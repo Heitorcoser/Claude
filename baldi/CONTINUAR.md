@@ -41,6 +41,7 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Navegação: `Nav.muro` marca passagens entre células cortadas por parede fina; o A* e o alisamento não atravessam paredes (`test/paredes.mjs`, `test/ronda.mjs`).
 - Dificuldade: tela `#telaDif` depois de escolher o modo (`DIF` em `jogo.js`, guardada em localStorage): raiva e espera do Baldi, detenções (índices de 15/30/45/60/99 s, para a voz do Diretor bater), gasto de energia, tempo do Diretor para notar, intervalo do Robô.
 - Sons: `Motor.tocando` guarda tudo que toca; `menu()` e `comeca()` chamam `M.paraTudo()` (`test/menu.mjs`).
+- 1st Prize: acelera até 40 (12/s), vira 1 rad/s vendo o jogador; solta quando a velocidade cai abaixo de 4 e espera 2 s (`test/prize.mjs`).
 - Empurrões (1st Prize, Gotta Sweep) movem o jogador em passos de 0,5 com colisão a cada passo (`test/dificuldade.mjs`).
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 

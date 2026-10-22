@@ -327,15 +327,15 @@
     });
     const fp = npcSprite('1st Prize');
     N.prize = Object.assign(Agente('1st Prize', fp.ex[0], fp.ex[2], 5), {
-      spr: fp.m, oy: fp.oy, dir: 0, viu: false, cool: 1, louco: 0, vAtual: 5, abracou: false,
+      spr: fp.m, oy: fp.oy, dir: 0, viu: false, cool: 1, louco: 0, vAtual: 5, abracou: false, solta: 0,
       ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
       vagar() { const r = ronda(false); this.vai(r[0], r[1]); this.abracou = false; if (Math.random() < 0.1) M.som('Characters/1stPrize/1PR_' + (Math.random() < 0.5 ? 'BeenProgrammed' : 'AmLooking'), { de: this }); this.cool = 1; },
-      tique(dt) { this.cool -= dt; },
+      tique(dt) { this.cool -= dt; this.solta -= dt; },
       fixo(dt) {
         if (this.louco > 0) { this.louco -= dt; this.dir += Math.PI * dt; this.vx = this.vz = 0; return; }
         if (ve(this)) {
           if (!this.viu) M.som('Characters/1stPrize/1PR_' + (Math.random() < 0.5 ? 'ISeeYou' : 'AmComing'), { de: this });
-          this.viu = true; this.vai(G.p.x, G.p.z); this.cool = 0.5; this.vAtual = Math.min(100, this.vAtual + 40 * dt);
+          this.viu = true; this.vai(G.p.x, G.p.z); this.cool = 0.5; this.vAtual = Math.min(40, this.vAtual + 12 * dt); // acelera devagar
         } else {
           this.vAtual = 5;
           if (this.viu && this.cool <= 0) { M.som('Characters/1stPrize/1PR_' + (Math.random() < 0.5 ? 'HaveLost' : 'OhNo'), { de: this }); this.viu = false; this.vagar(); }
@@ -345,11 +345,13 @@
         if (this.cam.length) {
           const alvo = Math.atan2(this.cam[0][0] - this.x, this.cam[0][1] - this.z);
           let d = alvo - this.dir; d = Math.atan2(Math.sin(d), Math.cos(d));
-          if (Math.abs(d) < 0.09) { this.dir = alvo; this.anda(dt, this.vAtual); } else { this.dir += Math.sign(d) * Math.min(Math.abs(d), (this.viu ? 4 : 1.5) * dt); this.anda(dt, 0); this.vAtual = Math.max(5, this.vAtual * 0.9); }
+          if (Math.abs(d) < 0.09) { this.dir = alvo; this.anda(dt, this.vAtual); } else { this.dir += Math.sign(d) * Math.min(Math.abs(d), (this.viu ? 1 : 0.7) * dt); this.anda(dt, 0); this.vAtual = Math.max(5, this.vAtual * 0.97); } // vira devagar e perde velocidade
         } else this.anda(dt, 0);
         const sp = Math.hypot(this.vx, this.vz);
-        if (dist(this, G.p) < 3.5 && sp > 5 && G.p.botas <= 0) {
-          G.p.abracando = 1; G.p.abraco = this;
+        // parado ou quase: solta o jogador e espera um pouco antes de abraçar de novo
+        if (G.p.abraco === this && G.p.abracando > 0 && sp < 4) { G.p.abracando = 0; this.solta = 2; this.abracou = false; }
+        if (dist(this, G.p) < 3.5 && sp > 8 && G.p.botas <= 0 && this.solta <= 0) {
+          G.p.abracando = 0.3; G.p.abraco = this;
           if (!this.abracou) { this.abracou = true; M.som('Characters/1stPrize/1PR_' + (Math.random() < 0.5 ? 'IHug' : 'Marry'), { de: this }); }
         }
       },
