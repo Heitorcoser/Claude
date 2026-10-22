@@ -51,12 +51,19 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #bPausa{right:max(196px,calc(env(safe-area-inset-right) + 196px));top:max(8px,env(safe-area-inset-top));width:46px;height:46px;background-image:url(assets/Texture2D/HudTextures/MobileSprites/Pause.png);background-size:70%}
 #bPulo{right:max(24px,env(safe-area-inset-right));bottom:max(200px,calc(env(safe-area-inset-bottom) + 200px));font-size:14px;align-items:center;padding:0}
 /* contas (You Can Think Pad) */
-#mat{z-index:20;background:rgba(0,0,0,.6)}
-#pad{position:relative;width:min(100vw,133.3vh);aspect-ratio:4/3;background:url(assets/Texture2D/YCTPTextures/YCTP2_NoButtons.png) center/100% 100%;color:#000;image-rendering:pixelated;container-type:size}
+#mat{z-index:20;background:#000}
+#pad{position:relative;width:min(100vw,133.3vh);aspect-ratio:4/3;color:#000;image-rendering:pixelated;container-type:size}
 #pad>*{position:absolute}
-#pergunta{left:32.50%;top:30.42%;width:37.00%;height:29.17%;font-size:5.4cqh;font-weight:700;line-height:1.2;white-space:pre-line;display:flex;flex-direction:column;justify-content:center}
+/* painéis atrás dos buracos do aparelho, como no prefab MathGame (TextBG, ResultBG, InputField, BaldiFeedBG) */
+#fundoTexto{left:31.00%;top:30.42%;width:43.75%;height:29.17%;background:#fff}
+#fundoRes{left:18.75%;top:29.17%;width:12.50%;height:26.67%;background:#fff}
+#fundoResp{left:38.38%;top:59.33%;width:31.25%;height:15.00%;background:#fff}
+#fundoBaldi{left:19.50%;top:56.00%;width:16.00%;height:21.33%;background:#000}
+#yctp{left:0;top:0;width:100%;height:100%;pointer-events:none}
+#pergunta{left:32.50%;top:30.42%;width:37.00%;height:29.17%;font-size:5cqh;font-weight:700;line-height:1.15;white-space:pre-line;overflow:hidden}
 #pergunta .bug{display:block;font-size:4.2cqh}
-#resp{left:39.62%;top:60.42%;width:28.75%;height:12.83%;font-size:8cqh;font-weight:700;display:flex;align-items:center}
+#resp{left:39.62%;top:60.42%;width:28.75%;height:12.83%;font-size:10cqh;font-weight:700;line-height:1;padding-top:.6cqh;overflow:hidden;white-space:nowrap}
+#resp:empty::before{content:"DIGITE A RESPOSTA";font-size:4.6cqh;color:rgba(50,50,50,.5);display:flex;height:100%;align-items:center}
 #r0{left:21.69%;top:28.92%;width:6.62%;height:8.83%;image-rendering:pixelated}
 #r1{left:21.19%;top:37.92%;width:6.62%;height:8.83%;image-rendering:pixelated}
 #r2{left:20.94%;top:47.75%;width:6.62%;height:8.83%;image-rendering:pixelated}
@@ -147,10 +154,12 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 
 <div class="tela" id="mat" hidden>
   <div id="pad">
-    <div id="pergunta"></div>
-    <div id="resp"></div>
+    <div id="fundoTexto"></div><div id="fundoRes"></div><div id="fundoResp"></div><div id="fundoBaldi"></div>
     <img id="r0" alt=""><img id="r1" alt=""><img id="r2" alt="">
     <img id="baldiCara" alt="">
+    <div id="pergunta"></div>
+    <div id="resp"></div>
+    <img id="yctp" src="assets/Texture2D/YCTPTextures/YCTP2_NoButtons.png" alt="">
     <div id="teclado"></div>
   </div>
 </div>

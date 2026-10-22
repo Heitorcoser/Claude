@@ -594,13 +594,13 @@
         conta.impossivel = false;
         const a = N9(), b = N9(), mais = Math.random() < 0.5;
         conta.sol = mais ? a + b : a - b;
-        $('pergunta').textContent = `RESOLVA A CONTA ${q}:\n\n${a}${mais ? '+' : '-'}${b}=`;
+        $('pergunta').textContent = `CONTA ${q}:\n\n${a}${mais ? '+' : '-'}${b}=`;
         fala('Characters/Baldi/MathGame/Numbers/BAL_Math_' + a); fala('Characters/Baldi/MathGame/BAL_Math_' + (mais ? 'Plus' : 'Minus')); fala('Characters/Baldi/MathGame/Numbers/BAL_Math_' + b); fala('Characters/Baldi/MathGame/BAL_Math_Equals');
       } else {
         // a famosa conta impossível: três textos embaralhados e o Baldi guinchando
         conta.impossivel = true;
         const t = () => (Math.random() < 0.5 ? `${grande()}+(${grande()}X${grande()}=` : `(${grande()}/${grande()})+${grande()}=`);
-        $('pergunta').innerHTML = `RESOLVA A CONTA ${q}:<span class=bug>${t()}</span><span class=bug>${t()}</span><span class=bug>${t()}</span>`;
+        $('pergunta').innerHTML = `CONTA ${q}:<span class=bug>${t()}</span><span class=bug>${t()}</span><span class=bug>${t()}</span>`;
         ['Characters/Baldi/Sounds/BAL_Screech', 'Characters/Baldi/MathGame/BAL_Math_Plus', 'Characters/Baldi/Sounds/BAL_Screech', 'Characters/Baldi/MathGame/BAL_Math_Times', 'Characters/Baldi/Sounds/BAL_Screech', 'Characters/Baldi/MathGame/BAL_Math_Equals'].forEach(fala);
       }
     } else {
