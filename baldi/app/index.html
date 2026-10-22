@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<link rel="icon" href="assets/Texture2D/Miscellaneous/GameIcon.png">
+<title>Baldi's Basics: Beta Tester</title>
+<style>
+@font-face{font-family:Comic;src:url(assets/fonts/comic-neue-latin-400-normal.woff2) format("woff2");font-weight:400}
+@font-face{font-family:Comic;src:url(assets/fonts/comic-neue-latin-700-normal.woff2) format("woff2");font-weight:700}
+:root{--hud:#fff;--sombra:0 2px 0 #000,0 -2px 0 #000,2px 0 0 #000,-2px 0 0 #000}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Comic,sans-serif;color:#fff;-webkit-user-select:none;user-select:none;touch-action:none}
+[hidden]{display:none!important}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.tela{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;background:#000 center/cover no-repeat}
+#titulo{background:#fff url(assets/Texture2D/MenuTextures/title_final.png) center/contain no-repeat;justify-content:flex-end;padding-bottom:max(16px,env(safe-area-inset-bottom));cursor:pointer}
+#tocaTxt{color:#000;font-size:22px;font-weight:700;animation:pisca 1.2s steps(2) infinite}
+@keyframes pisca{50%{opacity:0}}
+#menu{background:#fff;gap:10px}
+#miniTitulo{height:min(34vh,200px)}
+.botoes{display:flex;flex-wrap:wrap;gap:6px 22px;justify-content:center;align-items:center;max-width:760px}
+.bt{appearance:none;border:0;background:none;color:#000;font:700 22px Comic,sans-serif;padding:4px 2px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:3px solid transparent}
+.bt img{height:64px;image-rendering:pixelated}
+.bt:hover,.bt:focus-visible,.bt:active{border-bottom-color:#000;outline:none}
+.bt.claro{color:#fff}
+.bt.claro:hover,.bt.claro:active{border-bottom-color:#fff}
+.aviso{font-size:11px;color:#555;text-align:center;max-width:560px}
+/* HUD */
+#hud{position:fixed;inset:0;z-index:5;pointer-events:none}
+#cadernos{position:absolute;left:max(10px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top));font-size:22px;font-weight:700;text-shadow:var(--sombra)}
+#evento{white-space:pre-line;position:absolute;left:50%;top:max(46px,calc(env(safe-area-inset-top) + 40px));transform:translateX(-50%);font-size:18px;font-weight:700;text-shadow:var(--sombra);text-align:center;white-space:nowrap}
+#aviso{position:absolute;left:50%;top:38%;transform:translateX(-50%);font-size:22px;font-weight:700;text-shadow:var(--sombra);text-align:center;color:#fff;white-space:nowrap}
+#mira{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #000}
+#estamina{position:absolute;left:max(12px,env(safe-area-inset-left));bottom:max(150px,calc(env(safe-area-inset-bottom) + 150px));width:150px;height:16px;border:3px solid #000;background:#600}
+#estamina i{display:block;height:100%;background:#0c0;width:100%}
+#itens{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:flex-end;gap:4px;pointer-events:auto}
+#slots{display:flex;gap:4px}
+.slot{width:56px;height:56px;border:3px solid #000;background:#fff center/80% no-repeat;image-rendering:pixelated}
+.slot.sel{border-color:#f00}
+#nomeItem{font-size:16px;font-weight:700;text-shadow:var(--sombra)}
+/* controles de toque */
+#toque{position:fixed;inset:0;z-index:6}
+#stick{position:absolute;left:max(24px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.5)}
+#stick i{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.7)}
+.bot{position:absolute;width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.22) center/62% no-repeat;border:3px solid rgba(255,255,255,.55);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;text-shadow:var(--sombra)}
+#bCorre{right:max(24px,env(safe-area-inset-right));bottom:max(110px,calc(env(safe-area-inset-bottom) + 110px));background-image:url(assets/Texture2D/HudTextures/MobileSprites/RunSprite.png)}
+#bCorre.on{background-color:rgba(255,220,0,.5)}
+#bUsa{right:max(110px,calc(env(safe-area-inset-right) + 110px));bottom:max(24px,env(safe-area-inset-bottom));background-image:url(assets/Texture2D/HudTextures/MobileSprites/ItemButton.png)}
+#bToca{right:max(24px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));background-image:url(assets/Texture2D/HudTextures/MobileSprites/CursorSprite2D.png);background-size:50%}
+#bPausa{right:max(196px,calc(env(safe-area-inset-right) + 196px));top:max(8px,env(safe-area-inset-top));width:46px;height:46px;background-image:url(assets/Texture2D/HudTextures/MobileSprites/Pause.png);background-size:70%}
+#bPulo{right:max(24px,env(safe-area-inset-right));bottom:max(200px,calc(env(safe-area-inset-bottom) + 200px));font-size:14px;align-items:center;padding:0}
+/* contas (You Can Think Pad) */
+#mat{z-index:20;background:rgba(0,0,0,.6)}
+#pad{position:relative;width:min(100vw,133.3vh);aspect-ratio:4/3;background:url(assets/Texture2D/YCTPTextures/YCTP2_NoButtons.png) center/100% 100%;color:#000;image-rendering:pixelated;container-type:size}
+#pad>*{position:absolute}
+#pergunta{left:32.50%;top:30.42%;width:37.00%;height:29.17%;font-size:5.4cqh;font-weight:700;line-height:1.2;white-space:pre-line;display:flex;flex-direction:column;justify-content:center}
+#pergunta .bug{display:block;font-size:4.2cqh}
+#resp{left:39.62%;top:60.42%;width:28.75%;height:12.83%;font-size:8cqh;font-weight:700;display:flex;align-items:center}
+#r0{left:21.69%;top:28.92%;width:6.62%;height:8.83%;image-rendering:pixelated}
+#r1{left:21.19%;top:37.92%;width:6.62%;height:8.83%;image-rendering:pixelated}
+#r2{left:20.94%;top:47.75%;width:6.62%;height:8.83%;image-rendering:pixelated}
+#baldiCara{left:20.62%;top:59.17%;width:13.75%;height:18.33%;image-rendering:pixelated}
+#teclado [data-k="7"]{position:absolute;left:74.62%;top:27.00%;width:6.50%;height:8.67%}
+#teclado [data-k="8"]{position:absolute;left:81.00%;top:27.00%;width:6.50%;height:8.67%}
+#teclado [data-k="9"]{position:absolute;left:87.50%;top:27.00%;width:6.50%;height:8.67%}
+#teclado [data-k="4"]{position:absolute;left:74.62%;top:35.50%;width:6.50%;height:8.67%}
+#teclado [data-k="5"]{position:absolute;left:81.00%;top:35.50%;width:6.50%;height:8.67%}
+#teclado [data-k="6"]{position:absolute;left:87.50%;top:35.50%;width:6.50%;height:8.67%}
+#teclado [data-k="1"]{position:absolute;left:74.62%;top:44.00%;width:6.50%;height:8.67%}
+#teclado [data-k="2"]{position:absolute;left:81.00%;top:44.00%;width:6.50%;height:8.67%}
+#teclado [data-k="3"]{position:absolute;left:87.50%;top:44.00%;width:6.50%;height:8.67%}
+#teclado [data-k="C"]{position:absolute;left:74.62%;top:52.50%;width:6.50%;height:8.67%}
+#teclado [data-k="0"]{position:absolute;left:81.00%;top:52.50%;width:6.50%;height:8.67%}
+#teclado [data-k="-"]{position:absolute;left:87.50%;top:52.50%;width:6.50%;height:8.67%}
+#teclado [data-k="OK"]{position:absolute;left:74.62%;top:61.00%;width:19.25%;height:25.67%}
+#teclado{position:absolute;inset:0}
+#teclado button{appearance:none;border:0;padding:0;background:transparent}
+#teclado img{width:100%;height:100%;image-rendering:pixelated;display:block}
+#teclado button:active img{filter:brightness(.8)}
+/* pular corda */
+#corda{z-index:15;background:rgba(0,0,0,.35);pointer-events:none}
+#corda img{width:min(70vw,60vh);image-rendering:pixelated}
+#pulos{font-size:34px;font-weight:700;text-shadow:var(--sombra)}
+/* fim de jogo */
+#fim{z-index:30;background-size:contain;justify-content:flex-end;padding-bottom:max(18px,env(safe-area-inset-bottom))}
+#fimTxt{font-size:26px;font-weight:700;text-shadow:var(--sombra)}
+#susto{position:fixed;inset:0;z-index:29;background:#000 center/contain no-repeat;display:none}
+.caixa{background:#fff;color:#000;padding:18px 22px;max-width:640px;max-height:84vh;overflow:auto;font-size:17px;line-height:1.35;text-align:center}
+.caixa h2{margin:0 0 8px}
+.caixa p{margin:0 0 10px}
+#pausa{background:rgba(0,0,0,.75)}
+#pausa img{width:150px;image-rendering:pixelated}
+#pausa h2{margin:0;font-size:30px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" hidden>
+  <div id="cadernos">0/7 Cadernos</div>
+  <div id="evento" hidden></div>
+  <div id="aviso" hidden></div>
+  <div id="mira"></div>
+  <div id="estamina"><i></i></div>
+  <div id="itens"><div id="slots"><div class="slot sel" data-s="0"></div><div class="slot" data-s="1"></div><div class="slot" data-s="2"></div></div><div id="nomeItem">Nada</div></div>
+</div>
+
+<div id="toque" hidden>
+  <div id="stick"><i></i></div>
+  <div class="bot" id="bCorre"></div>
+  <div class="bot" id="bUsa"></div>
+  <div class="bot" id="bToca"></div>
+  <div class="bot" id="bPausa"></div>
+  <div class="bot" id="bPulo" hidden>Pular</div>
+</div>
+
+<div class="tela" id="titulo"><div id="tocaTxt">Toque para começar</div></div>
+<div class="tela" id="menu" hidden>
+  <img src="assets/Texture2D/MenuTextures/title_final.png" id="miniTitulo" alt="Baldi's Basics">
+  <div class="botoes">
+    <button class="bt" id="jHistoria"><img src="assets/ui/historia.png" alt="">Modo História</button>
+    <button class="bt" id="jInfinito"><img src="assets/ui/infinito.png" alt="">Modo Infinito</button>
+    <button class="bt" id="jBeta"><img src="assets/Texture2D/CharacterSprites/PlaceFace.png" alt="">Beta Tester</button>
+    <button class="bt" id="jComo">Como jogar</button>
+  </div>
+  <div class="aviso">Fã-jogo sem fins lucrativos, refeito na web a partir do projeto aberto do Baldi's Basics Classic. Baldi's Basics é de Basically Games (mystman12).</div>
+</div>
+
+<div class="tela" id="carregando" hidden><img src="assets/Texture2D/MenuTextures/LoadingHead/HeadSpin0000.png" id="cabeca" width="160" style="image-rendering:pixelated" alt=""><div id="carregaTxt">Carregando...</div></div>
+
+<div class="tela" id="como" hidden><div class="caixa">
+  <h2>Como jogar</h2>
+  <p>Ache os <b>7 cadernos</b> da escola e resolva as contas do Baldi. Errou? Ele fica bravo e vem te pegar, cada vez mais rápido. Com todos os cadernos, fuja por uma das saídas.</p>
+  <p><b>Celular:</b> bolinha da esquerda anda, arraste a tela para olhar, ✋ pega e abre o que está na mira, <b>Usar</b> usa o item escolhido (toque no item lá em cima para escolher), <b>Correr</b> gasta energia.</p>
+  <p><b>Computador:</b> WASD anda, mouse olha, clique pega, botão direito ou E usa o item, Shift corre, 1/2/3 escolhe item.</p>
+  <p><b>Cuidado:</b> o Diretor não deixa correr, beber no corredor nem entrar na sala dos professores. A Playtime quer pular corda. O Gotta Sweep varre tudo. O Bully cobra pedágio.</p>
+  <p><b>Beta Tester:</b> modo de teste do que vem por aí: escola maior, personagens novos e eventos.</p>
+  <button class="bt" id="fechaComo">Voltar</button>
+</div></div>
+
+<div class="tela" id="pausa" hidden>
+  <img id="cabecaPausa" src="assets/Texture2D/HudTextures/PauseHead/Nod0000.png" alt="">
+  <h2>Pausado</h2>
+  <div class="botoes"><button class="bt claro" id="continua">Continuar</button><button class="bt claro" id="sair">Sair para o menu</button></div>
+</div>
+
+<div class="tela" id="mat" hidden>
+  <div id="pad">
+    <div id="pergunta"></div>
+    <div id="resp"></div>
+    <img id="r0" alt=""><img id="r1" alt=""><img id="r2" alt="">
+    <img id="baldiCara" alt="">
+    <div id="teclado"></div>
+  </div>
+</div>
+
+<div class="tela" id="corda" hidden><img id="cordaImg" alt=""><div id="pulos">0/5</div></div>
+<div id="susto"></div>
+<div class="tela" id="fim" hidden><div id="fimTxt"></div><div class="botoes"><button class="bt claro" id="denovo">Jogar de novo</button><button class="bt claro" id="paraMenu">Menu</button></div></div>
+
+<script src="three.min.js"></script>
+<script src="motor.js"></script>
+<script src="jogo.js"></script>
+<script src="beta.js"></script>
+</body>
+</html>
