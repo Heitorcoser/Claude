@@ -75,13 +75,22 @@
   let G = null; // jogo em andamento
   J.estado = () => G;
   const espDe = (s, n) => E.esp.filter((e) => e.s === s && (!n || e.n === n));
+  // dificuldade: raiva do Baldi, espera entre os passos, detenção, energia, Diretor e Robô
+  const DIF = {
+    facil: { nome: 'Fácil', raiva: 0.6, espera: 1.35, deten: [0, 0, 1, 1, 1], gasto: 0.6, olhar: 1.2, robo: 5 },
+    normal: { nome: 'Normal', raiva: 1, espera: 1, deten: [0, 1, 2, 3, 4], gasto: 1, olhar: 0.5, robo: 3 },
+    dificil: { nome: 'Difícil', raiva: 1.3, espera: 0.85, deten: [1, 2, 3, 4, 4], gasto: 1.2, olhar: 0.35, robo: 2 },
+  };
+  let dificuldade = 'normal';
+  try { dificuldade = DIF[localStorage.getItem('baldiDificuldade')] ? localStorage.getItem('baldiDificuldade') : 'normal'; } catch (e) {}
+  J.DIF = DIF;
   function novoJogo(modo) {
     montaCena(modo);
     const pj = espDe('PlayerScript')[0];
     G = {
       modo, t: 0, cadernos: 0, totalCadernos: E.totalCadernos || 7, falhou: 0, spoop: false, final: false, saidas: 0, pausado: false, aprendendo: false, fim: false,
       p: { x: pj.pos[0], z: pj.pos[2], yaw: 0, est: 100, culpa: 0, culpaTipo: '', corda: false, varrendo: 0, abracando: 0, botas: 0, h: 4, pulo: 0, vy: 0, preso: null },
-      item: [0, 0, 0], sel: 0, objs: [], npcs: {}, portas: [], acum: 0, sons: {},
+      item: [0, 0, 0], sel: 0, objs: [], npcs: {}, portas: [], acum: 0, sons: {}, dif: DIF[dificuldade],
     };
     G.infinito = modo == 'infinito';
     J.G = G;
@@ -205,7 +214,7 @@
       ativa() { this.ativo = true; this.spr.visible = true; this.mover = 3; this.vagar(); },
       vagar() { const r = ronda(true); this.vai(r[0], r[1]); this.cool = 1; this.prio = 0; },
       ouve(x, z, pr) { if (this.ativo && this.surdo <= 0 && pr >= this.prio) { this.vai(x, z); this.prio = pr; } },
-      bravo(v) { this.raiva = Math.max(0.5, this.raiva + v); this.espera = -3 * this.raiva / (this.raiva + 2 / this.escala) + 3; },
+      bravo(v) { this.raiva = Math.max(0.5, this.raiva + v * G.dif.raiva); this.espera = (-3 * this.raiva / (this.raiva + 2 / this.escala) + 3) * G.dif.espera; },
       tique(dt) {
         if ((this.mover -= dt) <= 0) this.tapear();
         this.cool -= dt; this.raivaT = Math.max(0, this.raivaT - 0.02 * dt); this.surdo -= dt;
@@ -237,7 +246,7 @@
         const p = G.p;
         this.naSala = dentro('Office Trigger', this.x, this.z);
         if (!this.bravo) {
-          if (ve(this) && p.culpa > 0 && !this.naSala) { if ((this.vendo += dt) >= 0.5) { this.bravo = true; this.vendo = 0; this.corrige(); } }
+          if (ve(this) && p.culpa > 0 && !this.naSala) { if ((this.vendo += dt) >= G.dif.olhar) { this.bravo = true; this.vendo = 0; this.corrige(); } }
           else { this.vendo = 0; if (this.parado() && this.cool <= 0) this.vagar(); }
           const bu = G.npcs.bully;
           if (bu.ativo && bu.culpa > 0 && !this.naSala && mundo.ve(this.x, this.z, bu.x, bu.z) && !this.viuBully) { this.vai(bu.x, bu.z); this.fala('Characters/Principal/RuleBroke/PRI_NoBullying'); this.viuBully = true; }
@@ -248,13 +257,12 @@
       vagar() { const r = ronda(true); this.vai(r[0], r[1]); this.cool = 1; this.viuBully = false; if (Math.random() < 0.1) M.som('Characters/Principal/PRI_Whistle', { de: this, vol: 0.5 }); },
       corrige() { this.fila = []; const m = { faculty: 'NoFaculty', running: 'NoRunning', drink: 'NoDrinking', escape: 'NoEscaping' }[G.p.culpaTipo]; if (m) this.fala('Characters/Principal/RuleBroke/PRI_' + m); },
       detencao() {
-        const pp = E.pontos.playerDetentionPoint, dp = E.pontos.principalDetentionPoint, T = [15, 30, 45, 60, 99];
+        const pp = E.pontos.playerDetentionPoint, dp = E.pontos.principalDetentionPoint, T = [15, 30, 45, 60, 99], t = G.dif.deten[this.detencoes];
         this.x = dp[0]; this.z = dp[2]; this.cam = []; G.p.x = pp[0]; G.p.z = pp[2];
-        this.fila = ['Sounds/delay', 'Characters/Principal/Seconds/PRI_' + T[this.detencoes] + 'Sec', 'Characters/Principal/PRI_DetentionForYou', 'Characters/Principal/Scolds/PRI_' + ['YourParents', 'KnowBetter', 'WhenLearn'][M.rndInt(0, 2)]];
-        G.diretoria.trava = T[this.detencoes]; G.diretoria.aberta = false; G.diretoria.seg.ativo = true; mostraPorta(G.diretoria);
+        this.fila = ['Sounds/delay', 'Characters/Principal/Seconds/PRI_' + T[t] + 'Sec', 'Characters/Principal/PRI_DetentionForYou', 'Characters/Principal/Scolds/PRI_' + ['YourParents', 'KnowBetter', 'WhenLearn'][M.rndInt(0, 2)]];
+        G.diretoria.trava = T[t]; G.diretoria.aberta = false; G.diretoria.seg.ativo = true; mostraPorta(G.diretoria);
         G.npcs.baldi.ouve(this.x, this.z, 8);
         this.cool = 5; this.bravo = false; this.detencoes = Math.min(4, this.detencoes + 1);
-        aviso('Detenção! ' + T[Math.max(0, this.detencoes - 1)] + ' segundos', 2.5);
       },
     });
     const pt = npcSprite('Playtime');
@@ -715,12 +723,16 @@
       mx = a.vx * 1.2 * dt + (a.x + Math.round(fx2) * 3 - p.x); mz = a.vz * 1.2 * dt + (a.z + Math.round(fz2) * 3 - p.z);
     }
     const ox = p.x, oz = p.z;
-    p.x += mx; p.z += mz;
-    mundo.resolve(p, 2);
-    for (const n of Object.values(G.npcs)) if (n.solido && n.ativo) { const d = dist(p, n), r = n.solido + 2; if (d < r && d > 0.01) { p.x = n.x + (p.x - n.x) * r / d; p.z = n.z + (p.z - n.z) * r / d; } }
+    // anda em passos curtos: um empurrão forte (1st Prize, Gotta Sweep) não pula a parede
+    const np = Math.max(1, Math.ceil(Math.hypot(mx, mz) / 0.5));
+    for (let k = 0; k < np; k++) { p.x += mx / np; p.z += mz / np; mundo.resolve(p, 2); }
+    for (const n of Object.values(G.npcs)) if (n.solido && n.ativo) {
+      const d = dist(p, n), r = n.solido + 2;
+      if (d < r && d > 0.01) { const px = p.x, pz = p.z; p.x = n.x + (p.x - n.x) * r / d; p.z = n.z + (p.z - n.z) * r / d; if (!mundo.ve(px, pz, p.x, p.z, true)) { p.x = px; p.z = pz; } mundo.resolve(p, 2); }
+    }
     const andou = Math.hypot(p.x - ox, p.z - oz) / dt;
     // energia
-    if (andou > 0.1) { if (corre) { p.est -= 10 * dt; if (andou > 0.1 && p.varrendo <= 0 && p.abracando <= 0 && !J.correLiberado) culpa('running', 0.1); } if (p.est < 0 && p.est > -5) p.est = -5; }
+    if (andou > 0.1) { if (corre) { p.est -= 10 * G.dif.gasto * dt; if (andou > 0.1 && p.varrendo <= 0 && p.abracando <= 0 && !J.correLiberado) culpa('running', 0.1); } if (p.est < 0 && p.est > -5) p.est = -5; }
     else if (p.est < 100) p.est += 10 * dt;
     if (p.corda && Math.hypot(p.x - p.cordaPos[0], p.z - p.cordaPos[1]) >= 1) acabaCorda();
     p.culpa -= dt; p.varrendo -= dt; p.abracando -= dt; p.botas -= dt;
@@ -826,6 +838,9 @@
     // som ambiente de vez em quando
     if ((G.ambT = (G.ambT ?? 20) - dt) <= 0) { G.ambT = M.rnd(25, 60); const r = ronda(true); M.som('Sounds/Ambiences/' + ['ambience', 'creepy sound', 'dulcimer', 'fret', 'noise', 'tone'][M.rndInt(0, 5)], { de: { x: r[0], z: r[1] }, vol: 0.5, alcance: 200 }); }
     M.atualizaSons(G.p.x, G.p.z);
+    const dt2 = G.diretoria && G.diretoria.trava > 0 ? Math.ceil(G.diretoria.trava) : 0;
+    $('detencao').hidden = !dt2;
+    if (dt2) $('detencao').textContent = `Você está de detenção!\nFaltam ${dt2} segundos!`;
     $('estamina').firstElementChild.style.width = Math.max(0, Math.min(100, G.p.est)) + '%';
   }
   function desenha() {
@@ -871,6 +886,9 @@
   $('jInfinito').onclick = () => comeca('infinito');
   $('jBeta').onclick = () => comeca('beta');
   $('jComo').onclick = () => ($('como').hidden = false);
+  function marcaDificuldade() { document.querySelectorAll('#dificuldade button').forEach((b) => b.classList.toggle('sel', b.dataset.d == dificuldade)); }
+  document.querySelectorAll('#dificuldade button').forEach((b) => (b.onclick = () => { dificuldade = b.dataset.d; try { localStorage.setItem('baldiDificuldade', dificuldade); } catch (e) {} marcaDificuldade(); }));
+  marcaDificuldade();
   $('fechaComo').onclick = () => ($('como').hidden = true);
   // toque na tela de fora do jogo também libera o som no celular
   addEventListener('pointerdown', () => M.audio().resume(), { once: true });

@@ -116,7 +116,7 @@
           this.viu = true;
           // fica de olho de longe e chama o Baldi a cada 3 segundos
           if (d > 18) this.vai(p.x, p.z); else this.cam = [];
-          if (this.aviso <= 0) { this.aviso = 3; G.npcs.baldi.ouve(p.x, p.z, 2); M.som('beta/sons/bipe', { de: this, vol: 0.6 }); if (Math.random() < 0.3) this.diz('BackupRequested'); }
+          if (this.aviso <= 0) { this.aviso = G.dif.robo; G.npcs.baldi.ouve(p.x, p.z, 2); M.som('beta/sons/bipe', { de: this, vol: 0.6 }); if (Math.random() < 0.3) this.diz('BackupRequested'); }
           this.cool = 1.5;
         } else if (this.viu && this.cool <= 0) { this.viu = false; this.diz(Math.random() < 0.5 ? 'TargetLost' : 'WhereDidYouGo'); this.vagar(); }
         else if (this.parado() && this.cool <= 0) { this.vagar(); if (Math.random() < 0.15) this.diz('WhereAreYou'); }

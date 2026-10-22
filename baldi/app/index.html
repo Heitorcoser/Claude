@@ -25,6 +25,10 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .bt:hover,.bt:focus-visible,.bt:active{border-bottom-color:#000;outline:none}
 .bt.claro{color:#fff}
 .bt.claro:hover,.bt.claro:active{border-bottom-color:#fff}
+#dificuldade{color:#000;display:flex;gap:4px 16px;align-items:center;font:700 18px Comic,sans-serif;flex-wrap:wrap;justify-content:center}
+#dificuldade button{appearance:none;border:0;background:none;font:inherit;color:#888;padding:2px 2px;cursor:pointer;border-bottom:3px solid transparent}
+#dificuldade button.sel{color:#000;border-bottom-color:#000}
+#detencao{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-size:24px;font-weight:700;text-shadow:var(--sombra);text-align:center;color:#fff;white-space:pre-line}
 .aviso{font-size:11px;color:#555;text-align:center;max-width:560px}
 /* HUD */
 #hud{position:fixed;inset:0;z-index:5;pointer-events:none}
@@ -107,7 +111,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 <div id="hud" hidden>
   <div id="cadernos">0/7 Cadernos</div>
   <div id="evento" hidden></div>
-  <div id="aviso" hidden></div>
+  <div id="detencao" hidden></div><div id="aviso" hidden></div>
   <div id="mira"></div>
   <div id="estamina"><i></i></div>
   <div id="itens"><div id="slots"><div class="slot sel" data-s="0"></div><div class="slot" data-s="1"></div><div class="slot" data-s="2"></div></div><div id="nomeItem">Nada</div></div>
@@ -131,6 +135,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
     <button class="bt" id="jBeta"><img src="assets/Texture2D/CharacterSprites/PlaceFace.png" alt="">Beta Tester</button>
     <button class="bt" id="jComo">Como jogar</button>
   </div>
+  <div id="dificuldade"><span>Dificuldade:</span><button data-d="facil">Fácil</button><button data-d="normal">Normal</button><button data-d="dificil">Difícil</button></div>
   <div class="aviso">Fã-jogo sem fins lucrativos, refeito na web a partir do projeto aberto do Baldi's Basics Classic. Baldi's Basics é de Basically Games (mystman12).</div>
 </div>
 
@@ -139,7 +144,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 <div class="tela" id="como" hidden><div class="caixa">
   <h2>Como jogar</h2>
   <p>Ache os <b>7 cadernos</b> da escola e resolva as contas do Baldi. Errou? Ele fica bravo e vem te pegar, cada vez mais rápido. Com todos os cadernos, fuja por uma das saídas.</p>
-  <p><b>Celular:</b> bolinha da esquerda anda, arraste a tela para olhar, ✋ pega e abre o que está na mira, <b>Usar</b> usa o item escolhido (toque no item lá em cima para escolher), <b>Correr</b> gasta energia.</p>
+  <p><b>Celular:</b> bolinha da esquerda anda, arraste a tela para olhar, a mão pega e abre o que está na mira, <b>Usar</b> usa o item escolhido (toque no item lá em cima para escolher), <b>Correr</b> gasta energia.</p>
   <p><b>Computador:</b> WASD anda, mouse olha, clique pega, botão direito ou E usa o item, Shift corre, 1/2/3 escolhe item.</p>
   <p><b>Cuidado:</b> o Diretor não deixa correr, beber no corredor nem entrar na sala dos professores. A Playtime quer pular corda. O Gotta Sweep varre tudo. O Bully cobra pedágio.</p>
   <p><b>Beta Tester:</b> modo de teste do que vem por aí: escola maior, personagens novos e eventos.</p>
