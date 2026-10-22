@@ -58,7 +58,8 @@
     return g;
   }
   M.material = (mt, extra) => {
-    const o = { color: new THREE.Color(mt.cor[0], mt.cor[1], mt.cor[2]), side: THREE.DoubleSide };
+    // só a frente, como no Unity: com os dois lados, cartazes e portas apareciam espelhados por trás
+    const o = { color: new THREE.Color(mt.cor[0], mt.cor[1], mt.cor[2]) };
     if (mt.tex) {
       const t = M.tex(mt.tex).clone(); t.needsUpdate = true;
       t.repeat.set(mt.rep[0], mt.rep[1]); t.offset.set(mt.off[0], mt.off[1]);
@@ -78,6 +79,8 @@
         const mi = o.mat[Math.min(i, o.mat.length - 1)];
         if (mi == null) return;
         g.applyMatrix4(mat4);
+        // escala negativa espelha a malha: inverte a ordem dos triângulos para a frente continuar do lado certo
+        if (mat4.determinant() < 0) { const I = g.index.array; for (let k = 0; k < I.length; k += 3) { const t = I[k + 1]; I[k + 1] = I[k + 2]; I[k + 2] = t; } }
         const chave = o.ent ? 'ent:' + o.ent + ':' + mi : mi;
         if (!grupos.has(chave)) grupos.set(chave, []);
         grupos.get(chave).push(g);
@@ -161,7 +164,7 @@
     }
   };
   // linha de visão (raio no chão); caixas não tapam a visão (são baixas)
-  P.ve = function (ax, az, bx, bz) {
+  P.ve = function (ax, az, bx, bz, semPortas) {
     const dx = bx - ax, dz = bz - az;
     const minx = Math.min(ax, bx), maxx = Math.max(ax, bx), minz = Math.min(az, bz), maxz = Math.max(az, bz);
     const testa = (s) => {
@@ -176,7 +179,7 @@
         const l = this.grade.get(gx + ',' + gz);
         if (l) for (const s of l) if (testa(s)) return false;
       }
-    for (const s of this.dyn) if (testa(s)) return false;
+    if (!semPortas) for (const s of this.dyn) if (testa(s)) return false;
     return true;
   };
   // distância até a parede numa direção (para tocar em objetos na tela)
@@ -205,10 +208,24 @@
       this.m.resolve(o, 1.2);
       this.livre[j * this.W + i] = Math.hypot(o.x - ox, o.z - oz) < 0.3 ? 1 : 0;
     }
+    // paredes finas ficam entre duas células livres: marca as passagens bloqueadas (bit 1 = i+1, bit 2 = j+1)
+    this.muro = new Uint8Array(this.W * this.H);
+    const cx = (i) => this.x0 + (i + 0.5) * NC, cz = (j) => this.z0 + (j + 0.5) * NC;
+    for (let j = 0; j < this.H; j++) for (let i = 0; i < this.W; i++) {
+      const k = j * this.W + i;
+      if (!this.livre[k]) continue;
+      if (i + 1 < this.W && this.livre[k + 1] && !mundo.ve(cx(i), cz(j), cx(i + 1), cz(j), true)) this.muro[k] |= 1;
+      if (j + 1 < this.H && this.livre[k + this.W] && !mundo.ve(cx(i), cz(j), cx(i), cz(j + 1), true)) this.muro[k] |= 2;
+    }
   };
   const N = M.Nav.prototype;
   N.cel = function (x, z) { return [Math.floor((x - this.x0) / NC), Math.floor((z - this.z0) / NC)]; };
   N.ok = function (i, j) { return i >= 0 && j >= 0 && i < this.W && j < this.H && this.livre[j * this.W + i] === 1 && !(this.trava && this.trava.has(j * this.W + i)); };
+  // dá para passar da célula (i,j) para a vizinha (i+di, j+dj), um passo reto, sem cruzar parede?
+  N.passa = function (i, j, di, dj) {
+    if (di) { const a = di > 0 ? i : i - 1; return !(this.muro[j * this.W + a] & 1); }
+    const b = dj > 0 ? j : j - 1; return !(this.muro[b * this.W + i] & 2);
+  };
   N.maisPerto = function (i, j) {
     if (this.ok(i, j)) return [i, j];
     for (let r = 1; r < 8; r++) for (let a = -r; a <= r; a++) for (const [di, dj] of [[a, -r], [a, r], [-r, a], [r, a]]) if (this.ok(i + di, j + dj)) return [i + di, j + dj];
@@ -233,7 +250,11 @@
       for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
         if (!di && !dj) continue;
         const ni = i + di, nj = j + dj;
-        if (!this.ok(ni, nj) || (di && dj && (!this.ok(i + di, j) || !this.ok(i, j + dj)))) continue;
+        if (!this.ok(ni, nj)) continue;
+        if (di && dj) {
+          // diagonal: as duas células do lado e as quatro passagens em volta têm de estar livres
+          if (!this.ok(i + di, j) || !this.ok(i, j + dj) || !this.passa(i, j, di, 0) || !this.passa(i, j, 0, dj) || !this.passa(i + di, j, 0, dj) || !this.passa(i, j + dj, di, 0)) continue;
+        } else if (!this.passa(i, j, di, dj)) continue;
         const nk = nj * W + ni, c = g[k] + (di && dj ? 1.414 : 1);
         if (c < g[nk]) { g[nk] = c; de[nk] = k; push([c + h(nk), nk]); }
       }
@@ -244,7 +265,9 @@
     pts.reverse();
     // alisa: pula pontos quando dá para ir em linha reta pela grade
     const P2 = pts.map((k) => [this.x0 + ((k % W) + 0.5) * NC, this.z0 + (((k / W) | 0) + 0.5) * NC]);
-    P2.push([bx, bz]);
+    const ul = P2.length ? P2[P2.length - 1] : [ax, az];
+    if (this.m.ve(ul[0], ul[1], bx, bz, true)) P2.push([bx, bz]); // o alvo pode estar dentro da parede
+    if (!P2.length) return [];
     const out = []; let cx = ax, cz = az, i = 0;
     while (i < P2.length) {
       let j = Math.min(P2.length - 1, i + 12);
@@ -256,6 +279,9 @@
   N.reto = function (ax, az, bx, bz) {
     const d = Math.hypot(bx - ax, bz - az), n = Math.ceil(d / (NC * 0.5));
     for (let k = 1; k <= n; k++) { const [i, j] = this.cel(ax + (bx - ax) * k / n, az + (bz - az) * k / n); if (!this.ok(i, j)) return false; }
+    // a linha e duas paralelas (largura do personagem) não podem cruzar parede
+    const px = d ? -(bz - az) / d : 0, pz = d ? (bx - ax) / d : 0;
+    for (const o of [0, 1, -1]) if (!this.m.ve(ax + px * o, az + pz * o, bx + px * o, bz + pz * o, true)) return false;
     return true;
   };
 

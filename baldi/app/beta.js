@@ -40,11 +40,13 @@
     E.segs = E.segs.filter((s) => !(Math.abs(s.a[0] - X0) < 0.2 && Math.abs(s.b[0] - X0) < 0.2 && Math.abs((s.a[1] + s.b[1]) / 2 - zc) < 0.2));
     const piso = (x, z, mat) => E.objs.push({ m: 'quad', mat: [mi(mat)], M: [0, 0, -T, 0, -T, 0, 0, 0, 0, 1, 0, 0, x, 0, z, 1] });
     const forro = (x, z) => E.objs.push({ m: 'quad', mat: [teto], M: [T, 0, 0, 0, 0, 0, -T, 0, 0, -1, 0, 0, x, 10, z, 1] });
-    // parede de largura w centrada em (x,z); 'x' = corre ao longo do eixo x
-    const muro = (x, z, w, eixo, mat = parede) => {
-      const M = eixo == 'x' ? [w, 0, 0, 0, 0, 10, 0, 0, 0, 0, 1, 0, x, 5, z, 1] : [0, 0, w, 0, 0, 10, 0, 0, 1, 0, 0, 0, x, 5, z, 1];
-      E.objs.push({ m: 'quad', mat: [mat], M });
-      const a = eixo == 'x' ? [x - w / 2, z] : [x, z - w / 2], b = eixo == 'x' ? [x + w / 2, z] : [x, z + w / 2];
+    // quad de largura w centrado em (x,z), virado para n = [nx, nz] (só a frente aparece)
+    const quadV = (x, z, w, n, y = 5) => [w * n[1], 0, -w * n[0], 0, 0, 10, 0, 0, n[0], 0, n[1], 0, x, y, z, 1];
+    // parede virada para n; dupla = também do outro lado (parede entre duas áreas)
+    const muro = (x, z, w, n, mat = parede, dupla = false) => {
+      E.objs.push({ m: 'quad', mat: [mat], M: quadV(x, z, w, n) });
+      if (dupla) E.objs.push({ m: 'quad', mat: [mat], M: quadV(x, z, w, [-n[0], -n[1]]) });
+      const a = n[0] == 0 ? [x - w / 2, z] : [x, z - w / 2], b = n[0] == 0 ? [x + w / 2, z] : [x, z + w / 2];
       E.segs.push({ a, b, y: [0, 10] });
     };
     const ehPorta = (i, j, lado) => PORTAS.some(([pi, pj, pl]) => {
@@ -62,15 +64,16 @@
         if (v && (lado == 's' || lado == 'l') && !ehPorta(i, j, lado)) continue; // parede entre duas áreas: faz uma vez só
         const ex = lado == 'o' ? cx - T / 2 : lado == 'l' ? cx + T / 2 : cx, ez = lado == 'n' ? cz + T / 2 : lado == 's' ? cz - T / 2 : cz;
         const eixo = lado == 'n' || lado == 's' ? 'x' : 'z';
+        const n = { n: [0, -1], s: [0, 1], o: [1, 0], l: [-1, 0] }[lado]; // para dentro da área
         if (ehPorta(i, j, lado)) {
           if (v && (lado == 's' || lado == 'l')) continue; // a porta é feita pelo lado do corredor
           // porta de 5 no meio e dois pedaços de parede de 2,5
           const d = (k) => (eixo == 'x' ? [ex + k, ez] : [ex, ez + k]);
-          muro(...d(-3.75), 2.5, eixo, fina); muro(...d(3.75), 2.5, eixo, fina);
-          const Mq = (s) => (eixo == 'x' ? [5, 0, 0, 0, 0, 10, 0, 0, 0, 0, 1, 0, ex, 5, ez + s, 1] : [0, 0, 5, 0, 0, 10, 0, 0, 1, 0, 0, 0, ex + s, 5, ez, 1]);
+          muro(...d(-3.75), 2.5, n, fina, !!v); muro(...d(3.75), 2.5, n, fina, !!v);
+          const Mq = (k) => quadV(ex + k * n[0] * 0.02, ez + k * n[1] * 0.02, 5, [k * n[0], k * n[1]]);
           const ba = eixo == 'x' ? [ex - 2.5, ez] : [ex, ez - 2.5], bb = eixo == 'x' ? [ex + 2.5, ez] : [ex, ez + 2.5];
-          E.portas.push({ tipo: 'porta', pos: [ex, 5, ez], quads: [{ M: Mq(0.02), mat: porta, lado: '_DoorIn' }, { M: Mq(-0.02), mat: porta, lado: '_DoorOut' }], bar: { a: ba, b: bb, y: [0, 10] }, pai: 'AlaBeta' });
-        } else muro(ex, ez, T, eixo);
+          E.portas.push({ tipo: 'porta', pos: [ex, 5, ez], quads: [{ M: Mq(1), mat: porta, lado: '_DoorIn' }, { M: Mq(-1), mat: porta, lado: '_DoorOut' }], bar: { a: ba, b: bb, y: [0, 10] }, pai: 'AlaBeta' });
+        } else muro(ex, ez, T, n, parede, !!v);
       }
     }
     // cadernos e itens novos (copiam o tamanho dos originais)

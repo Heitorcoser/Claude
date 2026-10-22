@@ -37,6 +37,8 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - O APK original é IL2CPP (código nativo): não dá para editar. O projeto aberto só compila no Unity, que exige licença ativada num PC. Por isso o porte para a web.
 - Visual: sem emojis; usar imagens do próprio jogo. Material novo vem de sites com licença livre (OpenGameArt/OpenClipart, CC0/domínio público) e entra em `CREDITOS.md`.
 - A câmera tem um desvio de 0,0001 rad no giro: alinhada exatamente às paredes, alguns renderizadores desenhavam as paredes cinza.
+- Materiais só com a frente (como no Unity). Malhas com escala negativa têm a ordem dos triângulos invertida em `M.monta`. Paredes novas (`beta.js`) usam `quadV` virado para dentro da área; parede entre duas áreas leva dois quads.
+- Navegação: `Nav.muro` marca passagens entre células cortadas por parede fina; o A* e o alisamento não atravessam paredes (`test/paredes.mjs`, `test/ronda.mjs`).
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 
 ## Ideias para as próximas versões do Beta Tester
