@@ -304,11 +304,13 @@
     g.gain.value = opt.vol ?? 1;
     s.connect(g).connect(c.destination); s.start();
     const h = { s, g, de: opt.de, vol: opt.vol ?? 1, fim: false, alcance: opt.alcance || 120 };
-    s.onended = () => (h.fim = true);
+    s.onended = () => { h.fim = true; M.tocando.delete(h); };
+    M.tocando.add(h);
     if (h.de) M.posicionais.add(h);
     return h;
   };
   M.posicionais = new Set();
+  M.tocando = new Set(); // tudo que está tocando, para parar ao sair do jogo
   M.atualizaSons = (px, pz) => {
     for (const h of M.posicionais) {
       if (h.fim) { M.posicionais.delete(h); continue; }
@@ -316,7 +318,8 @@
       h.g.gain.value = h.vol * Math.max(0, 1 - d / h.alcance) ** 1.5;
     }
   };
-  M.para = (h) => { if (h && !h.fim) { try { h.s.stop(); } catch (e) {} h.fim = true; } };
+  M.para = (h) => { if (h && !h.fim) { try { h.s.stop(); } catch (e) {} h.fim = true; } if (h) { M.tocando.delete(h); M.posicionais.delete(h); } };
+  M.paraTudo = () => { for (const h of [...M.tocando]) M.para(h); };
 
   M.rnd = (a, b) => a + Math.random() * (b - a);
   M.rndInt = (a, b) => Math.round(M.rnd(a, b)); // igual ao Mathf.RoundToInt(Random.Range(a,b)) do jogo

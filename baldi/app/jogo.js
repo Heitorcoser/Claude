@@ -858,14 +858,14 @@
   /* ---------- telas ---------- */
   function menu() {
     G = null; J.G = null;
-    for (const h of M.posicionais) M.para(h);
+    M.paraTudo(); // música, alarmes e vozes: senão tocam de novo por cima no próximo jogo
     document.body.classList.remove('vermelho');
     $('hud').hidden = true; $('toque').hidden = true; $('mat').hidden = true; $('corda').hidden = true; $('pausa').hidden = true; evento('');
     $('menu').hidden = false;
   }
   async function comeca(modo) {
-    $('menu').hidden = true; $('carregando').hidden = false;
-    M.audio().resume();
+    $('menu').hidden = true; $('telaDif').hidden = true; $('carregando').hidden = false;
+    M.audio().resume(); M.paraTudo();
     let girando = 0; const gira = setInterval(() => ($('cabeca').src = 'assets/Texture2D/MenuTextures/LoadingHead/HeadSpin' + String(girando++ % 48).padStart(4, '0') + '.png'), 40);
     try {
       if (!J.Ebase) await J.carregar();
@@ -882,13 +882,17 @@
   }
   J.comeca = comeca; J.menu = menu; J.pegaCaderno = pegaCaderno; J.mostraPorta = mostraPorta; J.dist = dist; J.ve = ve; J.spoop = spoop; J.sprite = sprite; J.troca = troca; J.Agente = Agente; J.ronda = ronda; J.dentro = dentro; J.abrePorta = abrePorta; J.gameOver = gameOver; J.vitoria = vitoria;
   $('titulo').onclick = () => { $('titulo').hidden = true; $('menu').hidden = false; M.audio().resume(); M.carregaSom('Characters/Baldi/BAL_MainMenu').then(() => M.som('Characters/Baldi/BAL_MainMenu')).catch(() => {}); };
-  $('jHistoria').onclick = () => comeca('historia');
-  $('jInfinito').onclick = () => comeca('infinito');
-  $('jBeta').onclick = () => comeca('beta');
+  // escolher o modo abre a tela de dificuldade; a escolhida fica guardada para a próxima vez
+  let modoEscolhido = 'historia';
+  const NOME_MODO = { historia: 'Modo História', infinito: 'Modo Infinito', beta: 'Beta Tester' };
+  function escolheDificuldade(modo) { modoEscolhido = modo; $('difModo').textContent = NOME_MODO[modo]; marcaDificuldade(); $('menu').hidden = true; $('telaDif').hidden = false; }
+  $('jHistoria').onclick = () => escolheDificuldade('historia');
+  $('jInfinito').onclick = () => escolheDificuldade('infinito');
+  $('jBeta').onclick = () => escolheDificuldade('beta');
+  $('difVolta').onclick = () => { $('telaDif').hidden = true; $('menu').hidden = false; };
   $('jComo').onclick = () => ($('como').hidden = false);
-  function marcaDificuldade() { document.querySelectorAll('#dificuldade button').forEach((b) => b.classList.toggle('sel', b.dataset.d == dificuldade)); }
-  document.querySelectorAll('#dificuldade button').forEach((b) => (b.onclick = () => { dificuldade = b.dataset.d; try { localStorage.setItem('baldiDificuldade', dificuldade); } catch (e) {} marcaDificuldade(); }));
-  marcaDificuldade();
+  function marcaDificuldade() { document.querySelectorAll('#difs button').forEach((b) => b.classList.toggle('sel', b.dataset.d == dificuldade)); }
+  document.querySelectorAll('#difs button').forEach((b) => (b.onclick = () => { dificuldade = b.dataset.d; try { localStorage.setItem('baldiDificuldade', dificuldade); } catch (e) {} comeca(modoEscolhido); }));
   $('fechaComo').onclick = () => ($('como').hidden = true);
   // toque na tela de fora do jogo também libera o som no celular
   addEventListener('pointerdown', () => M.audio().resume(), { once: true });

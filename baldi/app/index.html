@@ -25,9 +25,12 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .bt:hover,.bt:focus-visible,.bt:active{border-bottom-color:#000;outline:none}
 .bt.claro{color:#fff}
 .bt.claro:hover,.bt.claro:active{border-bottom-color:#fff}
-#dificuldade{color:#000;display:flex;gap:4px 16px;align-items:center;font:700 18px Comic,sans-serif;flex-wrap:wrap;justify-content:center}
-#dificuldade button{appearance:none;border:0;background:none;font:inherit;color:#888;padding:2px 2px;cursor:pointer;border-bottom:3px solid transparent}
-#dificuldade button.sel{color:#000;border-bottom-color:#000}
+#telaDif{background:#fff;color:#000;gap:8px}
+#difModo{font-size:18px;color:#555}
+#difTitulo{font-size:28px;font-weight:700}
+#difs .bt{flex-direction:column;gap:2px;font-size:24px}
+#difs .bt img{height:min(30vh,120px)}
+#difs .bt.sel{border-bottom-color:#000}
 #detencao{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-size:24px;font-weight:700;text-shadow:var(--sombra);text-align:center;color:#fff;white-space:pre-line}
 .aviso{font-size:11px;color:#555;text-align:center;max-width:560px}
 /* HUD */
@@ -135,8 +138,18 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
     <button class="bt" id="jBeta"><img src="assets/Texture2D/CharacterSprites/PlaceFace.png" alt="">Beta Tester</button>
     <button class="bt" id="jComo">Como jogar</button>
   </div>
-  <div id="dificuldade"><span>Dificuldade:</span><button data-d="facil">Fácil</button><button data-d="normal">Normal</button><button data-d="dificil">Difícil</button></div>
   <div class="aviso">Fã-jogo sem fins lucrativos, refeito na web a partir do projeto aberto do Baldi's Basics Classic. Baldi's Basics é de Basically Games (mystman12).</div>
+</div>
+
+<div class="tela" id="telaDif" hidden>
+  <div id="difModo"></div>
+  <div id="difTitulo">Escolha a dificuldade</div>
+  <div class="botoes" id="difs">
+    <button class="bt" data-d="facil"><img src="assets/Texture2D/YCTPTextures/Baldi/Baldi_Talk0000.png" alt="">Fácil</button>
+    <button class="bt" data-d="normal"><img src="assets/Texture2D/YCTPTextures/Baldi/Frown/Bald_Frown0020.png" alt="">Normal</button>
+    <button class="bt" data-d="dificil"><img src="assets/Texture2D/YCTPTextures/Baldi/Frown/Bald_Frown0071.png" alt="">Difícil</button>
+  </div>
+  <button class="bt" id="difVolta">Voltar</button>
 </div>
 
 <div class="tela" id="carregando" hidden><img src="assets/Texture2D/MenuTextures/LoadingHead/HeadSpin0000.png" id="cabeca" width="160" style="image-rendering:pixelated" alt=""><div id="carregaTxt">Carregando...</div></div>

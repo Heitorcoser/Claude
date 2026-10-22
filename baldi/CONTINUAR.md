@@ -39,7 +39,8 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - A câmera tem um desvio de 0,0001 rad no giro: alinhada exatamente às paredes, alguns renderizadores desenhavam as paredes cinza.
 - Materiais só com a frente (como no Unity). Malhas com escala negativa têm a ordem dos triângulos invertida em `M.monta`. Paredes novas (`beta.js`) usam `quadV` virado para dentro da área; parede entre duas áreas leva dois quads.
 - Navegação: `Nav.muro` marca passagens entre células cortadas por parede fina; o A* e o alisamento não atravessam paredes (`test/paredes.mjs`, `test/ronda.mjs`).
-- Dificuldade (`DIF` em `jogo.js`, guardada em localStorage): raiva e espera do Baldi, detenções (índices de 15/30/45/60/99 s, para a voz do Diretor bater), gasto de energia, tempo do Diretor para notar, intervalo do Robô.
+- Dificuldade: tela `#telaDif` depois de escolher o modo (`DIF` em `jogo.js`, guardada em localStorage): raiva e espera do Baldi, detenções (índices de 15/30/45/60/99 s, para a voz do Diretor bater), gasto de energia, tempo do Diretor para notar, intervalo do Robô.
+- Sons: `Motor.tocando` guarda tudo que toca; `menu()` e `comeca()` chamam `M.paraTudo()` (`test/menu.mjs`).
 - Empurrões (1st Prize, Gotta Sweep) movem o jogador em passos de 0,5 com colisão a cada passo (`test/dificuldade.mjs`).
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 
