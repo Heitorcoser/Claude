@@ -22,7 +22,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
-        web.addJavascriptInterface(new Ponte(this), "Android");
+        web.addJavascriptInterface(new Ponte(this, web), "Android");
         setContentView(web);
         telaCheia();
         try {

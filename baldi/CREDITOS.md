@@ -27,6 +27,13 @@ Sprites e vozes do **Dr. Reflex**, do **Cloudy Copter** e do **The Test**, baixa
 | beta/porao/parede.png | SaloonWall (Baldi's Basics Plus), parede do porão |
 | beta/porao/chao.png, lampada.png, DoorTextures/PoraoMysteryDoor_* | feitos para o porão a partir do Carpet e da MysteryDoor do jogo, imitando o Baldi's Basement (Classic Remastered) |
 
+| beta/plus/beans*.png, chiclete*.png, Ben_*.mp3 | Beans e o chiclete (Baldi's Basics Plus, wiki do Baldi's Basics) |
+| beta/plus/chalkles.png, quadro*.png, Chk_*.mp3 | Chalkles (Baldi's Basics Plus) |
+| beta/plus/pomp*.png, NoL_*.mp3 | Mrs. Pomp (Baldi's Basics Plus) |
+| beta/plus/johnny.png, loja_*.png, Jon_*.mp3 | Johnny e a loja (Baldi's Basics Plus) |
+| beta/plus/mais_*.png, YTPPickup_*.mp3 | símbolos de mais (You Thought Points, Baldi's Basics Plus) |
+| DoorTextures/SwingDoor/SwingDoor0Certo, 0Errado, 60Certo, 60Errado | porta vai-e-vem de uma direção (Baldi's Basics Plus) |
+
 ## Outro material (domínio público / CC0 / OFL)
 
 | Arquivo | Origem | Autor | Licença |

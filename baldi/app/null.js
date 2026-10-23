@@ -15,7 +15,7 @@
   const OBJETOS = ['Texture2D/SchoolHouse/Billboards/Placements/Banana.png', 'Texture2D/SchoolHouse/Billboards/Plant.png', 'Texture2D/SchoolHouse/Billboards/Placements/Globe.png'];
   const ACERTOS = 10;
 
-  J.podeNull = (G) => G.modo == 'beta' && J.betaFeat && J.betaFeat.mapa && J.E && J.E.gerado && !G.null;
+  J.podeNull = (G) => J.F && J.F.mapa && J.E && J.E.gerado && !G.null;
 
   // op.direto: a luta começa na hora (depois do 2º discurso), com o Null em op.pos
   J.chefaoNull = (G, op = {}) => {
@@ -150,6 +150,7 @@
       if (!N.ok(i, j)) continue;
       const x = N.x0 + (i + 0.5) * 2.5, z = N.z0 + (j + 0.5) * 2.5;
       if (noPorao(x) != noPorao(p.x) || Math.hypot(x - nul.x, z - nul.z) < 10 || B.objs.some((o) => Math.hypot(o.x - x, o.z - z) < 8)) continue;
+      if (J.lugarLivre && !J.lugarLivre(x, z, 1.6)) continue; // nada dentro de móvel ou de outro objeto
       if (!N.caminho(p.x, p.z, x, z).length) continue;
       const tex = OBJETOS[M.rndInt(0, OBJETOS.length - 1)], m = J.sprite(tex, 2, 2);
       m.position.set(x, 3, z);

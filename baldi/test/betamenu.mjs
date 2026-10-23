@@ -1,6 +1,6 @@
 // Tela de Beta Features: liga o mapa aleatório, desliga o Cloudy, entra no Difícil
 export default async function (p, out) {
-  await p.click('#bPausa'); await p.waitForTimeout(300); await p.click('#sair'); await p.waitForTimeout(300);
+  await p.evaluate(() => Jogo.pausa(true)); await p.waitForTimeout(300); await p.click('#sair'); await p.waitForTimeout(300);
   await p.click('#jBeta'); await p.waitForTimeout(400);
   await p.evaluate(() => { Jogo.betaFeat.mapa = false; Jogo.betaFeat.cloudy = true; });
   await p.click('.feat[data-f=mapa]'); await p.click('.feat[data-f=cloudy]'); await p.waitForTimeout(200);

@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const M = window.Motor, $ = (id) => document.getElementById(id);
-  const J = (window.Jogo = { ganchos: { monta: [], inicia: [], tique: [], caderno: [], menu: [] } });
+  const J = (window.Jogo = { ganchos: { monta: [], inicia: [], tique: [], caderno: [], fimConta: [], menu: [] } });
   const FIXO = 1 / 50; // o Unity roda a física (FixedUpdate) a 50 por segundo
   const ITEM = ['Nada', 'Barra Zesty de Energia', 'Trava Amarela de Porta', 'Chaves do Diretor', 'BSODA', 'Moeda de 25 centavos', 'Fita "Baldi Anti Hearing"', 'Despertador', 'WD-Sem Ranger', 'Tesoura sem ponta', 'Botas Grandes', 'Teletransportador Perigoso', 'Fita verde'];
   const ICONE = [null, 'EnergyFlavoredZestyBar', 'YellowDoorLock', 'Key', 'BSODA', 'Quarter', 'Tape', 'AlarmClockItem', 'wd_nosquee', 'SafetyScissors', 'BootsIcon', 'TeleporterIcon', '../../../beta/null/fita_verde'];
@@ -61,6 +61,7 @@
   function montaCena(modo) {
     E = JSON.parse(JSON.stringify(J.Ebase));
     J.E = E;
+    J.F = J.feats ? J.feats(modo) : null; // opções da partida (Modo História e Beta); null = jogo original
     J.ganchos.monta.forEach((f) => f(E, J, modo));
     cena = new THREE.Scene(); cena.background = new THREE.Color(0x000000);
     sprites.length = 0;
@@ -128,7 +129,12 @@
   }
   function mostraPorta(d) {
     const t = d.trava > 0 || (d.tipo == 'vaivem' && d.travada) ? d.tex.t || d.tex.f : d.aberta ? d.tex.a : d.tex.f;
-    d.malhas.forEach((q) => { if (q.mesh.material.map) { const mt = M.tex(t); if (q.mesh.material.map.image !== mt.image) { q.mesh.material.map = mt; q.mesh.material.needsUpdate = true; } } });
+    d.malhas.forEach((q) => {
+      // porta de uma direção: setas verdes do lado de onde se entra, sinal vermelho do outro
+      let tq = t;
+      if (d.umaDir && !(d.trava > 0 || d.travada)) { const e = q.mesh.matrix.elements, certo = e[8] * d.umaDir[0] + e[10] * d.umaDir[1] < 0; tq = 'Texture2D/SchoolHouse/DoorTextures/SwingDoor/SwingDoor' + (d.aberta ? '60' : '0') + (certo ? 'Certo' : 'Errado') + '.png'; }
+      if (q.mesh.material.map) { const mt = M.tex(tq); if (q.mesh.material.map.image !== mt.image) { q.mesh.material.map = mt; q.mesh.material.needsUpdate = true; } }
+    });
   }
   function abrePorta(d, quem) {
     if (quem == 'jogador' && J.portaHook && J.portaHook(d) === false) return; // ex.: portas bugadas da partida do Null
@@ -153,10 +159,13 @@
         const travada = !d.req || d.trava > 0;
         if (travada !== d.travada) { d.travada = travada; d.seg.ativo = travada; mostraPorta(d); trancaNav(d, travada); }
         if (!travada) {
-          const perto = Math.hypot(p.x - d.x, p.z - d.z) < 5 ? 'jogador' : Object.values(G.npcs).some((n) => n.ativo && Math.hypot(n.x - d.x, n.z - d.z) < 5) ? 'npc' : null;
+          // porta de uma direção (Beta): só abre para quem está do lado das setas verdes
+          const lado = (o) => !d.umaDir || (o.x - d.x) * d.umaDir[0] + (o.z - d.z) * d.umaDir[1] < 0;
+          const perto = Math.hypot(p.x - d.x, p.z - d.z) < 5 && lado(p) ? 'jogador' : Object.values(G.npcs).some((n) => n.ativo && Math.hypot(n.x - d.x, n.z - d.z) < 5 && lado(n)) ? 'npc' : null;
           if (perto) { if (!d.aberta) abrePorta(d, perto); else d.tempo = 2; }
         }
         if (d.aberta && (d.tempo -= dt) <= 0) { d.aberta = false; mostraPorta(d); }
+        if (d.umaDir) d.seg.ativo = d.travada || !d.aberta; // fechada, é parede (aberta, qualquer um passa)
       } else {
         if (d.trava > 0 && (d.trava -= dt) <= 0) { d.trava = 0; mostraPorta(d); }
         if (d.trava <= 0 && Object.values(G.npcs).some((n) => n.ativo && n.abrePortas !== false && Math.hypot(n.x - d.x, n.z - d.z) < 5)) abrePorta(d, 'npc');
@@ -196,6 +205,7 @@
         else {
           // esmagado pelo martelo do Dr. Reflex: parado 2 s, depois metade da velocidade
           if (this.esmagado > 0) { this.esmagado -= dt; v = this.esmagado > 28 ? 0 : v * 0.5; }
+          if (this.chiclete > 0) { this.chiclete -= dt; v *= 0.35; } // chiclete do Beans
           // vento do Cloudy Copter: mais rápido a favor, mais devagar contra
           if (this.cam.length && G.vento) { const [tx, tz] = this.cam[0], d = Math.hypot(tx - this.x, tz - this.z) || 1; v *= G.vento(this.x, this.z, (tx - this.x) / d, (tz - this.z) / d); }
           let passo = v * dt;
@@ -501,9 +511,30 @@
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('bTras').addEventListener(ev, tras(false));
   $('bPulo').addEventListener('pointerdown', () => pula());
   document.querySelectorAll('.slot').forEach((s) => s.addEventListener('pointerdown', (e) => { e.stopPropagation(); G.sel = +s.dataset.s; atualizaHud(); }));
+  // teclado e mouse (no PC, ou ligados no celular): os controles de toque somem; tocar na tela traz de volta
+  let usaTeclado = false;
+  function modoTeclado(on) { usaTeclado = on; if (G && !G.fim) $('toque').hidden = on; }
+  addEventListener('pointerdown', (e) => { if (e.pointerType == 'touch' && usaTeclado) modoTeclado(false); else if (e.pointerType == 'mouse' && !usaTeclado) modoTeclado(true); }, true);
+  // captura do mouse: no app Android a captura é nativa (Ponte); no navegador, Pointer Lock
+  const nativo = () => !!(window.Android && window.Android.capturaMouse);
+  const mouseCapturado = () => document.pointerLockElement === canvas || (nativo() && window.Android.mouseCapturado());
+  function capturaMouse() { if (nativo()) window.Android.capturaMouse(true); else canvas.requestPointerLock?.(); }
+  function soltaMouse() { if (document.pointerLockElement) document.exitPointerLock(); if (nativo()) window.Android.capturaMouse(false); }
+  J.soltaMouse = soltaMouse;
+  // movimento e botões vindos da captura nativa do Android (dx, dy, botão: 1 esquerdo, 2 direito; roda)
+  J.mouseCap = (dx, dy, b, roda) => {
+    if (!usaTeclado) modoTeclado(true);
+    if (!G || G.fim || G.pausado) return;
+    if (G.aprendendo) { soltaMouse(); return; }
+    ent.olha += dx * 0.003;
+    if (b == 1) interage(); else if (b == 2) usaItem();
+    if (roda) { G.sel = (G.sel + (roda > 0 ? 1 : 2)) % 3; atualizaHud(); }
+  };
   addEventListener('keydown', (e) => {
     ent.teclas[e.code] = true;
     if (!G || G.fim) return;
+    if (!usaTeclado && !G.aprendendo && /^(Key[WASDEF]|Arrow|Shift|Space)/.test(e.code)) modoTeclado(true);
+    if (e.code == 'KeyF') interage();
     if (e.code == 'Escape') pausa(!G.pausado);
     if (/^Digit[123]$/.test(e.code)) { G.sel = +e.code[5] - 1; atualizaHud(); }
     if (e.code == 'KeyE') usaItem();
@@ -511,7 +542,7 @@
     if (G.aprendendo) teclaConta(e.key);
   });
   addEventListener('keyup', (e) => (ent.teclas[e.code] = false));
-  canvas.addEventListener('click', () => { if (G && !G.fim && !G.pausado && !G.aprendendo) { if (document.pointerLockElement !== canvas && matchMedia('(pointer:fine)').matches) canvas.requestPointerLock?.(); else interage(); } });
+  canvas.addEventListener('click', () => { if (G && !G.fim && !G.pausado && !G.aprendendo) { if (!mouseCapturado() && (usaTeclado || matchMedia('(pointer:fine)').matches)) capturaMouse(); else interage(); } });
   canvas.addEventListener('contextmenu', (e) => { e.preventDefault(); usaItem(); });
   addEventListener('mousemove', (e) => { if (document.pointerLockElement === canvas) ent.olha += e.movementX * 0.003; });
   addEventListener('wheel', (e) => { if (G) { G.sel = (G.sel + (e.deltaY > 0 ? 1 : 2)) % 3; atualizaHud(); } });
@@ -543,8 +574,9 @@
   function interage(sx, sy) {
     if (!G || G.aprendendo || G.pausado || G.fim) return;
     if (J.toqueMundo && J.toqueMundo(sx, sy, camera)) return; // ex.: teste do Dr. Reflex
-    const a = alvo(['caderno', 'item', 'porta'], 0.35, sx, sy);
+    const a = alvo(['caderno', 'item', 'porta', 'loja'], 0.35, sx, sy);
     if (!a) return;
+    if (a.tipo == 'loja') return J.compra && J.compra(a.o); // prateleira da loja do Johnny
     if (a.tipo == 'caderno') pegaCaderno(a.o);
     else if (a.tipo == 'item') { a.o.ativo = false; a.o.m.visible = false; pegaItem(a.o.id); }
     else if (a.tipo == 'porta' && a.o.tipo != 'vaivem' && a.o.trava <= 0) abrePorta(a.o, 'jogador');
@@ -572,7 +604,8 @@
     else if (id == 7) { despertador(); gasta(); }
     else if (id == 8) { const a = alvo(['porta'], 0.4); if (a && a.o.tipo != 'vaivem') { a.o.silencio = 4; M.som('Sounds/Items/can_spray'); gasta(); } }
     else if (id == 9) {
-      if (p.corda) { acabaCorda(true); gasta(); } // tesoura corta a corda: ela fica triste e espera 20 s
+      if (p.chiclete > 0) { p.chiclete = 0; gasta(); aviso('Você cortou o chiclete!', 1.5); }
+      else if (p.corda) { acabaCorda(true); gasta(); } // tesoura corta a corda: ela fica triste e espera 20 s
       else { const a = alvo(['prize'], 0.3); if (a) { G.npcs.prize.louco = 15; gasta(); } }
     } else if (id == 10) { p.botas = 15; gasta(); aviso('Botas grandes: nada te empurra por 15s', 2); }
     else if (id == 11) { teleporte(); gasta(); }
@@ -610,6 +643,7 @@
   }
   const conta = { prob: 0, erros: 0, fila: [], tocando: null, fimT: 0, impossivel: false, sol: 0, txt: '' };
   function abreConta() {
+    soltaMouse(); // o mouse volta a aparecer para o teclado numérico
     G.aprendendo = true; conta.prob = 0; conta.erros = 0; conta.fila = []; conta.fimT = 0;
     $('mat').hidden = false; [0, 1, 2].forEach((i) => ($('r' + i).style.visibility = 'hidden'));
     $('baldiCara').style.visibility = G.spoop ? 'hidden' : '';
@@ -693,6 +727,7 @@
   const FROWN = 'Bald_Frown0000.png', firstFrown = () => FROWN;
   function fechaConta() {
     G.aprendendo = false; $('mat').hidden = true;
+    J.ganchos.fimConta.forEach((f) => f(G, 3 - conta.erros)); // acertos deste caderno (pontos do Beta)
     if (G.p.est < 100) G.p.est = 100;
     if (!G.spoop) { M.para(G.sons.aprende); G.sons.musica = M.som('Music/mus_School', { loop: true, vol: 0.6 }); }
     if (G.cadernos == 1 && !G.spoop) {
@@ -726,6 +761,7 @@
     G.p.corda = false; $('corda').hidden = true; $('bPulo').hidden = true;
     const pt = G.npcs.playtime; pt.jogaCool = ESPERA_PLAYTIME; pt.viu = false; pt.vagar();
     if (fugiu) { pt.triste = ESPERA_PLAYTIME; pt.voz = 0; pt.diz('Sad', 10); }
+    else if (J.ganhaPontos) J.ganhaPontos(25, 'pulando corda');
   }
   function pula() { const p = G.p; if (p.corda && p.pulo <= 0) p.vy = 5; }
   function tiqueCorda(dt) {
@@ -762,6 +798,7 @@
     let vel = corre ? 16 : 10;
     // esmagado (Dr. Reflex): parado 2 s e depois devagar
     if (p.esmagado > 0) { p.esmagado -= dt; vel = p.esmagado > 28 ? 0 : vel * 0.55; }
+    if (p.chiclete > 0) { p.chiclete -= dt; vel *= 0.3; } // chiclete do Beans: 10 s bem devagar (a tesoura corta)
     const fx = -Math.sin(p.yaw), fz = -Math.cos(p.yaw), rx = Math.cos(p.yaw), rz = -Math.sin(p.yaw);
     let mx = (fx * f + rx * s) * vel * dt, mz = (fz * f + rz * s) * vel * dt;
     if (G.empurraJogador) { const e = G.empurraJogador(p.x, p.z); mx += e[0] * dt; mz += e[1] * dt; } // vento
@@ -826,6 +863,7 @@
     fim('assets/Texture2D/Screens/win.png', G.falhou >= G.totalCadernos ? 'Você errou tudo... e mesmo assim escapou!' : 'Você escapou!');
   }
   function fim(img, txt) {
+    soltaMouse();
     document.body.classList.remove('vermelho');
     const f = $('fim'); f.style.backgroundImage = `url(${img})`; f.hidden = false;
     $('fimTxt').textContent = txt;
@@ -837,7 +875,7 @@
     if (!G || G.fim || G.aprendendo) return;
     G.pausado = on; $('pausa').hidden = !on;
     clearInterval(G.cabecaT); if (on) { let k = 0; G.cabecaT = setInterval(() => ($('cabecaPausa').src = 'assets/Texture2D/HudTextures/PauseHead/Nod' + String(k++ % 48).padStart(4, '0') + '.png'), 40); }
-    if (on && document.pointerLockElement) document.exitPointerLock();
+    if (on) soltaMouse();
     M.audio()[on ? 'suspend' : 'resume']();
   }
   $('continua').onclick = () => pausa(false);
@@ -910,6 +948,7 @@
 
   /* ---------- telas ---------- */
   function menu() {
+    soltaMouse();
     J.ganchos.menu.forEach((f) => f()); // cada módulo desliga o que deixou ligado (eventos, luta do Null...)
     G = null; J.G = null;
     M.paraTudo(); // música, alarmes e vozes: senão tocam de novo por cima no próximo jogo
@@ -938,23 +977,23 @@
       novoJogo(modo);
     } finally { clearInterval(gira); $('carregando').hidden = true; }
     ajusta();
-    $('hud').hidden = false; $('toque').hidden = matchMedia('(pointer:fine)').matches && !('ontouchstart' in window) ? true : false;
+    $('hud').hidden = false; $('toque').hidden = usaTeclado || (matchMedia('(pointer:fine)').matches && !('ontouchstart' in window));
     if (!$('toque').hidden) document.documentElement.requestFullscreen?.().catch(() => {});
     G.sons.musica = M.som('Music/mus_School', { loop: true, vol: 0.6 });
     M.som('Characters/Baldi/BaldiTutor/BAL_Hi');
   }
   J.contaSol = () => conta.sol; // usado pelos testes
-  J.comeca = comeca; J.fim = fim; J.menu = menu; J.pegaCaderno = pegaCaderno; J.mostraPorta = mostraPorta; J.dist = dist; J.ve = ve; J.spoop = spoop; J.sprite = sprite; J.troca = troca; J.Agente = Agente; J.ronda = ronda; J.dentro = dentro; J.abrePorta = abrePorta; J.gameOver = gameOver; J.vitoria = vitoria;
+  J.comeca = comeca; J.fim = fim; J.menu = menu; J.pegaCaderno = pegaCaderno; J.mostraPorta = mostraPorta; J.dist = dist; J.ve = ve; J.spoop = spoop; J.sprite = sprite; J.troca = troca; J.Agente = Agente; J.ronda = ronda; J.dentro = dentro; J.abrePorta = abrePorta; J.gameOver = gameOver; J.vitoria = vitoria; J.trancaNav = trancaNav; J.alvo = alvo; J.usaItem = usaItem; J.pegaItem = pegaItem; J.ITEM = ITEM; J.ICONE = ICONE; J.interage = interage; J.pausa = pausa;
   $('titulo').onclick = () => { $('titulo').hidden = true; $('menu').hidden = false; M.audio().resume(); M.carregaSom('Characters/Baldi/BAL_MainMenu').then(() => M.som('Characters/Baldi/BAL_MainMenu')).catch(() => {}); };
   // escolher o modo abre a tela de dificuldade; a escolhida fica guardada para a próxima vez
   let modoEscolhido = 'historia';
   const NOME_MODO = { historia: 'Modo História', infinito: 'Modo Infinito', beta: 'Beta' };
   function escolheDificuldade(modo) { modoEscolhido = modo; $('difModo').textContent = NOME_MODO[modo]; marcaDificuldade(); $('menu').hidden = true; $('telaDif').hidden = false; }
-  $('jHistoria').onclick = () => escolheDificuldade('historia');
+  $('jHistoria').onclick = () => (J.abreOpcoes ? J.abreOpcoes('historia') : escolheDificuldade('historia'));
   $('jInfinito').onclick = () => escolheDificuldade('infinito');
-  $('jBeta').onclick = () => (J.abreBeta ? J.abreBeta() : escolheDificuldade('beta'));
+  $('jBeta').onclick = () => (J.abreOpcoes ? J.abreOpcoes('beta') : escolheDificuldade('beta'));
   J.escolheDificuldade = escolheDificuldade;
-  $('difVolta').onclick = () => { $('telaDif').hidden = true; if (modoEscolhido == 'beta' && J.abreBeta) J.abreBeta(); else $('menu').hidden = false; };
+  $('difVolta').onclick = () => { $('telaDif').hidden = true; if (modoEscolhido != 'infinito' && J.abreOpcoes) J.abreOpcoes(modoEscolhido); else $('menu').hidden = false; };
   $('jComo').onclick = () => ($('como').hidden = false);
   function marcaDificuldade() { document.querySelectorAll('#difs button').forEach((b) => b.classList.toggle('sel', b.dataset.d == dificuldade)); }
   document.querySelectorAll('#difs button').forEach((b) => (b.onclick = () => { dificuldade = b.dataset.d; try { localStorage.setItem('baldiDificuldade', dificuldade); } catch (e) {} comeca(modoEscolhido); }));

@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.heitor.baldibeta" android:versionCode="23" android:versionName="1.13">
+    package="com.heitor.baldibeta" android:versionCode="24" android:versionName="1.14">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- só para aparecer o botão de notificações nas configurações; o jogo nunca pede -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- atualização: instalar o APK novo baixado pelo próprio app -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application android:label="Baldi\'s Modded" android:icon="@mipmap/ic_launcher"
         android:allowBackup="true" android:hardwareAccelerated="true" android:usesCleartextTraffic="true">
         <activity android:name=".MainActivity" android:exported="true"

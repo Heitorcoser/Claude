@@ -28,10 +28,11 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #telaBeta{background:#fff;color:#000;gap:6px;overflow:auto}
 #betaTitulo{font-size:28px;font-weight:700}
 #betaSub{font-size:16px;color:#555}
-#feats{display:grid;grid-template-columns:repeat(3,minmax(0,170px));gap:6px 10px}
+#feats{display:grid;grid-template-columns:repeat(4,minmax(0,160px));gap:4px 10px}
+@media (max-width:760px){#feats{grid-template-columns:repeat(3,minmax(0,160px))}}
 @media (max-width:520px){#feats{grid-template-columns:repeat(2,minmax(0,170px))}}
 .feat{appearance:none;border:0;background:none;font:700 17px Comic,sans-serif;color:#000;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;position:relative;border-bottom:3px solid transparent}
-.feat img{height:min(16vh,74px);image-rendering:pixelated;object-fit:contain}
+.feat img{height:min(12vh,64px);image-rendering:pixelated;object-fit:contain}
 .feat i{position:absolute;right:18px;top:2px;width:26px;height:26px;background:url(assets/Texture2D/YCTPTextures/X.png) center/contain no-repeat}
 .feat.on i{background-image:url(assets/Texture2D/YCTPTextures/Check.png)}
 .feat:not(.on) img{opacity:.45}
@@ -128,15 +129,27 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
 .caixa h2{margin:0 0 8px}
 .caixa p{margin:0 0 10px}
 #pausa{background:rgba(0,0,0,.75)}
+#atualiza{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));max-width:300px;background:#fffbe0;border:3px solid #2a2;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;font-size:15px;color:#000;text-align:center}
+#atualiza .bt{font-size:18px;background:#2a2;color:#fff;border-radius:8px;padding:4px 10px;align-self:center}
+#versaoTxt{position:absolute;left:max(8px,env(safe-area-inset-left));bottom:max(6px,env(safe-area-inset-bottom));font-size:13px;color:#666}
+#pontos{position:absolute;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);font:700 22px Comic,sans-serif;color:#fff;text-shadow:var(--sombra);display:flex;align-items:center;gap:6px}
+#pontos img{width:28px;height:28px}
+#pompT{position:absolute;left:50%;top:max(48px,calc(env(safe-area-inset-top) + 48px));transform:translateX(-50%);font:700 20px Comic,sans-serif;color:#fff;text-shadow:var(--sombra);display:flex;align-items:center;gap:6px;background:rgba(160,0,60,.55);padding:2px 10px;border-radius:10px}
+#pompT img{width:34px;height:34px}
+#chicleteTela{position:fixed;inset:0;z-index:3;pointer-events:none;background:url(assets/beta/plus/chiclete_tela.png) center/cover no-repeat;opacity:.8}
+#lojaPainel{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:rgba(255,255,255,.92);color:#000;font:700 18px Comic,sans-serif;padding:6px 14px;border-radius:10px;text-align:center;max-width:80vw;pointer-events:none}
+
 #pausa img{width:150px;image-rendering:pixelated}
 #pausa h2{margin:0;font-size:30px}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="chicleteTela" hidden></div>
 
 <div id="hud" hidden>
   <div id="cadernos">0/7 Cadernos</div>
+  <div id="pontos" hidden></div><div id="pompT" hidden></div>
   <div id="evento" hidden></div>
   <div id="detencao" hidden></div><div id="aviso" hidden></div>
   <div id="mira"></div>
@@ -178,6 +191,11 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
     <button class="feat" data-f="eventos"><img src="assets/Texture2D/SchoolHouse/PickUps/AlarmClockItem.png" alt=""><span>Eventos</span><i></i></button>
     <button class="feat" data-f="ala"><img src="assets/Texture2D/SchoolHouse/Locker/Locker.png" alt=""><span>Ala nova</span><i></i></button>
     <button class="feat" data-f="porao"><img src="assets/beta/null/escada.png" alt=""><span>Porão</span><i></i></button>
+    <button class="feat" data-f="loja"><img src="assets/beta/plus/johnny.png" alt=""><span>Loja e pontos</span><i></i></button>
+    <button class="feat" data-f="umaDir"><img src="assets/Texture2D/SchoolHouse/DoorTextures/SwingDoor/SwingDoor0Certo.png" alt=""><span>Porta de 1 direção</span><i></i></button>
+    <button class="feat" data-f="beans"><img src="assets/beta/plus/beans00.png" alt=""><span>Beans</span><i></i></button>
+    <button class="feat" data-f="chalkles"><img src="assets/beta/plus/chalkles.png" alt="" style="background:#2b2b2b;border-radius:8px"><span>Chalkles</span><i></i></button>
+    <button class="feat" data-f="pomp"><img src="assets/beta/plus/pomp.png" alt=""><span>Mrs. Pomp</span><i></i></button>
   </div>
   <div class="botoes"><button class="bt" id="betaVolta">Voltar</button><button class="bt" id="betaSegue">Continuar</button></div>
 </div>
@@ -199,9 +217,10 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
   <h2>Como jogar</h2>
   <p>Ache os <b>7 cadernos</b> da escola e resolva as contas do Baldi. Errou? Ele fica bravo e vem te pegar, cada vez mais rápido. Com todos os cadernos, fuja por uma das saídas.</p>
   <p><b>Celular:</b> bolinha da esquerda anda, arraste a tela para olhar, a mão pega e abre o que está na mira, <b>Usar</b> usa o item escolhido (toque no item lá em cima para escolher), <b>Correr</b> gasta energia.</p>
-  <p><b>Computador:</b> WASD anda, mouse olha, clique pega, botão direito ou E usa o item, Shift corre, 1/2/3 escolhe item.</p>
+  <p><b>Teclado e mouse</b> (no computador ou ligados no celular): WASD anda, mouse olha (clique na tela para prender o mouse), clique ou F pega, botão direito ou E usa o item, Shift corre, Espaço olha para trás, 1/2/3 ou a rodinha escolhe o item, Esc pausa. Os botões de toque somem sozinhos; toque na tela para eles voltarem.</p>
   <p><b>Cuidado:</b> o Diretor não deixa correr, beber no corredor nem entrar na sala dos professores. A Playtime quer pular corda. O Gotta Sweep varre tudo. O Bully cobra pedágio.</p>
-  <p><b>Beta:</b> o mesmo jogo, com recursos em teste que você liga e desliga: mapa aleatório, Dr. Reflex (toque rápido na mão com o círculo), Cloudy Copter (vento nos corredores), The Test (não fique olhando para ele), eventos e a ala nova.</p>
+  <p><b>Modo História:</b> o jogo original, ou ligue as novidades que já saíram do Beta: mapa aleatório, Dr. Reflex (toque rápido na mão com o círculo), Cloudy Copter (vento nos corredores), The Test (não fique olhando para ele), eventos, a ala nova e o porão.</p>
+  <p><b>Beta:</b> tudo isso e o que está em teste: <b>pontos</b> (caderno com 2 ou mais acertos, símbolos de mais, Dr. Reflex, Playtime e Mrs. Pomp) para gastar na <b>loja do Johnny</b> (porta numa parede de corredor), <b>porta amarela de uma direção</b> (setas verdes abrem, sinal vermelho não), <b>Beans</b> (o chiclete gruda: a tesoura corta), <b>Chalkles</b> (saia da sala antes de 15 s) e <b>Mrs. Pomp</b> (chegue na aula dela a tempo).</p>
   <button class="bt" id="fechaComo">Voltar</button>
 </div></div>
 
@@ -234,5 +253,7 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
 <script src="mapa.js"></script>
 <script src="null.js"></script>
 <script src="porao.js"></script>
+<script src="plus.js"></script>
+<script src="atualiza.js"></script>
 </body>
 </html>

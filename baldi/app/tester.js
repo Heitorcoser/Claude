@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const J = window.Jogo, $ = (id) => document.getElementById(id);
+  J.ehTester = true; // a atualização baixa o APK de tester
 
   const css = document.createElement('style');
   css.textContent = '#telaTeste{background:#111;color:#0f0;gap:8px;overflow:auto;font-family:monospace}' +

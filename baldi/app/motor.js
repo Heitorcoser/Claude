@@ -283,6 +283,8 @@
         const [di, dj] = D[nd], ni = i + di, nj = j + dj;
         if (!this.ok(ni, nj) || !this.passa(i, j, di, dj)) continue;
         const nk = nj * W + ni, perto = this.meio[nk] || 1;
+        // porta de uma direção: não atravessa na contramão
+        if (this.umaDir) { const u = this.umaDir.get(nk) || this.umaDir.get(k); if (u && di * u[0] + dj * u[1] < 0) continue; }
         // beirada custa mais (até 2 células da parede); virar custa 3
         const c = g[st] + 1 + (perto < 3 ? (3 - perto) * 0.8 : 0) + (nd !== dir && k !== ini ? 3 : 0);
         const ns = nk * 4 + nd;

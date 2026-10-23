@@ -7,6 +7,7 @@ const srv = createServer((q, r) => { try { const f = join(app, decodeURIComponen
 const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required'] });
 const ctx = await b.newContext({ ...devices['Pixel 7'], viewport: { width: 915, height: 412 }, isMobile: true, hasTouch: true });
 const p = await ctx.newPage(); const errs = []; p.on('response', (r) => r.status() >= 400 && errs.push('404 ' + r.url())); p.on('pageerror', (e) => errs.push((e.stack || e.message).split('\n').slice(0, 3).join(' <- '))); p.on('console', (m) => m.type() == 'error' && errs.push(m.text()));
+await p.route('**/versao.json*', (r) => r.fulfill({ contentType: 'application/json', body: '{"versao":"0"}' })); // sem internet nos testes
 await p.goto('http://localhost:8790/'); await p.waitForTimeout(500); await p.click('#titulo'); await p.waitForTimeout(300);
 await p.screenshot({ path: out + '/b_menu.png' });
 if (process.env.FEAT) await p.evaluate((f) => (Jogo.betaFeat = JSON.parse(f)), process.env.FEAT);

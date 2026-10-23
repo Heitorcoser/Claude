@@ -42,7 +42,7 @@
     const E = J.E;
     G.porao = E.porao ? { cool: 1, longe: true, fog: false } : null;
     // partida especial do 2º discurso
-    if (G.modo == 'beta' && J.betaFeat && J.betaFeat.mapa && (J.modoNull || J.testeNull == 'portas') && J.testeNull != 'boss') comecaEspecial(G);
+    if (G.modo == 'beta' && J.F && J.F.mapa && (J.modoNull || J.testeNull == 'portas') && J.testeNull != 'boss') comecaEspecial(G);
     // atalhos do APK de tester
     if (J.testeNull) setTimeout(() => testeAtalho(G), 300);
   });

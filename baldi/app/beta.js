@@ -7,7 +7,6 @@
   const J = window.Jogo, M = window.Motor, $ = (id) => document.getElementById(id);
   J.SONS_EXTRA = ['alarme', 'apagao'].map((n) => 'beta/sons/' + n).concat(
     ['DrR_Normal_TakeMyTest', 'DrR_Think_Intro', 'DrR_Fast', 'DrR_Faster', 'DrR_TooSlow', 'DrR_HitCircle', 'DrR_Wrong', 'DrR_TryAgain', 'DrR_GoodJob', 'DrR_FirstTry', 'DrR_AllDone', 'DrR_Angry_HeyGetBack', 'DrR_Angry_Random_0', 'DrR_Angry_Random_1', 'DrR_Angry_Random_2', 'DrR_Hammer', 'Boink', 'Cmlo_Blowing', 'LAt_Sighted', 'LAt_Loop', 'LAt_Buildup', 'Explosion'].map((n) => 'beta/sons2/' + n));
-  const beta = () => J.G && J.G.modo == 'beta';
 
   /* ---------- Ala Beta ---------- */
   // Cada letra é um quadrado de 10x10 (o tamanho dos quadrados da escola original).
@@ -221,19 +220,43 @@
     E.totalCadernos = 10;
     E.clinica = [X0 + 175, Z0 - 50]; // o laboratório da ala é a clínica do Dr. Reflex
   }
-  J.ganchos.monta.push((E, _J, modo) => { const f = J.betaFeat || {}; if (modo == 'beta' && !f.mapa && f.ala !== false) constroiAla(E); });
+  J.ganchos.monta.push((E) => { const f = J.F; if (f && !f.mapa && f.ala) constroiAla(E); });
 
-  /* ---------- tela de Beta Features ---------- */
-  // padrão: tudo ligado menos o mapa aleatório; a escolha fica guardada no aparelho
-  J.betaFeat = { mapa: false, reflex: true, cloudy: true, test: true, eventos: true, ala: true, porao: false };
+  /* ---------- opções da partida: Modo História (o que já saiu do Beta) e Beta Features (o que está em teste) ---------- */
+  // História: tudo desligado = o jogo original. Beta: o que está em teste vem ligado. A escolha fica guardada no aparelho.
+  J.histFeat = { mapa: false, reflex: false, cloudy: false, test: false, eventos: false, ala: false, porao: false };
+  J.betaFeat = { mapa: false, reflex: true, cloudy: true, test: true, eventos: true, ala: true, porao: false, loja: true, umaDir: true, beans: true, chalkles: true, pomp: true };
+  const SO_BETA = ['loja', 'umaDir', 'beans', 'chalkles', 'pomp'];
+  try { Object.assign(J.histFeat, JSON.parse(localStorage.getItem('baldiHist') || '{}')); } catch (e) {}
   try { Object.assign(J.betaFeat, JSON.parse(localStorage.getItem('baldiBeta') || '{}')); } catch (e) {}
+  for (const k of SO_BETA) delete J.histFeat[k];
+  J.feats = (modo) => (modo == 'beta' ? J.betaFeat : modo == 'historia' ? J.histFeat : null);
+  let modoOpc = 'beta';
+  const atual = () => J.feats(modoOpc);
   const marca = () => {
-    document.querySelectorAll('.feat').forEach((b) => { b.classList.toggle('on', !!J.betaFeat[b.dataset.f]); b.classList.toggle('off', (b.dataset.f == 'ala' && J.betaFeat.mapa) || (b.dataset.f == 'porao' && !J.betaFeat.mapa)); }); // o porão só existe no mapa aleatório
+    const F = atual();
+    document.querySelectorAll('.feat').forEach((b) => {
+      const k = b.dataset.f;
+      b.hidden = modoOpc != 'beta' && SO_BETA.includes(k);
+      b.classList.toggle('on', !!F[k]);
+      b.classList.toggle('off', (k == 'ala' && F.mapa) || (k == 'porao' && !F.mapa)); // o porão só existe no mapa aleatório
+    });
   };
-  document.querySelectorAll('.feat').forEach((b) => (b.onclick = () => { if (b.classList.contains('off')) return; J.betaFeat[b.dataset.f] = !J.betaFeat[b.dataset.f]; try { localStorage.setItem('baldiBeta', JSON.stringify(J.betaFeat)); } catch (e) {} marca(); }));
-  J.abreBeta = () => { marca(); $('menu').hidden = true; $('telaBeta').hidden = false; };
+  document.querySelectorAll('.feat').forEach((b) => (b.onclick = () => {
+    if (b.classList.contains('off')) return;
+    const F = atual(); F[b.dataset.f] = !F[b.dataset.f];
+    try { localStorage.setItem(modoOpc == 'beta' ? 'baldiBeta' : 'baldiHist', JSON.stringify(F)); } catch (e) {}
+    marca();
+  }));
+  J.abreOpcoes = (modo) => {
+    modoOpc = modo;
+    $('betaTitulo').textContent = modo == 'beta' ? 'Beta Features' : 'Modo História';
+    $('betaSub').textContent = modo == 'beta' ? 'Escolha o que testar nesta partida' : 'Jogue o original ou ligue as novidades que já saíram do Beta';
+    marca(); $('menu').hidden = true; $('telaBeta').hidden = false;
+  };
+  J.abreBeta = () => J.abreOpcoes('beta');
   $('betaVolta').onclick = () => { $('telaBeta').hidden = true; $('menu').hidden = false; };
-  $('betaSegue').onclick = () => { $('telaBeta').hidden = true; J.escolheDificuldade('beta'); };
+  $('betaSegue').onclick = () => { $('telaBeta').hidden = true; J.escolheDificuldade(modoOpc); };
 
   /* ---------- personagens novos (vindos do Baldi's Basics Plus) ---------- */
   const IMG = (n) => 'beta/img2/' + n + '.png', SOM = (n) => 'beta/sons2/' + n;
@@ -254,8 +277,9 @@
     [...Array(6).keys()].flatMap((k) => [quadro2('maos_dir', k), quadro2('maos_esq', k)]), [...Array(13).keys()].map((k) => quadro2('explosao', k)));
 
   J.ganchos.inicia.push((G) => {
-    if (G.modo != 'beta') return;
-    const N = G.npcs, F = J.betaFeat || {};
+    const F = J.F;
+    if (!F) return;
+    const N = G.npcs;
     G.escala = 1;
 
     /* Dr. Reflex (como no Baldi's Basics Plus):
@@ -263,7 +287,7 @@
        - quando te vê, corre até você e começa o teste (a câmera vira para ele; você pode sair andando quando quiser);
        - ele abre as mãos com um círculo e um X: toque na mão com o círculo, nele mesmo, antes do tempo acabar;
        - se você sair (andando ou puxado por alguém), ele fica bravo, vai até a clínica buscar o martelo e volta para te esmagar. */
-    if (F.reflex !== false) {
+    if (F.reflex) {
       const casa = J.E.clinica || J.ronda(true);
       N.reflex = Object.assign(J.Agente('Dr. Reflex', casa[0], casa[1], 9), {
         spr: npcSprite(IMG('reflex'), 3.6), oy: 4.25, estado: 'anda', dir: 0, pausa: 0, cool: 15, fala: null, t: 0, casa, // oy: pés no chão (a imagem tem margem embaixo)
@@ -334,7 +358,7 @@
 
     /* Cloudy Copter: flutua pelos corredores e de vez em quando para e sopra vento por 10 a 30 s
        ao longo do corredor. O vento empurra você e muda a velocidade de quem anda nele. */
-    if (F.cloudy !== false) {
+    if (F.cloudy) {
       const c0 = corredor();
       N.cloudy = Object.assign(J.Agente('Cloudy Copter', c0[0], c0[1], 8), {
         spr: npcSprite(IMG('cloudy'), 2.6), oy: 6, sopra: 0, prox: M.rnd(8, 15), dirV: [1, 0], alcance: 0, som: null, t: 0, solido: 0,
@@ -388,7 +412,7 @@
     /* The Test: aparece num corredor. Olhar para ele deixa o tempo mais lento e as luzes piscam;
        quando você olha para outro lado ele some e aparece em outro corredor.
        Olhar demais faz ele explodir, e aí tudo fica mais rápido por um minuto. */
-    if (F.test !== false) {
+    if (F.test) {
       const t0 = corredor();
       N.test = Object.assign(J.Agente('The Test', t0[0], t0[1], 0), {
         spr: npcSprite(IMG('test'), 2.5), oy: 4.85, olhado: 0, visto: false, som: null, morto: false, rapido: 0, explosao: null, solido: 0,
@@ -475,7 +499,7 @@
     },
     passa() {
       const dr = this.dr;
-      dr.diz(this.erros ? 'GoodJob' : 'FirstTry', true); M.som(SOM('DrR_HitCircle'));
+      dr.diz(this.erros ? 'GoodJob' : 'FirstTry', true); M.som(SOM('DrR_HitCircle')); if (J.ganhaPontos) J.ganhaPontos(Math.max(5, 25 - 5 * this.erros), 'no teste do Dr. Reflex');
       J.aviso(this.erros ? 'Passou no teste!' : 'Passou de primeira!', 2);
       this.fecha(); dr.calmo(45);
     },
@@ -483,7 +507,7 @@
     fecha() { this.fase = ''; },
   };
   J.toqueMundo = (sx, sy, camera) => teste.toque(sx, sy, camera);
-  J.ganchos.tique.push((G, dt) => { if (G.modo == 'beta') teste.tique(dt); });
+  J.ganchos.tique.push((G, dt) => { if (J.F) teste.tique(dt); });
   J.testeReflexo = teste;
 
   /* ---------- eventos ---------- */
@@ -544,7 +568,7 @@
     J.aviso('Caderno dourado: ganhou um item!', 2);
   };
   J.ganchos.tique.push((G, dt) => {
-    if (G.modo != 'beta' || !G.spoop || G.null || (J.betaFeat || {}).eventos === false) return;
+    if (!J.F || !J.F.eventos || !G.spoop || G.null) return;
     const ev = G.ev, mostra = () => J.evento(ev.atual ? `${EVENTOS[ev.atual].nome}  ${Math.ceil(ev.fim)}s` + (EVENTOS[ev.atual].sub ? `\n${EVENTOS[ev.atual].sub}` : '') : '');
     if (ev.atual) {
       const e = EVENTOS[ev.atual];

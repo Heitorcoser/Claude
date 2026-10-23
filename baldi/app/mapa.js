@@ -186,11 +186,11 @@
     const cadernos = aulasZona.slice(0, 2).concat(aulasFora.slice(0, nCad - 2));
     // Só tem porta onde vale a pena entrar: salas com caderno, diretoria, professores, clínica do Dr. Reflex
     // e o armário do Gotta Sweep. Cantina e biblioteca ficam abertas (sem porta). As outras salas viram parede.
-    const F = J.betaFeat || {};
+    const F = J.F || {};
     const sweepSala = lista.find((s) => s.tipo == 'deposito' && !s.porta.vizinha);
     for (const s of lista) {
       if (s.tipo == 'cantina' || s.tipo == 'biblioteca') s.aberta = true;
-      const fica = cadernos.includes(s) || s.aberta || s === sweepSala || s.tipo == 'diretoria' || s.tipo == 'professores' || (s.tipo == 'clinica' && F.reflex !== false);
+      const fica = cadernos.includes(s) || s.aberta || s === sweepSala || s.tipo == 'diretoria' || s.tipo == 'professores' || (s.tipo == 'clinica' && F.reflex);
       if (!fica) s.fechada = true;
     }
     for (const s of lista) if (!s.fechada && s.porta.vizinha != null && lista[s.porta.vizinha].fechada) s.fechada = true;
@@ -337,7 +337,9 @@
     for (const [i, j] of corrLivres) {
       const w = D4.find(([di, dj]) => c[j + dj]?.[i + di] !== 1 && !ehSaida(i + di, j + dj));
       if (!w || !fone) continue;
-      E.spr.push(Object.assign({}, fone, { M: fone.M.slice(0, 12).concat([cx(i) + w[0] * 3.8, fone.M[13], cz(j) - w[1] * 3.8, 1]) }));
+      const fx = cx(i) + w[0] * 3.8, fz = cz(j) - w[1] * 3.8;
+      if (E.caixas.some((c) => Math.hypot(c.c[0] - fx, c.c[2] - fz) < 4) || E.spr.some((s) => Math.hypot(s.M[12] - fx, s.M[14] - fz) < 3)) continue; // nada de orelhão dentro de máquina
+      E.spr.push(Object.assign({}, fone, { M: fone.M.slice(0, 12).concat([fx, fone.M[13], fz, 1]) }));
       break;
     }
     // porão (recurso do Beta, só com o mapa aleatório): escada num beco do corredor, fora da área da entrada
@@ -585,13 +587,29 @@
     for (const e of E.esp) if (e.s == 'EntranceScript') alvos.push([e.pos[0], e.pos[2]]);
     return alvos.every((a) => N.caminho(pl[0], pl[2], a[0], a[1]).length);
   }
-  J.geraMapa = gera; J.validaMapa = valida;
+  // itens que caíram dentro de um móvel ou em cima de outro objeto vão para um lugar livre ali perto
+  function desgruda(E) {
+    const mu = new M.Mundo(E);
+    const naCaixa = (x, z, m) => E.caixas.some((c) => { const dx = x - c.c[0], dz = z - c.c[2], co = Math.cos(c.ang || 0), si = Math.sin(c.ang || 0); return Math.abs(dx * co + dz * si) < c.h[0] + m && Math.abs(-dx * si + dz * co) < c.h[2] + m; });
+    const outros = (s, x, z) => E.spr.some((o) => o !== s && o.a && !o.pai.startsWith('NPC/') && Math.hypot(o.M[12] - x, o.M[14] - z) < 2 && Math.abs(o.M[13] - s.M[13]) < 2);
+    const livre = (s, x, z) => { const o = { x, z }; mu.resolve(o, 1.3); return Math.hypot(o.x - x, o.z - z) < 0.05 && !naCaixa(x, z, 0.8) && !outros(s, x, z); };
+    for (const s of E.spr) {
+      if (!/Pickup_/.test(s.pai) || /FitaVerde/.test(s.pai)) continue;
+      const x = s.M[12], z = s.M[14];
+      if (livre(s, x, z)) continue;
+      fora: for (let r = 2; r <= 8; r += 1.5) for (let a = 0; a < 8; a++) {
+        const nx = x + Math.cos(a * Math.PI / 4) * r, nz = z + Math.sin(a * Math.PI / 4) * r;
+        if (mu.ve(x, z, nx, nz) && livre(s, nx, nz)) { s.M[12] = nx; s.M[14] = nz; break fora; }
+      }
+    }
+  }
+  J.geraMapa = (b, n) => { const e = gera(b, n); if (e) desgruda(e); return e; }; J.validaMapa = valida;
   // no Beta, com o recurso ligado, troca a escola original por uma gerada
   J.ganchos.monta.unshift((E, _J, modo) => {
-    if (modo != 'beta' || !(J.betaFeat && J.betaFeat.mapa)) return;
+    if (!J.F || !J.F.mapa) return;
     // gera e confere com a navegação de verdade: tudo (cadernos, itens, saídas, ronda) tem que ter caminho
     let novo = null;
-    for (let k = 0; k < 8 && !novo; k++) { const e = gera(J.Ebase, 7); if (e && valida(e)) novo = e; }
+    for (let k = 0; k < 8 && !novo; k++) { const e = J.geraMapa(J.Ebase, 7); if (e && valida(e)) novo = e; }
     if (!novo) return;
     for (const k of Object.keys(E)) delete E[k];
     Object.assign(E, novo);
