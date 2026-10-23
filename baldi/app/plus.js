@@ -236,9 +236,9 @@
   /* ---------- Beans ---------- */
   function criaBeans(G) {
     const r = longeDoJogador(G);
-    const spr = J.sprite(BEANS(0), 1.8, 1.8); spr.visible = false;
+    const spr = J.sprite(BEANS(0), 3.2, 3.2); spr.visible = false; // do tamanho dos outros alunos (a imagem tem margem)
     return Object.assign(J.Agente('Beans', r[0], r[1], 12), {
-      spr, oy: 2.3, estado: 'anda', t: 0, cool: 8, quadro: 0, dir: 0,
+      spr, oy: 4, estado: 'anda', t: 0, cool: 8, quadro: 0, dir: 0,
       ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
       vagar() { const r = J.ronda(false); this.vai(r[0], r[1]); },
       tique(dt) { this.cool -= dt; this.t += dt; },
@@ -331,9 +331,9 @@
   /* ---------- Mrs. Pomp ---------- */
   function criaPomp(G) {
     const r = longeDoJogador(G);
-    const spr = J.sprite(IMG('pomp'), 1.5, 1.5); spr.visible = false;
+    const spr = J.sprite(IMG('pomp'), 3.2, 3.2); spr.visible = false;
     return Object.assign(J.Agente('Mrs. Pomp', r[0], r[1], 10), {
-      spr, oy: 2, estado: 'anda', cool: 20, perdeu: 0, t: 0,
+      spr, oy: 4.05, estado: 'anda', cool: 20, perdeu: 0, t: 0,
       ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
       vagar() { const r = J.ronda(false); this.vai(r[0], r[1]); },
       tique(dt) { this.cool -= dt; this.t += dt; },
