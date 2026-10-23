@@ -192,6 +192,6 @@
       else if (porta) { const [bx, bz] = E.porao.entrada; p.x = bx; p.z = bz; }
       if (G.porao) { G.porao.longe = false; G.porao.cool = 1; } // não volta pela escada na hora
     }
-    if (t == 'boss') J.chefaoNull(G, {});
+    if (t == 'boss') J.chefaoNull(G, { direto: true });
   }
 })();

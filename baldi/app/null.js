@@ -46,7 +46,7 @@
     spr.position.set(nul.x, nul.oy, nul.z);
     G.npcs.null = nul;
     G.null = { fase: op.direto ? 'luta' : 'intro', t: 0, nul, objs: [], barreiras: [], segurando: null, voo: [], proxObj: 1, proxBarreira: 14, proxFala: 18, falas: 0, musica: null };
-    if (op.direto) { G.null.musica = M.som(SOM('Mus_boss_start'), { vol: 0.7 }); G.null.loopEm = 7.6; for (let k = 0; k < 3; k++) novoObjeto(G, G.null); }
+    if (op.direto) { G.null.espera = 3; G.null.musica = M.som(SOM('Mus_boss_start'), { vol: 0.7 }); G.null.loopEm = 7.6; for (let k = 0; k < 3; k++) novoObjeto(G, G.null); }
     else { J.aviso('???', 2); G.null.falaIntro = M.som(SOM('Null_PreBoss_Start'), { de: nul, alcance: 400 }); }
     document.body.classList.add('nullGlitch');
   };
@@ -70,7 +70,8 @@
       }
     } else if (B.fase == 'luta') {
       if (B.loopEm > 0 && (B.loopEm -= dt) <= 0) B.musica = M.som(SOM('Mus_boss_loop'), { loop: true, vol: 0.7 });
-      if (nul.tonto > 0) { nul.tonto -= dt; nul.anda(dt, 0); }
+      if (B.espera > 0) { B.espera -= dt; nul.anda(dt, 0); } // luta direta: um tempinho para correr
+      else if (nul.tonto > 0) { nul.tonto -= dt; nul.anda(dt, 0); }
       else { nul.vai(p.x, p.z); nul.anda(dt, nul.vel); }
       // falas de vez em quando
       if ((B.proxFala -= dt) <= 0) {
@@ -81,7 +82,7 @@
       // barreiras de PlaceFace na frente do jogador
       if ((B.proxBarreira -= dt) <= 0) { B.proxBarreira = M.rnd(9, 15); barreira(G, B); }
       // pegou o jogador
-      if (nul.tonto <= 0 && Math.hypot(nul.x - p.x, nul.z - p.z) < 2.6) return pegou(G, B);
+      if (nul.tonto <= 0 && !(B.espera > 0) && Math.hypot(nul.x - p.x, nul.z - p.z) < 2.6) return pegou(G, B);
       J.evento(`NULL  ${nul.acertos}/${ACERTOS}`);
     }
     // objetos flutuantes para jogar
@@ -106,14 +107,12 @@
     B.barreiras = B.barreiras.filter((b) => b.t > 0);
   });
 
-  // jogar o objeto: o toque na tela (ou o botão da mão) joga na direção em que você olha
+  // jogar o objeto: qualquer toque (ou o botão da mão) joga reto na direção da mira, no meio da tela
   const toqueAntes = J.toqueMundo;
   J.toqueMundo = (sx, sy, camera) => {
     const G = J.G, B = G && G.null;
     if (B && B.segurando) {
-      const p = G.p;
-      let dx = -Math.sin(p.yaw), dz = -Math.cos(p.yaw);
-      if (sx !== undefined) { const v = new THREE.Vector3((sx / innerWidth) * 2 - 1, -(sy / innerHeight) * 2 + 1, 0.5).unproject(camera).sub(camera.position); const l = Math.hypot(v.x, v.z); dx = v.x / l; dz = v.z / l; }
+      const p = G.p, dx = -Math.sin(p.yaw), dz = -Math.cos(p.yaw);
       const m = J.sprite(B.segurando, 2, 2);
       B.voo.push({ x: p.x + dx * 2, z: p.z + dz * 2, dx, dz, vida: 2, m });
       B.segurando = null; mostraNaMao(null);
@@ -174,15 +173,27 @@
       J.fim('assets/' + PASTA + 'fim.jpg', 'Você derrotou o NULL!');
     }, 6000);
   }
+  // pegou: a tela congela na cara dele, ele ri e o jogo "crasha" (o app fecha de verdade)
   function pegou(G, B) {
     G.fim = true; B.fase = 'fim'; M.paraTudo();
+    const n = B.nul, p = G.p;
+    const dx = p.x - n.x, dz = p.z - n.z, l = Math.hypot(dx, dz) || 1;
+    const r = Math.min(7.5, J.mundo.raio(n.x, n.z, dx / l, dz / l, 7.5) - 1); // uns passos para trás: a cara dele enche a tela
+    p.x = n.x + (dx / l) * r; p.z = n.z + (dz / l) * r;
+    p.yaw = Math.atan2(-(n.x - p.x), -(n.z - p.z));
+    $('hud').hidden = true; $('toque').hidden = true;
     M.som(SOM('Null_NPC_Haha'), { vol: 1 });
     document.body.classList.add('nullForte');
-    setTimeout(() => {
-      document.body.classList.remove('nullGlitch', 'nullForte'); limpaGlitch();
-      J.fim('assets/' + PASTA + 'pego.jpg', 'O NULL te pegou...');
-    }, 2500);
+    setTimeout(() => J.crash(), 1800);
   }
+
+  // "crash": tela preta e o app fecha (no navegador, recarrega)
+  J.crash = () => {
+    M.paraTudo(); if (J.G) J.G.fim = true;
+    document.body.classList.remove('nullGlitch', 'nullForte', 'nullTreme');
+    document.body.innerHTML = '<div style="position:fixed;inset:0;background:#000"></div>';
+    setTimeout(() => { try { if (window.Android && window.Android.fecha) return window.Android.fecha(); } catch (e) {} location.reload(); }, 1200);
+  };
 
   // ---------- a escola falhando: cores trocando e tremendo, mais forte quando ele está perto ----------
   const cv = () => document.querySelector('canvas');
