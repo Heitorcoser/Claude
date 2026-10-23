@@ -241,6 +241,9 @@
     return (dx * fx + dz * fz) / d > Math.cos(abertura);
   };
   const corredor = () => J.ronda(false);
+  J.QUADROS_EXTRA = ['reflex', 'test', 'test_caido', 'cloudy', 'vento'].map(IMG).concat(
+    [...Array(16).keys()].map((k) => quadro2('reflex_anda', k)), [...Array(14).keys()].map((k) => quadro2('reflex_martelo', k)),
+    [...Array(6).keys()].flatMap((k) => [quadro2('maos_dir', k), quadro2('maos_esq', k)]), [...Array(13).keys()].map((k) => quadro2('explosao', k)));
 
   J.ganchos.inicia.push((G) => {
     if (G.modo != 'beta') return;

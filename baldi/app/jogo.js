@@ -43,7 +43,8 @@
     cena.add(m); sprites.push(m);
     return m;
   }
-  function troca(m, tex) { if (m.material.map !== M.tex(tex)) { m.material.map = M.tex(tex); m.material.needsUpdate = true; } }
+  // troca o desenho do sprite só quando a imagem nova já carregou (senão o personagem pisca/some)
+  function troca(m, tex) { const t = M.tex(tex); if (m.material.map !== t && t.image && t.image.width) { m.material.map = t; m.material.needsUpdate = true; } }
   // escala do sprite a partir da matriz do Unity (tamanho em pixels / pixels por unidade × escala)
   function spriteDe(s) {
     const sx = Math.hypot(s.M[0], s.M[1], s.M[2]) * 100 / s.ppu, sy = Math.hypot(s.M[4], s.M[5], s.M[6]) * 100 / s.ppu;
@@ -888,6 +889,15 @@
       let feitos = 0;
       const todos = SONS.concat(J.SONS_EXTRA || []);
       await Promise.all(todos.map((n) => M.carregaSom(n).catch(() => {}).then(() => ($('carregaTxt').textContent = `Carregando sons... ${++feitos}/${todos.length}`))));
+      // carrega antes os quadros das animações (aceno do Baldi, tapa, 1st Prize, personagens do Beta)
+      const quadros = [];
+      for (let k = 0; k < 100; k++) quadros.push('Texture2D/CharacterSprites/Baldi/Baldi_Wave' + String(k).padStart(4, '0') + '.png');
+      for (const k of [0, 6, 12, 18, 24]) quadros.push('Texture2D/CharacterSprites/Baldi/Angry/Baldi_Slap' + String(k).padStart(4, '0') + '.png');
+      for (let k = 0; k < 16; k++) { const n = k * 22.5; quadros.push('Texture2D/CharacterSprites/1stPrize/1PR_' + (n % 1 ? n.toFixed(1) : n) + '.png'); }
+      quadros.push(...(J.QUADROS_EXTRA || []));
+      $('carregaTxt').textContent = 'Carregando imagens...';
+      const texs = quadros.map((q) => M.tex(q)), t0 = performance.now();
+      while (texs.some((t) => !(t.image && t.image.width)) && performance.now() - t0 < 15000) await new Promise((r) => setTimeout(r, 50));
       novoJogo(modo);
     } finally { clearInterval(gira); $('carregando').hidden = true; }
     ajusta();

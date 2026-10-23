@@ -241,7 +241,7 @@
     while (pontosCorr.length < 16) pontosCorr.push(pontosCorr[pontosCorr.length % Math.max(1, pontosCorr.length)]);
     E.ronda = pontosCorr.slice(0, 16).concat(rondaSala);
     E.rondaCorr = pontosCorr.slice(16);
-    enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca);
+    enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca, saidas);
     const cl = lista.find((s) => s.tipo == 'clinica'); if (cl) E.clinica = rondaSala[cl.n]; // casa do Dr. Reflex
 
     // ---------- jogador, personagens e itens ----------
@@ -266,7 +266,7 @@
     // Baldi do tutorial acenando logo na entrada
     const tut = base.spr.find((s) => s.pai.startsWith('NPC/TutorBaldi'));
     const frente = [cx(sul0.i + sul0.para[0] * 2), cz(sul0.j + sul0.para[1] * 2)];
-    if (tut) E.spr.push(Object.assign({}, tut, { M: tut.M.slice(0, 12).concat([frente[0] + 3, tut.M[13], frente[1], 1]) }));
+    if (tut) E.spr.push(Object.assign({}, tut, { M: tut.M.slice(0, 12).concat([frente[0], tut.M[13], frente[1], 1]) })); // no meio do corredor, de frente para a entrada
     E.pontos.playerTeleportPoint = [ini[0], 0, ini[1] - 12];
     const bt = corrLonge(80); E.pontos.baldiTeleportPoint = [bt[0], 0, bt[1]];
     // itens espalhados (em salas e corredores)
@@ -380,7 +380,9 @@
     }
   }
 
-  function enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca) {
+  function enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca, saidas) {
+    // perto das saídas o corredor fica limpo (o Baldi do tutorial acena logo na entrada)
+    const pertoSaida = (i, j) => saidas.some((s) => Math.abs(s.i - i) + Math.abs(s.j - j) <= 4);
     const ehCorr = (i, j) => c[j]?.[i] == 1;
     const POST = ['SchoolRulesPoster', 'SchoolAttention', 'BootsPoster', 'WD_NoSqueePoster', 'PhonePoster', 'ScissorsPoster', 'recyclefood', 'what', 'comic00', 'comic01'];
     let vaivem = 0;
@@ -398,6 +400,7 @@
         vaivem++;
         continue;
       }
+      if (pertoSaida(i, j)) continue;
       for (const [di, dj] of D4) {
         if (ehCorr(i + di, j + dj) || ehSaida(i + di, j + dj)) continue;
         const temPorta = (() => { const v = id[j + dj]?.[i + di]; if (v == null || v < 0) return false; const p = lista[v].porta; return p.i == i + di && p.j == j + dj && p.di == -di && p.dj == -dj; })();
