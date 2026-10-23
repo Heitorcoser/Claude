@@ -42,10 +42,6 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #difs .bt{flex-direction:column;gap:2px;font-size:24px}
 #difs .bt img{height:min(30vh,120px)}
 #difs .bt.sel{border-bottom-color:#000}
-#reflexo{position:fixed;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;touch-action:none}
-#reflexo[hidden]{display:none}
-#reflexoImg{height:82vh;image-rendering:pixelated;pointer-events:none}
-#reflexoTxt{position:absolute;top:max(70px,calc(env(safe-area-inset-top) + 64px));font-size:22px;font-weight:700;color:#fff;text-shadow:var(--sombra)}
 #detencao{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-size:24px;font-weight:700;text-shadow:var(--sombra);text-align:center;color:#fff;white-space:pre-line}
 .aviso{font-size:11px;color:#555;text-align:center;max-width:560px}
 /* HUD */
@@ -144,7 +140,23 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
   <div class="bot" id="bPulo" hidden>Pular</div>
 </div>
 
-<div id="reflexo" hidden><div id="reflexoTxt">Toque na mão com o círculo!</div><img id="reflexoImg" alt=""></div>
+
+  <div id="evento" hidden></div>
+  <div id="detencao" hidden></div><div id="aviso" hidden></div>
+  <div id="mira"></div>
+  <div id="estamina"><i></i></div>
+  <div id="itens"><div id="slots"><div class="slot sel" data-s="0"></div><div class="slot" data-s="1"></div><div class="slot" data-s="2"></div></div><div id="nomeItem">Nada</div></div>
+</div>
+
+<div id="toque" hidden>
+  <div id="stick"><i></i></div>
+  <div class="bot" id="bCorre"></div>
+  <div class="bot" id="bUsa"></div>
+  <div class="bot" id="bToca"></div>
+  <div class="bot" id="bPausa"></div>
+  <div class="bot" id="bPulo" hidden>Pular</div>
+</div>
+
 
 <div class="tela" id="titulo"><div id="tocaTxt">Toque para começar</div></div>
 <div class="tela" id="menu" hidden>

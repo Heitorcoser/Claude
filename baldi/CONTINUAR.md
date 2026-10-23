@@ -14,7 +14,7 @@ interno (o Unity não é usado). Código também em `Heitorcoser/Claude`, pasta 
 | `app/motor.js` | Monta a escola a partir do `escola.json` (junta os quads por material), colisão 2D (paredes = segmentos, móveis = caixas), navegação em grade com A* (no lugar do NavMesh), som (WebAudio, volume pela distância). |
 | `app/jogo.js` | Regras portadas dos scripts C#: jogador (andar 10, correr 16, energia), portas e portas vai-e-vem, cadernos e contas (conta impossível no 3º problema), itens 1 a 11, Baldi (tapa, raiva, ouvir), Diretor (culpa e detenção 15-99 s), Playtime (pular corda), Gotta Sweep, Arts and Crafters, 1st Prize (16 sprites de ângulo), Bully, modo final com as saídas, modo infinito. Tem ganchos `Jogo.ganchos.monta/inicia/tique/caderno`. |
 | `app/beta.js` | Modo Beta: tela de Beta Features (`J.betaFeat`), ala nova (`PLANTA`, `PORTAS`, `decora()`), `kit(E)` com as peças de montar mapa, personagens do Baldi's Basics Plus (Dr. Reflex com o teste de reflexo, Cloudy Copter com vento, The Test que mexe no tempo `G.escala`) e eventos (`EVENTOS`). |
-| `app/mapa.js` | Mapa aleatório: grade de 10x10, anel de corredores + linhas no meio, quarteirões cortados em salas (aula, professores, diretoria, cantina, biblioteca, depósito), 4 saídas, portas vai-e-vem que não isolam nada. `test/planta.mjs` desenha a planta vista de cima. |
+| `app/mapa.js` | Mapa aleatório por **chunks prontos** (`CHUNKS`: desenhos 9x9 feitos à mão, com saídas de corredor no meio dos lados). Os chunks são girados/espelhados e escolhidos para bater com uma grade de ligações (árvore + laços). Letras: c corredor, p praça, a/A/e/E aula, s/S especiais (diretoria, professores, clínica do Dr. Reflex, depósito), k cantina, b biblioteca. Cada sala do desenho precisa encostar num corredor. O jogo gera, confere com a navegação (`valida`) e tenta de novo se algo ficar sem caminho. Testes: `test/planta.mjs` (planta vista de cima), `test/muitos.mjs` (40 mapas). |
 | `app/escola.json` | Mapa gerado pelos scripts de `tools/` a partir da cena `School.unity`. |
 | `app/assets/` | Texturas e sons do jogo (convertidos), `beta/` com material novo (domínio público/CC0, ver `CREDITOS.md`), `fonts/`, `ui/`. |
 | `tools/` | `extrai.py` (lê a cena YAML do Unity), `malhas.py` (modelos .asset), `compacta.py` (gera `app/escola.json`), `assets.sh` (copia texturas e converte sons). |
@@ -46,6 +46,8 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Empurrões (1st Prize, Gotta Sweep) movem o jogador em passos de 0,5 com colisão a cada passo (`test/dificuldade.mjs`).
 - Ala Beta decorada em `decora()` (`beta.js`): móveis do jogo (`MOVEL`: carteira, cadeira, mesa do professor, mesa comprida, armário), estantes e caixotes (cubos de madeira), máquinas BSODA/Zesty que funcionam, quadros, cartazes, janelas e enfeites em sprite. Cada peça leva caixa de colisão. `test/ala.mjs` tira fotos e confere caminhos.
 - O HUD fica acima dos controles de toque (z-index 7) para os espaços de item receberem o toque.
+- Dr. Reflex: nasce na clínica (`E.clinica`: laboratório da ala, sala especial do mapa aleatório). Teste de reflexo no próprio sprite (toque/raycast na mão com o círculo, `J.toqueMundo`). O jogador fica livre; se sair do teste ele vai buscar o martelo na clínica e volta para esmagar.
+- Cloudy Copter: vento de 14,5 (andando contra você volta, correndo contra avança devagar).
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 
 ## Ideias para as próximas versões

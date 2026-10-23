@@ -68,7 +68,7 @@
     let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
     for (const s of E.segs) { x0 = Math.min(x0, s.a[0], s.b[0]); x1 = Math.max(x1, s.a[0], s.b[0]); z0 = Math.min(z0, s.a[1], s.b[1]); z1 = Math.max(z1, s.a[1], s.b[1]); }
     nav = new M.Nav(mundo, [x0 - 5, z0 - 5, x1 + 5, z1 + 5]);
-    J.mundo = mundo; J.nav = nav; J.cena = cena;
+    J.mundo = mundo; J.nav = nav; J.cena = cena; J.camera = camera;
   }
 
   /* ---------- estado ---------- */
@@ -527,6 +527,7 @@
   }
   function interage(sx, sy) {
     if (!G || G.aprendendo || G.pausado || G.fim) return;
+    if (J.toqueMundo && J.toqueMundo(sx, sy, camera)) return; // ex.: teste do Dr. Reflex
     const a = alvo(['caderno', 'item', 'porta'], 0.35, sx, sy);
     if (!a) return;
     if (a.tipo == 'caderno') pegaCaderno(a.o);

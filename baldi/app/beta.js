@@ -211,6 +211,7 @@
     E.rondaCorr = [[X0 + 45, zc], [X0 + 105, zc], [X0 + 135, Z0 - 15], [X0 + 135, Z0 - 105]];
     E.rondaSala = [[X0 + 30, Z0 - 25], [X0 + 30, Z0 - 85], [X0 + 85, Z0 - 85], [X0 + 85, Z0 - 25], [X0 + 175, Z0 - 50]];
     E.totalCadernos = 10;
+    E.clinica = [X0 + 175, Z0 - 50]; // o laboratório da ala é a clínica do Dr. Reflex
   }
   J.ganchos.monta.push((E, _J, modo) => { const f = J.betaFeat || {}; if (modo == 'beta' && !f.mapa && f.ala !== false) constroiAla(E); });
 
@@ -246,13 +247,15 @@
     const N = G.npcs, F = J.betaFeat || {};
     G.escala = 1;
 
-    /* Dr. Reflex: anda pelos corredores parando e virando; só enxerga o que está na frente dele.
-       Quando te vê, corre e faz o teste de reflexo: toque na mão com o círculo bem rápido.
-       Se você fugir no meio do teste, ele volta com o martelo e te esmaga (fica lento por 30 s). */
+    /* Dr. Reflex (como no Baldi's Basics Plus):
+       - nasce na clínica dele e anda pelos corredores, parando e virando a cada destino; só enxerga o que está na frente;
+       - quando te vê, corre até você e começa o teste (a câmera vira para ele; você pode sair andando quando quiser);
+       - ele abre as mãos com um círculo e um X: toque na mão com o círculo, nele mesmo, antes do tempo acabar;
+       - se você sair (andando ou puxado por alguém), ele fica bravo, vai até a clínica buscar o martelo e volta para te esmagar. */
     if (F.reflex !== false) {
-      const r0 = J.E.rondaSala ? J.E.rondaSala[J.E.rondaSala.length - 1] : J.ronda(true);
-      N.reflex = Object.assign(J.Agente('Dr. Reflex', r0[0], r0[1], 9), {
-        spr: npcSprite(IMG('reflex'), 1.9), oy: 4.6, estado: 'anda', dir: 0, pausa: 0, cool: 10, fala: null, t: 0,
+      const casa = J.E.clinica || J.ronda(true);
+      N.reflex = Object.assign(J.Agente('Dr. Reflex', casa[0], casa[1], 9), {
+        spr: npcSprite(IMG('reflex'), 1.9), oy: 4.3, estado: 'anda', dir: 0, pausa: 0, cool: 15, fala: null, t: 0, casa,
         ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
         diz(n, forca) { if (forca) M.para(this.fala); if (forca || !this.fala || this.fala.fim) this.fala = M.som(SOM('DrR_' + n), { de: this, alcance: 110 }); },
         vagar() { const r = corredor(); this.vai(r[0], r[1]); },
@@ -267,34 +270,51 @@
           const p = G.p, d = J.dist(this, p);
           if (this.vx || this.vz) this.dir = Math.atan2(this.vx, this.vz);
           if (this.estado == 'anda') {
-            if (this.cool <= 0 && this.enxerga()) { this.estado = 'corre'; this.diz('Normal_TakeMyTest', true); }
+            if (this.cool <= 0 && this.enxerga()) { this.estado = 'viu'; this.pausa = 0; this.cam = []; }
             else if (this.chegou()) { if ((this.pausa += dt) > 2) { this.pausa = 0; this.vagar(); } }
             this.anda(dt, 9);
+          } else if (this.estado == 'viu') {
+            // para, olha para você e então corre
+            this.dir = Math.atan2(p.x - this.x, p.z - this.z); this.anda(dt, 0);
+            if ((this.pausa += dt) > 0.8) { this.estado = 'corre'; this.diz('Normal_TakeMyTest', true); }
           } else if (this.estado == 'corre') {
             if (!J.ve(this) && d > 15) { this.estado = 'anda'; this.vagar(); }
-            this.vai(p.x, p.z); this.anda(dt, 24);
+            this.vai(p.x, p.z); this.anda(dt, 22);
             if (d < 5 && !G.aprendendo && !p.corda) teste.comeca(this);
           } else if (this.estado == 'teste') {
             this.cam = []; this.anda(dt, 0);
-            if (d > 14) { teste.fecha(); this.estado = 'bravo'; this.bravoT = 45; this.diz('Angry_HeyGetBack', true); }
-          } else if (this.estado == 'bravo') {
+            this.dir = Math.atan2(p.x - this.x, p.z - this.z);
+            // saiu do teste (andando, puxão, vassoura, vento, refrigerante...)
+            if (d > 10 || this.empurro > 0) this.ficaBravo();
+          } else if (this.estado == 'busca') {
+            // vai até a clínica pegar o martelo
+            if (this.chegou()) { this.estado = 'pega'; this.pausa = 0; M.som(SOM('DrR_Hammer'), { de: this }); }
+            this.anda(dt, 18);
+          } else if (this.estado == 'pega') {
+            this.anda(dt, 0);
+            if ((this.pausa += dt) > 2) { this.estado = 'martelo'; this.bravoT = 60; this.diz('Angry_Random_' + M.rndInt(0, 2), true); }
+          } else if (this.estado == 'martelo') {
             this.bravoT -= dt;
-            if (J.ve(this) || this.cam.length == 0) this.vai(p.x, p.z);
-            this.anda(dt, 20);
+            this.vai(p.x, p.z); this.anda(dt, 20);
             if (Math.random() < dt * 0.15) this.diz('Angry_Random_' + M.rndInt(0, 2));
             // esmaga quem encostar
-            for (const n of Object.values(N)) if (n !== this && n.ativo && J.dist(n, this) < 3.5 && !(n.esmagado > 0)) { n.esmagado = 30; M.som(SOM('Boink'), { de: n }); }
+            for (const n of Object.values(N)) if (n !== this && n.ativo && n.spr && J.dist(n, this) < 3.5 && !(n.esmagado > 0)) { n.esmagado = 30; M.som(SOM('Boink'), { de: n }); }
             if (d < 3.5 && G.p.botas <= 0) {
               p.esmagado = 30; M.som(SOM('DrR_Hammer'), { de: this }); M.som(SOM('Boink'));
               J.aviso('Esmagado! Você está mais lento', 2.5);
               p.yaw = Math.atan2(-(this.x - p.x), -(this.z - p.z));
-              this.estado = 'anda'; this.cool = 45; this.vagar();
-            } else if (this.bravoT <= 0) { this.estado = 'anda'; this.cool = 20; this.vagar(); }
+              this.calmo(45);
+            } else if (this.bravoT <= 0) this.calmo(20);
           }
         },
+        ficaBravo() {
+          teste.fecha(); this.estado = 'busca'; this.diz('Angry_HeyGetBack', true);
+          this.vai(this.casa[0], this.casa[1]); this.spr.material.color.setRGB(1, 0.72, 0.45); // fica alaranjado
+        },
+        calmo(cool) { this.estado = 'anda'; this.cool = cool; this.spr.material.color.setRGB(1, 1, 1); this.vagar(); },
         anima() {
           const mexe = Math.hypot(this.vx, this.vz) > 1, k = Math.floor(this.t * 12);
-          if (this.estado == 'bravo') J.troca(this.spr, quadro2('reflex_martelo', k % 14));
+          if (this.estado == 'martelo') J.troca(this.spr, quadro2('reflex_martelo', k % 14));
           else if (this.estado == 'teste') J.troca(this.spr, teste.quadro || IMG('reflex'));
           else J.troca(this.spr, mexe ? quadro2('reflex_anda', k % 16) : IMG('reflex'));
         },
@@ -351,7 +371,7 @@
       });
       const cl = N.cloudy;
       G.vento = (x, z, ux, uz) => (cl.noVento(x, z) ? Math.max(0.3, 1 + (ux * cl.dirV[0] + uz * cl.dirV[1]) * 0.6) : 1);
-      G.empurraJogador = (x, z) => (cl.noVento(x, z) && G.p.botas <= 0 ? [cl.dirV[0] * 11, cl.dirV[1] * 11] : [0, 0]);
+      G.empurraJogador = (x, z) => (cl.noVento(x, z) && G.p.botas <= 0 ? [cl.dirV[0] * 14.5, cl.dirV[1] * 14.5] : [0, 0]);
     }
 
     /* The Test: aparece num corredor. Olhar para ele deixa o tempo mais lento e as luzes piscam;
@@ -403,42 +423,55 @@
   });
 
   /* ---------- teste de reflexo do Dr. Reflex ---------- */
+  // Tudo acontece no próprio Dr. Reflex: ele segura um círculo e um X e você toca na mão certa, nele.
   const teste = {
-    dr: null, fase: '', t: 0, lado: 0, quadro: null, erros: 0,
+    dr: null, fase: '', t: 0, lado: 0, quadro: null, erros: 0, k: 0,
     comeca(dr) {
-      const G = J.G, p = G.p;
-      this.dr = dr; dr.estado = 'teste'; this.erros = 0;
-      p.yaw = Math.atan2(-(dr.x - p.x), -(dr.z - p.z)); // vira para ele
-      $('reflexo').hidden = false; this.rodada();
+      const G = J.G;
+      this.dr = dr; dr.estado = 'teste'; dr.cam = []; this.erros = 0;
+      G.p.yaw = Math.atan2(-(dr.x - G.p.x), -(dr.z - G.p.z)); // vira para ele (uma vez; depois você mexe à vontade)
+      this.rodada();
     },
     rodada() {
-      this.fase = 'pensa'; this.t = M.rnd(1.6, 2.6); this.lado = Math.random() < 0.5 ? 0 : 1; // 0: círculo à esquerda
-      this.quadro = quadro2(this.lado ? 'maos_dir' : 'maos_esq', 0); this.mostra();
+      this.fase = 'pensa'; this.t = M.rnd(1.2, 3); this.lado = Math.random() < 0.5 ? 0 : 1; // 0: círculo na mão da esquerda (da tela)
+      this.quadro = quadro2(this.lado ? 'maos_dir' : 'maos_esq', 0);
       this.dr.diz('Think_Intro', true);
     },
-    mostra() { $('reflexoImg').src = 'assets/' + this.quadro; },
     tique(dt) {
-      if (!this.dr || $('reflexo').hidden) return;
+      const G = J.G;
+      if (!this.fase || !this.dr) return;
+      const dr = this.dr;
       this.t -= dt;
-      if (this.fase == 'pensa' && this.t <= 0) { this.fase = 'abre'; this.t = 0; this.k = 0; this.dr.diz('Fast', true); }
+      if (this.fase == 'pensa' && this.t <= 0) { this.fase = 'abre'; this.k = 0; dr.diz('Fast', true); }
       else if (this.fase == 'abre') {
-        this.k += dt * 24; this.quadro = quadro2(this.lado ? 'maos_dir' : 'maos_esq', Math.min(5, Math.floor(this.k))); this.mostra();
-        if (this.k >= 5) { this.fase = 'espera'; this.t = J.G.dif.reflexo || 1; }
+        this.k += dt * 24; this.quadro = quadro2(this.lado ? 'maos_dir' : 'maos_esq', Math.min(5, Math.floor(this.k)));
+        if (this.k >= 5) { this.fase = 'espera'; this.t = G.dif.reflexo || 1; }
       } else if (this.fase == 'espera' && this.t <= 0) this.falha('TooSlow');
       else if (this.fase == 'erro' && this.t <= 0) this.rodada();
     },
-    toque(ladoTocado) {
-      if (this.fase != 'espera') return;
-      if (ladoTocado === this.lado) {
-        this.dr.diz(this.erros ? 'GoodJob' : 'FirstTry', true); M.som(SOM('DrR_HitCircle'));
-        J.aviso(this.erros ? 'Passou no teste!' : 'Passou de primeira!', 2);
-        this.fecha(); this.dr.estado = 'anda'; this.dr.cool = 45; this.dr.vagar();
-      } else this.falha('Wrong');
+    // toque na tela: acerta a mão do Dr. Reflex que está no mundo?
+    toque(sx, sy, camera) {
+      if (!this.fase || !this.dr) return false;
+      if (this.fase != 'espera') return true; // durante o teste o toque é só para ele
+      const ndc = new THREE.Vector2(sx === undefined ? 0 : (sx / innerWidth) * 2 - 1, sy === undefined ? 0 : -(sy / innerHeight) * 2 + 1);
+      const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObject(this.dr.spr)[0];
+      if (!hit || !hit.uv) return true;
+      const u = hit.uv.x, v = hit.uv.y;
+      if (v < 0.35 || v > 0.95 || Math.abs(u - 0.5) < 0.1) return true; // tocou no corpo, não na mão
+      if ((u > 0.5 ? 1 : 0) === this.lado) this.passa(); else this.falha('Wrong');
+      return true;
     },
-    falha(n) { this.erros++; this.fase = 'erro'; this.t = 1.6; this.dr.diz(n, true); this.quadro = IMG('reflex'); this.mostra(); },
-    fecha() { $('reflexo').hidden = true; this.fase = ''; },
+    passa() {
+      const dr = this.dr;
+      dr.diz(this.erros ? 'GoodJob' : 'FirstTry', true); M.som(SOM('DrR_HitCircle'));
+      J.aviso(this.erros ? 'Passou no teste!' : 'Passou de primeira!', 2);
+      this.fecha(); dr.calmo(45);
+    },
+    falha(n) { this.erros++; this.fase = 'erro'; this.t = 1.6; this.dr.diz(n, true); this.quadro = IMG('reflex'); },
+    fecha() { this.fase = ''; },
   };
-  $('reflexo').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); teste.toque(e.clientX > innerWidth / 2 ? 1 : 0); });
+  J.toqueMundo = (sx, sy, camera) => teste.toque(sx, sy, camera);
   J.ganchos.tique.push((G, dt) => { if (G.modo == 'beta') teste.tique(dt); });
   J.testeReflexo = teste;
 
@@ -517,5 +550,5 @@
   J.EVENTOS = EVENTOS;
   // ao sair do jogo, desliga o que um evento deixou ligado
   const menuOriginal = J.menu;
-  J.menu = () => { J.escuro = false; J.correLiberado = false; if (J.cena) J.cena.fog = null; teste.fecha(); menuOriginal(); };
+  J.menu = () => { J.escuro = false; J.correLiberado = false; if (J.cena) J.cena.fog = null; teste.fecha(); teste.dr = null; menuOriginal(); };
 })();

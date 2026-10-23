@@ -1,45 +1,111 @@
 // Mapa aleatório (recurso do Beta): monta uma escola nova a cada partida, no mesmo formato do escola.json.
-// A escola é uma grade de quadrados de 10x10 (o tamanho dos da escola original):
-// - corredores em linhas retas formando um anel e cruzamentos, com alguns trechos tirados para variar;
-// - os quarteirões entre os corredores viram salas (de aula, professores, diretoria, cantina, biblioteca, depósito);
-// - quatro saídas, uma em cada lado, e o jogador começa na saída sul, como no jogo original.
+// A escola é montada com CHUNKS prontos: pedaços de 9x9 quadrados (de 10x10, o tamanho dos da escola original)
+// desenhados à mão, com salas e corredores já arrumados. Cada chunk tem saídas de corredor no meio dos lados
+// (norte, sul, oeste, leste). O gerador faz uma grade de chunks ligados entre si (uma árvore com alguns laços),
+// e para cada lugar escolhe um chunk (girado ou espelhado) cujas saídas batem com os vizinhos.
+// Depois: portas, tipos de sala, móveis, enfeites, quatro saídas da escola, personagens e itens.
 (function () {
   'use strict';
   const J = window.Jogo, M = window.Motor;
-  const T = 10;
+  const T = 10, C = 9, MEIO = 4;
   const rnd = (a, b) => a + Math.random() * (b - a), rndInt = (a, b) => Math.floor(rnd(a, b + 1));
   const embaralha = (l) => { for (let i = l.length - 1; i > 0; i--) { const j = rndInt(0, i); [l[i], l[j]] = [l[j], l[i]]; } return l; };
   const D4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
-  // linhas de corredor: as duas bordas do anel e algumas no meio, com pelo menos 6 quadrados entre elas
-  function linhas(n) {
-    for (let t = 0; t < 50; t++) {
-      const l = [1, n - 2], k = rndInt(2, 3);
-      for (let q = 0; q < k; q++) l.push(rndInt(6, n - 7));
-      l.sort((a, b) => a - b);
-      if (l.every((v, i) => !i || v - l[i - 1] >= 5)) return l;
+  /* ---------- chunks prontos ----------
+     c = corredor, p = praça (corredor largo), . = maciço
+     a A e E g = salas de aula (letras diferentes = salas diferentes)
+     s S = salas especiais (viram diretoria, professores, clínica do Dr. Reflex ou depósito)
+     k = cantina, b = biblioteca */
+  const CHUNKS = [
+    { nome: 'cruzamento', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'ccccccccc', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE'] },
+    { nome: 'pátio', l: ['aaaacbbbb', 'aaaacbbbb', 'aaaacbbbb', 'aaapppbbb', 'ccccpcccc', 'ssspppkkk', 'SSSSckkkk', 'SSSSckkkk', 'SSSSckkkk'] },
+    { nome: 'anel', l: ['aaaacAAAA', 'aaaacAAAA', 'aacccccAA', 'aacssscAA', 'cccssscc' + 'c', 'eecssscEE', 'eecccccEE', 'eeeecEEEE', 'eeeecEEEE'] },
+    { nome: 'tê', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'eeeeccccc', 'eeeecSSSS', 'eeeecSSSS', 'eeeecSSSS', 'eeeecSSSS'] },
+    { nome: 'cantina', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'ccccccccc', 'kkkkkkkkk', 'kkkkkkkkk', 'kkkkkkkkk', 'kkkkkkkkk'] },
+    { nome: 'biblioteca', l: ['bbbbbssSS', 'bbbbbssSS', 'bbbbbssSS', 'bbbbbssSS', 'ccccccccc', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA'] },
+    { nome: 'curva', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'eeeeccccc', 'eeeebbbbb', 'eeeebbbbb', 'eeeebbbbb', 'eeeebbbbb'] },
+    { nome: 'curva com praça', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'ssspppAAA', 'ssspccccc', 'SSSpppeee', 'SSSSeeeee', 'SSSSeeeee', 'SSSSeeeee'] },
+    { nome: 'reto', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE', 'sssscSSSS', 'sssscSSSS'] },
+    { nome: 'reto com praça', l: ['aaaacAAAA', 'aaaacAAAA', 'aaapppAAA', 'ssspppSSS', 'ssspppSSS', 'eeepppEEE', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE'] },
+    { nome: 'fim com cantina', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'ssspppSSS', 'kkkkkkkkk', 'kkkkkkkkk', 'kkkkkkkkk', 'kkkkkkkkk', 'kkkkkkkkk'] },
+    { nome: 'fim com salas', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE', 'sssssssss', 'sssssssss'] },
+  ];
+  const corr = (ch) => ch == 'c' || ch == 'p';
+  // giros e espelhos de cada chunk, com a máscara das saídas (1 = norte/j-, 2 = leste/i+, 4 = sul/j+, 8 = oeste/i-)
+  const gira = (l) => Array.from({ length: C }, (_, r) => Array.from({ length: C }, (_, c) => l[C - 1 - c][r]).join(''));
+  const espelha = (l) => l.map((r) => r.split('').reverse().join(''));
+  const mascara = (l) => (corr(l[0][MEIO]) ? 1 : 0) | (corr(l[MEIO][C - 1]) ? 2 : 0) | (corr(l[C - 1][MEIO]) ? 4 : 0) | (corr(l[MEIO][0]) ? 8 : 0);
+  const VARIANTES = [];
+  for (const ch of CHUNKS) {
+    let l = ch.l, vistos = new Set();
+    for (const esp of [false, true]) {
+      let v = esp ? espelha(l) : l;
+      for (let g = 0; g < 4; g++) { const k = v.join('/'); if (!vistos.has(k)) { vistos.add(k); VARIANTES.push({ nome: ch.nome, l: v, m: mascara(v) }); } v = gira(v); }
     }
-    return [1, Math.floor(n / 2), n - 2];
   }
 
-  function planta(W, H) {
-    // c[j][i]: 0 = maciço, 1 = corredor, 2 = quarteirão (vira sala)
-    const c = Array.from({ length: H }, () => new Array(W).fill(0));
-    const cols = linhas(W), rows = linhas(H);
-    for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) c[j][i] = cols.includes(i) || rows.includes(j) ? 1 : 2;
-    // tira alguns trechos de corredor entre dois cruzamentos (vira sala maior), sem desconectar nada
-    const trechos = [];
-    for (const i of cols) for (let r = 0; r < rows.length - 1; r++) trechos.push({ i, j0: rows[r] + 1, j1: rows[r + 1] - 1, vert: true });
-    for (const j of rows) for (let q = 0; q < cols.length - 1; q++) trechos.push({ j, i0: cols[q] + 1, i1: cols[q + 1] - 1, vert: false });
-    for (const t of embaralha(trechos)) {
-      if (Math.random() < 0.7) continue;
-      const borda = t.vert ? t.i == 1 || t.i == W - 2 : t.j == 1 || t.j == H - 2;
-      if (borda) continue; // o anel fica inteiro
-      const cel = t.vert ? Array.from({ length: t.j1 - t.j0 + 1 }, (_, k) => [t.i, t.j0 + k]) : Array.from({ length: t.i1 - t.i0 + 1 }, (_, k) => [t.i0 + k, t.j]);
-      cel.forEach(([i, j]) => (c[j][i] = 2));
-      if (!conectado(c, W, H)) cel.forEach(([i, j]) => (c[j][i] = 1));
+  // grade de chunks ligados: árvore aleatória + alguns laços (para dar caminhos alternativos)
+  function ligacoes(GW, GH) {
+    const m = Array.from({ length: GH }, () => new Array(GW).fill(0));
+    const BIT = { '0,-1': 1, '1,0': 2, '0,1': 4, '-1,0': 8 }, OPOSTO = { 1: 4, 4: 1, 2: 8, 8: 2 };
+    const liga = (x, y, dx, dy) => { const b = BIT[dx + ',' + dy]; m[y][x] |= b; m[y + dy][x + dx] |= OPOSTO[b]; };
+    const visto = new Set(['0,0']), pilha = [[rndInt(0, GW - 1), rndInt(0, GH - 1)]];
+    visto.clear(); visto.add(pilha[0] + '');
+    while (pilha.length) {
+      const [x, y] = pilha[pilha.length - 1];
+      const viz = embaralha(D4.slice()).filter(([dx, dy]) => x + dx >= 0 && y + dy >= 0 && x + dx < GW && y + dy < GH && !visto.has([x + dx, y + dy] + ''));
+      if (!viz.length) { pilha.pop(); continue; }
+      const [dx, dy] = viz[0]; liga(x, y, dx, dy); visto.add([x + dx, y + dy] + ''); pilha.push([x + dx, y + dy]);
     }
-    return { c, cols, rows };
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) for (const [dx, dy] of [[1, 0], [0, 1]]) if (x + dx < GW && y + dy < GH && Math.random() < 0.4) liga(x, y, dx, dy);
+    return m;
+  }
+
+  // monta a planta: c[j][i] 0 = maciço, 1 = corredor, 2 = sala; id[j][i] = número da sala
+  function montaChunks() {
+    const GW = rndInt(3, 4), GH = rndInt(3, 4), W = GW * C + 2, H = GH * C + 2;
+    const m = ligacoes(GW, GH);
+    // saídas da escola: uma em cada lado, num chunk da borda (sul = j pequeno, onde o jogador começa)
+    const saidas = [];
+    const sx = rndInt(0, GW - 1), nx = rndInt(0, GW - 1), wy = rndInt(0, GH - 1), ey = rndInt(0, GH - 1);
+    m[0][sx] |= 1; m[GH - 1][nx] |= 4; m[wy][0] |= 8; m[ey][GW - 1] |= 2;
+    saidas.push({ i: 1 + sx * C + MEIO, j: 0, para: [0, 1] }, { i: 1 + nx * C + MEIO, j: H - 1, para: [0, -1] }, { i: 0, j: 1 + wy * C + MEIO, para: [1, 0] }, { i: W - 1, j: 1 + ey * C + MEIO, para: [-1, 0] });
+    const c = Array.from({ length: H }, () => new Array(W).fill(0)), id = Array.from({ length: H }, () => new Array(W).fill(-1));
+    const praca = new Set(), lista = [], porLetra = {};
+    const usados = {};
+    for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+      const op = VARIANTES.filter((v) => v.m === m[y][x]);
+      // evita repetir o mesmo chunk muitas vezes
+      op.sort((a, b) => (usados[a.nome] || 0) - (usados[b.nome] || 0) + rnd(-0.8, 0.8));
+      const v = op[0]; usados[v.nome] = (usados[v.nome] || 0) + 1;
+      for (let r = 0; r < C; r++) for (let q = 0; q < C; q++) {
+        const ch = v.l[r][q], i = 1 + x * C + q, j = 1 + y * C + r;
+        if (corr(ch)) { c[j][i] = 1; if (ch == 'p') praca.add(i + ',' + j); }
+        else if (ch != '.') {
+          c[j][i] = 2;
+          const k = x + ',' + y + ',' + ch;
+          if (porLetra[k] === undefined) { porLetra[k] = lista.length; lista.push({ n: lista.length, cel: [], letra: ch, chunk: v.nome }); }
+          id[j][i] = porLetra[k]; lista[porLetra[k]].cel.push([i, j]);
+        }
+      }
+    }
+    // a mesma letra num chunk pode ter virado dois pedaços separados: separa em salas diferentes
+    for (const s of lista.slice()) {
+      const resto = new Set(s.cel.map((q) => q + '')), partes = [];
+      while (resto.size) {
+        const ini = [...resto][0].split(',').map(Number), comp = [ini], fila = [ini]; resto.delete(ini + '');
+        while (fila.length) { const [a, b] = fila.pop(); for (const [di, dj] of D4) { const k = [a + di, b + dj] + ''; if (resto.has(k)) { resto.delete(k); comp.push([a + di, b + dj]); fila.push([a + di, b + dj]); } } }
+        partes.push(comp);
+      }
+      s.cel = partes[0];
+      for (const p of partes.slice(1)) { const n = { n: lista.length, cel: p, letra: s.letra, chunk: s.chunk }; lista.push(n); p.forEach(([i, j]) => (id[j][i] = n.n)); }
+    }
+    for (const s of lista) {
+      const xs = s.cel.map((p) => p[0]), ys = s.cel.map((p) => p[1]);
+      Object.assign(s, { i0: Math.min(...xs), i1: Math.max(...xs), j0: Math.min(...ys), j1: Math.max(...ys), area: s.cel.length });
+    }
+    return { c, id, lista, saidas, praca, W, H };
   }
   function conectado(c, W, H) {
     let ini = null, total = 0;
@@ -49,49 +115,13 @@
     return visto.size == total;
   }
 
-  // quarteirões -> salas: corta retângulos grandes ao meio até ficarem com no máximo 7 quadrados de lado
-  function salas(c, W, H) {
-    const id = Array.from({ length: H }, () => new Array(W).fill(-1)), lista = [];
-    const vistos = Array.from({ length: H }, () => new Array(W).fill(false));
-    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
-      if (c[j][i] != 2 || vistos[j][i]) continue;
-      const comp = [], fila = [[i, j]]; vistos[j][i] = true;
-      while (fila.length) { const [a, b] = fila.pop(); comp.push([a, b]); for (const [di, dj] of D4) { const ni = a + di, nj = b + dj; if (c[nj]?.[ni] == 2 && !vistos[nj][ni]) { vistos[nj][ni] = true; fila.push([ni, nj]); } } }
-      const xs = comp.map((p) => p[0]), ys = comp.map((p) => p[1]);
-      const r = { i0: Math.min(...xs), i1: Math.max(...xs), j0: Math.min(...ys), j1: Math.max(...ys) };
-      const retangulo = (r.i1 - r.i0 + 1) * (r.j1 - r.j0 + 1) == comp.length;
-      const partes = retangulo ? corta(r) : [{ cel: comp }];
-      for (const p of partes) {
-        const cel = p.cel || celulas(p);
-        const s = { n: lista.length, cel, tipo: '' };
-        cel.forEach(([a, b]) => (id[b][a] = s.n));
-        lista.push(s);
-      }
-    }
-    for (const s of lista) {
-      const xs = s.cel.map((p) => p[0]), ys = s.cel.map((p) => p[1]);
-      Object.assign(s, { i0: Math.min(...xs), i1: Math.max(...xs), j0: Math.min(...ys), j1: Math.max(...ys), area: s.cel.length });
-    }
-    return { id, lista };
-  }
-  const celulas = (r) => { const l = []; for (let j = r.j0; j <= r.j1; j++) for (let i = r.i0; i <= r.i1; i++) l.push([i, j]); return l; };
-  function corta(r) {
-    const w = r.i1 - r.i0 + 1, h = r.j1 - r.j0 + 1;
-    if (w <= 6 && h <= 6 && (w * h <= 24 || Math.random() < 0.4)) return [r];
-    if (w >= h && w >= 6) { const k = rndInt(r.i0 + 2, r.i1 - 3); return corta({ ...r, i1: k }).concat(corta({ ...r, i0: k + 1 })); }
-    if (h >= 6) { const k = rndInt(r.j0 + 2, r.j1 - 3); return corta({ ...r, j1: k }).concat(corta({ ...r, j0: k + 1 })); }
-    return [r];
-  }
-
   // ---------- monta a escola ----------
   function gera(base, nCad) {
     for (let tent = 0; tent < 40; tent++) { const E = tenta(base, nCad); if (E) return E; }
     return null;
   }
   function tenta(base, nCad) {
-    const W = 26 + rndInt(0, 6), H = 26 + rndInt(0, 6);
-    const { c, cols, rows } = planta(W, H);
-    const { id, lista } = salas(c, W, H);
+    const { c, id, lista, saidas, praca, W, H } = montaChunks();
     const ehCorr = (i, j) => c[j]?.[i] == 1;
     // centro de um quadrado em coordenadas do jogo (x cresce para a direita, z diminui para o norte)
     const cx = (i) => i * T + 5, cz = (j) => -(j * T + 5);
@@ -102,7 +132,7 @@
       for (const [i, j] of s.cel) for (const [di, dj] of D4) if (ehCorr(i + di, j + dj)) opc.push({ i, j, di, dj, meio: Math.abs(i - (s.i0 + s.i1) / 2) + Math.abs(j - (s.j0 + s.j1) / 2) });
       if (!opc.length) continue;
       opc.sort((a, b) => a.meio - b.meio);
-      s.porta = opc[Math.min(opc.length - 1, rndInt(0, Math.min(2, opc.length - 1)))];
+      s.porta = opc[Math.min(opc.length - 1, rndInt(0, Math.min(1, opc.length - 1)))];
     }
     // salas sem corredor do lado ganham porta para a sala vizinha
     for (const s of lista) if (!s.porta) {
@@ -110,19 +140,23 @@
     }
     if (lista.some((s) => !s.porta)) return null;
 
-    // tipos de sala
-    const livres = lista.slice().sort((a, b) => b.area - a.area);
-    const pega = (filtro) => { const k = livres.findIndex(filtro); return k < 0 ? null : livres.splice(k, 1)[0]; };
-    const cantina = pega((s) => s.area >= 20 && !s.porta.vizinha); if (cantina) cantina.tipo = 'cantina';
-    const biblio = pega((s) => s.area >= 12 && !s.porta.vizinha); if (biblio) biblio.tipo = 'biblioteca';
-    const sul = (s) => s.j0; // perto da entrada (j pequeno)
-    const dir = livres.filter((s) => s.area >= 6 && s.area <= 25 && !s.porta.vizinha).sort((a, b) => sul(a) - sul(b))[1];
+    // tipos de sala: vêm das letras do chunk; as especiais viram diretoria (perto da entrada), professores, clínica e depósito
+    const ini0 = saidas[0];
+    const longeIni = (s) => Math.hypot((s.i0 + s.i1) / 2 - ini0.i, (s.j0 + s.j1) / 2 - ini0.j);
+    for (const s of lista) s.tipo = 'aeEgGA'.includes(s.letra) ? 'aula' : s.letra == 'k' ? 'cantina' : s.letra == 'b' ? 'biblioteca' : 'especial';
+    // salas de 1 quadrado de largura ou muito pequenas não servem de sala de aula
+    for (const s of lista) if (s.tipo == 'aula' && (s.area < 6 || s.i1 == s.i0 || s.j1 == s.j0)) s.tipo = 'especial';
+    // no máximo uma cantina e uma biblioteca grandes; o resto vira sala de aula
+    for (const t of ['cantina', 'biblioteca']) lista.filter((s) => s.tipo == t).sort((a, b) => b.area - a.area).slice(1).forEach((s) => (s.tipo = 'aula'));
+    const esp = lista.filter((s) => s.tipo == 'especial' && !s.porta.vizinha).sort((a, b) => longeIni(a) - longeIni(b));
+    const dir = esp.find((s) => s.area >= 4 && s.area <= 25);
     if (!dir) return null;
-    livres.splice(livres.indexOf(dir), 1); dir.tipo = 'diretoria';
-    const peq = livres.filter((s) => s.area <= 12).sort((a, b) => a.area - b.area);
-    for (const s of peq.slice(0, 2)) { s.tipo = 'deposito'; livres.splice(livres.indexOf(s), 1); }
-    for (const s of livres.filter((s) => s.area >= 6 && s.area <= 20).slice(-2)) { s.tipo = 'professores'; livres.splice(livres.indexOf(s), 1); }
-    for (const s of livres) s.tipo = 'aula';
+    dir.tipo = 'diretoria';
+    const resto = esp.filter((s) => s !== dir);
+    const clin = resto.filter((s) => s.area >= 4).sort((a, b) => longeIni(b) - longeIni(a))[0];
+    if (clin) clin.tipo = 'clinica';
+    resto.filter((s) => s.tipo == 'especial' && s.area >= 4).slice(0, 2).forEach((s) => (s.tipo = 'professores'));
+    lista.filter((s) => s.tipo == 'especial').forEach((s) => (s.tipo = 'deposito'));
     const aulas = lista.filter((s) => s.tipo == 'aula' && !s.porta.vizinha);
     if (aulas.length < nCad + 1) return null;
 
@@ -130,8 +164,7 @@
     const E = { mats: base.mats, objs: [], portas: [], segs: [], caixas: [], gat: [], esp: [], spr: [], ronda: [], pontos: {} };
     const K = J.kit(E);
     const espaco = (i, j) => (c[j]?.[i] == 1 ? 'c' : id[j]?.[i] >= 0 ? 's' + id[j][i] : null);
-    const PISO = { aula: 'Carpet', professores: 'Carpet', diretoria: 'Carpet', biblioteca: 'Carpet', cantina: 'TileFloor', deposito: 'TileFloor' };
-    const saidas = escolheSaidas(c, W, H, cols, rows);
+    const PISO = { aula: 'Carpet', professores: 'Carpet', diretoria: 'Carpet', biblioteca: 'Carpet', cantina: 'TileFloor', deposito: 'TileFloor', clinica: 'TileFloor' };
     const ehSaida = (i, j) => saidas.find((s) => s.i == i && s.j == j);
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
       const e = espaco(i, j), sd = ehSaida(i, j);
@@ -208,7 +241,8 @@
     while (pontosCorr.length < 16) pontosCorr.push(pontosCorr[pontosCorr.length % Math.max(1, pontosCorr.length)]);
     E.ronda = pontosCorr.slice(0, 16).concat(rondaSala);
     E.rondaCorr = pontosCorr.slice(16);
-    enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, base);
+    enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca);
+    const cl = lista.find((s) => s.tipo == 'clinica'); if (cl) E.clinica = rondaSala[cl.n]; // casa do Dr. Reflex
 
     // ---------- jogador, personagens e itens ----------
     const sul0 = saidas[0];
@@ -247,6 +281,7 @@
     });
     E.totalCadernos = nCad;
     E.gerado = { W, H };
+    Object.defineProperty(E, 'debug', { value: { lista, id, c } }); // só para os testes
     return E;
   }
 
@@ -266,15 +301,6 @@
     const x0 = cx(s.i0) - 5, x1 = cx(s.i1) + 5, z0 = cz(s.j0) + 5, z1 = cz(s.j1) - 5;
     return { n, c: [(x0 + x1) / 2, 5, (z0 + z1) / 2], h: [(x1 - x0) / 2, 5, Math.abs(z1 - z0) / 2], ang: 0 };
   };
-
-  // uma saída em cada lado, no fim de um corredor que encosta na borda do anel
-  function escolheSaidas(c, W, H, cols, rows) {
-    const mid = (l) => l.filter((v) => v > 1 && v < l[l.length - 1]);
-    const pick = (l, def) => { const m = mid(l); return m.length ? m[rndInt(0, m.length - 1)] : def; };
-    const ci = pick(cols, Math.floor(W / 2)), cn = pick(cols, Math.floor(W / 2)), rw = pick(rows, Math.floor(H / 2)), re = pick(rows, Math.floor(H / 2));
-    // para = direção de dentro do vestíbulo até o corredor (em i,j)
-    return [{ i: ci, j: 0, para: [0, 1] }, { i: cn, j: H - 1, para: [0, -1] }, { i: 0, j: rw, para: [1, 0] }, { i: W - 1, j: re, para: [-1, 0] }];
-  }
 
   // móveis de cada tipo de sala
   function mobilia(K, s, cx, cz, livre, res) {
@@ -326,6 +352,12 @@
       if (m) { const x = X(m[0]), z = Z(m[1]); res(m[0], m[1]); K.movel('mesaLonga', x, z, s.i1 - s.i0 >= s.j1 - s.j0 ? 0 : Math.PI / 2); for (const d of [-6, 0, 6]) K.enfeite('food', x + (s.i1 - s.i0 >= s.j1 - s.j0 ? d : 0), z + (s.i1 - s.i0 >= s.j1 - s.j0 ? 0 : d), 4.2); }
       const w = parede.pop(); if (w) K.maquina(Math.random() < 0.5 ? 'BSODAMachine' : 'ZestyMachine', w.x + w.n[0] * 1.2, w.z + w.n[1] * 1.2, w.n);
       for (const n of ['PRI_Poster', 'Baldi_Poster', 'Prize_Poster', 'Sweep_Poster', 'Playtime_Poster', 'Bully_Poster', 'Crafters_Poster']) { const q = parede.pop(); if (q && Math.random() < 0.5) K.naParede(n, q.x, q.z, q.n); }
+    } else if (s.tipo == 'clinica') {
+      // clínica do Dr. Reflex: mesa, armários e o cartaz dele
+      const f = paredeFundo(); K.naParede('PhonePoster', f.x, f.z, f.n);
+      K.movel('mesaProf', f.x + f.n[0] * 4, f.z + f.n[1] * 4, f.n[0] ? 0 : Math.PI / 2);
+      const w = parede.pop(); if (w) K.armarios(w.x - Math.abs(w.n[1]) * 3, w.z - Math.abs(w.n[0]) * 3, w.x + Math.abs(w.n[1]) * 3, w.z + Math.abs(w.n[0]) * 3, w.n);
+      const c0 = cantos[cantos.length - 1]; if (c0) K.enfeite('Plant', X(c0[0]) + 3, Z(c0[1]) - 3);
     } else if (s.tipo == 'diretoria') {
       const f = paredeFundo(); K.naParede('PRI_Poster', f.x, f.z, f.n);
       for (const n of ['Baldi_Poster', 'Sweep_Poster', 'Playtime_Poster', 'Prize_Poster', 'Bully_Poster', 'Crafters_Poster']) { const q = parede.pop(); if (q) K.naParede(n, q.x, q.z, q.n); }
@@ -344,11 +376,11 @@
       K.enfeite('Globe', X(s.i1) + 2, Z(s.j1) - 2);
     } else if (s.tipo == 'deposito') {
       for (let k = 0; k < Math.min(3, parede.length); k++) { const w = parede.pop(); K.armarios(w.x - Math.abs(w.n[1]) * 4, w.z - Math.abs(w.n[0]) * 4, w.x + Math.abs(w.n[1]) * 4, w.z + Math.abs(w.n[0]) * 4, w.n); }
-      for (const [i, j] of s.cel) if (livre(i, j) && Math.random() < 0.5) K.caixote(X(i) + rnd(-2, 2), Z(j) + rnd(-2, 2), rnd(2, 3.2));
+      if (s.area >= 6 && s.i1 > s.i0 && s.j1 > s.j0) for (const [i, j] of s.cel) if (livre(i, j) && Math.random() < 0.5) K.caixote(X(i) + rnd(-2, 2), Z(j) + rnd(-2, 2), rnd(2, 3.2));
     }
   }
 
-  function enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, base) {
+  function enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca) {
     const ehCorr = (i, j) => c[j]?.[i] == 1;
     const POST = ['SchoolRulesPoster', 'SchoolAttention', 'BootsPoster', 'WD_NoSqueePoster', 'PhonePoster', 'ScissorsPoster', 'recyclefood', 'what', 'comic00', 'comic01'];
     let vaivem = 0;
@@ -359,7 +391,8 @@
       const reto = viz.length == 2 && viz[0][0] == -viz[1][0] && viz[0][1] == -viz[1][1];
       // porta vai-e-vem no meio de trechos retos, de vez em quando
       // (elas ficam trancadas até o 2º caderno: não podem separar nenhum pedaço da escola)
-      if (reto && vaivem < 6 && Math.random() < 0.03 && !D4.some(([di, dj]) => ehSaida(i + di, j + dj)) && ((copia[j][i] = 3), conectado(copia, W, H) || ((copia[j][i] = 1), false))) {
+      const naPraca = praca.has(i + ',' + j);
+      if (!naPraca && reto && vaivem < 6 && Math.random() < 0.03 && !D4.some(([di, dj]) => ehSaida(i + di, j + dj)) && ((copia[j][i] = 3), conectado(copia, W, H) || ((copia[j][i] = 1), false))) {
         const [di, dj] = viz[0];
         K.porta(cx(i), cz(j), [di, -dj], 'SwingDoor0', 'vaivem', 'Gerado/vaivem'); // atravessada no corredor
         vaivem++;
@@ -370,6 +403,8 @@
         const temPorta = (() => { const v = id[j + dj]?.[i + di]; if (v == null || v < 0) return false; const p = lista[v].porta; return p.i == i + di && p.j == j + dj && p.di == -di && p.dj == -dj; })();
         if (temPorta) continue;
         const x = cx(i) + di * 5, z = cz(j) - dj * 5, n = [-di, dj], r = Math.random();
+        // praças: máquinas, plantas e cartazes, sem armários
+        if (naPraca) { if (r < 0.2) K.maquina(Math.random() < 0.5 ? 'BSODAMachine' : 'ZestyMachine', x + n[0] * 1.2, z + n[1] * 1.2, n); else if (r < 0.5) K.enfeite('Plant', x + n[0] * 1.5, z + n[1] * 1.5); else if (r < 0.75) K.naParede(POST[rndInt(0, POST.length - 1)], x, z, n); continue; }
         if (r < 0.22) K.armarios(x - Math.abs(n[1]) * 4, z - Math.abs(n[0]) * 4, x + Math.abs(n[1]) * 4, z + Math.abs(n[0]) * 4, n);
         else if (r < 0.32) K.naParede(POST[rndInt(0, POST.length - 1)], x, z, n);
         else if (r < 0.40 && c[j + dj]?.[i + di] === 0) K.naParede('Window', x, z, n);
@@ -378,11 +413,24 @@
     }
   }
 
-  J.geraMapa = gera;
+  function valida(E) {
+    const mu = new M.Mundo(E);
+    let x0 = 1e9, z0 = 1e9, x1 = -1e9, z1 = -1e9;
+    for (const s of E.segs) { x0 = Math.min(x0, s.a[0], s.b[0]); x1 = Math.max(x1, s.a[0], s.b[0]); z0 = Math.min(z0, s.a[1], s.b[1]); z1 = Math.max(z1, s.a[1], s.b[1]); }
+    const N = new M.Nav(mu, [x0 - 5, z0 - 5, x1 + 5, z1 + 5]);
+    const pl = E.esp.find((e) => e.s == 'PlayerScript').pos;
+    const alvos = E.ronda.concat(E.rondaCorr || []);
+    for (const s of E.spr) if ((s.n == '_nbSprite' && /Notebooks\//.test(s.pai)) || /Pickup_/.test(s.pai)) alvos.push([s.M[12], s.M[14]]);
+    for (const e of E.esp) if (e.s == 'EntranceScript') alvos.push([e.pos[0], e.pos[2]]);
+    return alvos.every((a) => N.caminho(pl[0], pl[2], a[0], a[1]).length);
+  }
+  J.geraMapa = gera; J.validaMapa = valida;
   // no Beta, com o recurso ligado, troca a escola original por uma gerada
   J.ganchos.monta.unshift((E, _J, modo) => {
     if (modo != 'beta' || !(J.betaFeat && J.betaFeat.mapa)) return;
-    const novo = gera(J.Ebase, 7);
+    // gera e confere com a navegação de verdade: tudo (cadernos, itens, saídas, ronda) tem que ter caminho
+    let novo = null;
+    for (let k = 0; k < 8 && !novo; k++) { const e = gera(J.Ebase, 7); if (e && valida(e)) novo = e; }
     if (!novo) return;
     for (const k of Object.keys(E)) delete E[k];
     Object.assign(E, novo);
