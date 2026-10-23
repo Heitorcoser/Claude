@@ -21,7 +21,7 @@ export default async function (p, out) {
   await p.evaluate(() => { const b = Jogo.G.npcs.baldi; Jogo.G.p.x = b.x; Jogo.G.p.z = b.z + 40; Jogo.G.p.yaw = 0; });
   await p.waitForTimeout(1500);
   await p.screenshot({ path: out + '/b_baldi.png' });
-  for (let k = 0; k < 6; k++) { await p.waitForTimeout(2000); const e = await p.evaluate(() => ({ d: Math.hypot(Jogo.G.npcs.baldi.x - Jogo.G.p.x, Jogo.G.npcs.baldi.z - Jogo.G.p.z).toFixed(1), fim: Jogo.G.fim, cam: Jogo.G.npcs.baldi.cam.length })); console.log('baldi', JSON.stringify(e)); if (e.fim) break; }
+  for (let k = 0; k < 12; k++) { await p.waitForTimeout(2000); const e = await p.evaluate(() => ({ d: Math.hypot(Jogo.G.npcs.baldi.x - Jogo.G.p.x, Jogo.G.npcs.baldi.z - Jogo.G.p.z).toFixed(1), fim: Jogo.G.fim, cam: Jogo.G.npcs.baldi.cam.length })); console.log('baldi', JSON.stringify(e)); if (e.fim) break; }
   await p.waitForTimeout(2500);
   await p.screenshot({ path: out + '/b_fim.png' });
 }

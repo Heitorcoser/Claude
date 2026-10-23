@@ -266,7 +266,7 @@
     if (F.reflex !== false) {
       const casa = J.E.clinica || J.ronda(true);
       N.reflex = Object.assign(J.Agente('Dr. Reflex', casa[0], casa[1], 9), {
-        spr: npcSprite(IMG('reflex'), 1.9), oy: 4.3, estado: 'anda', dir: 0, pausa: 0, cool: 15, fala: null, t: 0, casa,
+        spr: npcSprite(IMG('reflex'), 3.6), oy: 4.25, estado: 'anda', dir: 0, pausa: 0, cool: 15, fala: null, t: 0, casa, // oy: pés no chão (a imagem tem margem embaixo)
         ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
         diz(n, forca) { if (forca) M.para(this.fala); if (forca || !this.fala || this.fala.fim) this.fala = M.som(SOM('DrR_' + n), { de: this, alcance: 110 }); },
         vagar() { const r = corredor(); this.vai(r[0], r[1]); },
@@ -337,7 +337,7 @@
     if (F.cloudy !== false) {
       const c0 = corredor();
       N.cloudy = Object.assign(J.Agente('Cloudy Copter', c0[0], c0[1], 8), {
-        spr: npcSprite(IMG('cloudy'), 1.6), oy: 6, sopra: 0, prox: M.rnd(8, 15), dirV: [1, 0], alcance: 0, som: null, t: 0, solido: 0,
+        spr: npcSprite(IMG('cloudy'), 2.6), oy: 6, sopra: 0, prox: M.rnd(8, 15), dirV: [1, 0], alcance: 0, som: null, t: 0, solido: 0,
         ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
         vagar() { const r = corredor(); this.vai(r[0], r[1]); },
         tique(dt) {
@@ -391,7 +391,7 @@
     if (F.test !== false) {
       const t0 = corredor();
       N.test = Object.assign(J.Agente('The Test', t0[0], t0[1], 0), {
-        spr: npcSprite(IMG('test'), 2.2), oy: 5.2, olhado: 0, visto: false, som: null, morto: false, rapido: 0, explosao: null, solido: 0,
+        spr: npcSprite(IMG('test'), 2.5), oy: 4.85, olhado: 0, visto: false, som: null, morto: false, rapido: 0, explosao: null, solido: 0,
         ativa() { this.ativo = true; this.spr.visible = true; this.muda(); },
         // vai para um corredor longe da vista
         muda() { for (let k = 0; k < 20; k++) { const r = corredor(); if (Math.hypot(r[0] - G.p.x, r[1] - G.p.z) > 40) { this.x = r[0]; this.z = r[1]; break; } } },

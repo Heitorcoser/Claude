@@ -48,7 +48,7 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - O HUD fica acima dos controles de toque (z-index 7) para os espaços de item receberem o toque.
 - Dr. Reflex: nasce na clínica (`E.clinica`: laboratório da ala, sala especial do mapa aleatório). Teste de reflexo no próprio sprite (toque/raycast na mão com o círculo, `J.toqueMundo`). O jogador fica livre; se sair do teste ele vai buscar o martelo na clínica e volta para esmagar.
 - Cloudy Copter: vento de 14,5 (andando contra você volta, correndo contra avança devagar).
-- Jogador criança: `ALTURA` 3,6 (olhos) e `RAIO` 1,5 em `jogo.js`.
+- Jogador criança: `ALTURA` 4,5 (olhos, acima das mesas) e `RAIO` 1,7 em `jogo.js`. BSODA: jato grande (escala 9) a `BSODA_VEL` 12. Dr. Reflex (3,6, oy 4,25) e The Test (2,5, oy 4,85) com os pés no chão.
 - Playtime: fala com intervalo (`diz`), contagem "3, 2, 1, PULE!" antes da corda; 1st Prize e Dr. Reflex ignoram o jogador enquanto ele pula corda (`test/playtime.mjs`).
 - Mapa aleatório: móveis só entram se couberem inteiros na sala (`cabe`/`poe` em `mobilia`); cadernos ficam em cima de uma carteira (`s.mesas`).
 - Mapa aleatório: só têm porta as salas com caderno, diretoria, professores, clínica e o armário do Gotta Sweep; cantina e biblioteca ficam abertas; as outras salas viram parede (`s.fechada`). Porta por tipo: aula `Door_0` (99), diretoria `PrincipalDoor_0`, professores `FacultyDoor_0`, clínica `DoctorDoor_0`, armário `SuppliesDoor_0` (o `kit.mi` cria o material). Na escola original a porta da diretoria também vira "Principal".

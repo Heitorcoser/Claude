@@ -569,15 +569,16 @@
   }
   function fita(o) { if (o.tipo == 'fita') troca(o.m, 'Texture2D/SchoolHouse/PickUps/TapePlayer/TapePlayerClosed.png'); M.som('Sounds/Items/AntiHearing', { de: o }); G.npcs.baldi.surdo = 30; G.npcs.baldi.vagar(); }
   function despertador() {
-    const p = G.p, m = sprite('Texture2D/SchoolHouse/PickUps/AlarmClockItem.png', 0.5, 0.5);
+    const p = G.p, m = sprite('Texture2D/SchoolHouse/PickUps/AlarmClockItem.png', 1.2, 1.2);
     const o = { x: p.x, z: p.z, m, t: 30, vida: 35 };
     m.position.set(p.x, 1, p.z); G.relogios = (G.relogios || []).concat(o);
     o.tic = M.som('Sounds/Items/clocktick', { de: o, loop: true, vol: 0.6 });
   }
   function soltaBsoda() {
-    const p = G.p, m = sprite('Texture2D/SchoolHouse/PickUps/ItemDrop/BSODA_Spray.png', 2, 2);
-    const o = { x: p.x, z: p.z, vx: -Math.sin(p.yaw) * 25, vz: -Math.cos(p.yaw) * 25, vida: 3, m };
-    m.position.set(o.x, 4, o.z); G.bsodas = (G.bsodas || []).concat(o);
+    // o jato ocupa quase o corredor todo e anda devagar (como no jogo original)
+    const p = G.p, m = sprite('Texture2D/SchoolHouse/PickUps/ItemDrop/BSODA_Spray.png', 9, 9);
+    const o = { x: p.x, z: p.z, vx: -Math.sin(p.yaw) * BSODA_VEL, vz: -Math.cos(p.yaw) * BSODA_VEL, vida: 10, m };
+    m.position.set(o.x, 3.6, o.z); G.bsodas = (G.bsodas || []).concat(o);
   }
   async function teleporte() {
     const n = M.rndInt(12, 16); let t = 0.2;
@@ -723,8 +724,8 @@
   }
 
   /* ---------- jogador ---------- */
-  // o jogador é uma criança: olhos a 3,6 do chão (o teto fica a 10) e corpo de raio 1,5
-  const ALTURA = 3.6, RAIO = 1.5;
+  // o jogador é uma criança: olhos a 4,5 do chão (acima das mesas; o teto fica a 10) e corpo de raio 1,7
+  const ALTURA = 4.5, RAIO = 1.7, BSODA_VEL = 12;
   function movimenta(dt) {
     const p = G.p, k = ent.teclas;
     let f = ent.mz, s = ent.mx;
@@ -843,9 +844,10 @@
     while (G.acum >= FIXO) { G.acum -= FIXO; for (const n of Object.values(G.npcs)) if (n.ativo) n.fixo(FIXO); }
     // BSODA e despertadores
     for (const b of G.bsodas || []) {
-      b.vida -= dt; b.x += b.vx * dt; b.z += b.vz * dt; b.m.position.set(b.x, 4, b.z);
-      if (mundo.raio(b.x - b.vx * dt, b.z - b.vz * dt, b.vx / 25, b.vz / 25, 25 * dt + 1) < 25 * dt + 1) b.vida = 0;
-      for (const n of Object.values(G.npcs)) if (n.ativo && dist(n, b) < 3) { n.empurro = 1; n.ex = b.vx; n.ez = b.vz; }
+      b.vida -= dt; b.x += b.vx * dt; b.z += b.vz * dt; b.m.position.set(b.x, 3.6, b.z);
+      const passo = BSODA_VEL * dt + 1;
+      if (mundo.raio(b.x - b.vx * dt, b.z - b.vz * dt, b.vx / BSODA_VEL, b.vz / BSODA_VEL, passo) < passo) b.vida = 0;
+      for (const n of Object.values(G.npcs)) if (n.ativo && dist(n, b) < 4) { n.empurro = 0.5; n.ex = b.vx * 1.6; n.ez = b.vz * 1.6; }
       if (b.vida <= 0) cena.remove(b.m);
     }
     G.bsodas = (G.bsodas || []).filter((b) => b.vida > 0);
