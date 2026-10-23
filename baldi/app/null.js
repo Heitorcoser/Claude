@@ -112,7 +112,7 @@
   J.toqueMundo = (sx, sy, camera) => {
     const G = J.G, B = G && G.null;
     if (B && B.segurando) {
-      const p = G.p, dx = -Math.sin(p.yaw), dz = -Math.cos(p.yaw);
+      const p = G.p, y = J.camera.rotation.y, dx = -Math.sin(y), dz = -Math.cos(y); // para onde a câmera olha (também olhando para trás)
       const m = J.sprite(B.segurando, 2, 2);
       B.voo.push({ x: p.x + dx * 2, z: p.z + dz * 2, dx, dz, vida: 2, m });
       B.segurando = null; mostraNaMao(null);
