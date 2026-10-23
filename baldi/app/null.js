@@ -46,7 +46,7 @@
     spr.position.set(nul.x, nul.oy, nul.z);
     G.npcs.null = nul;
     G.null = { fase: op.direto ? 'luta' : 'intro', t: 0, nul, objs: [], barreiras: [], segurando: null, voo: [], proxObj: 1, proxBarreira: 14, proxFala: 18, falas: 0, musica: null };
-    if (op.direto) { G.null.espera = 3; G.null.musica = M.som(SOM('Mus_boss_start'), { vol: 0.7 }); G.null.loopEm = 7.6; for (let k = 0; k < 3; k++) novoObjeto(G, G.null); }
+    if (op.direto) { G.null.espera = 3; G.null.musica = M.som(SOM('Mus_boss_start'), { vol: 0.7 }); G.null.loopEm = 7.6; for (let k = 0; k < 4; k++) novoObjeto(G, G.null, 6, 30); }
     else { J.aviso('???', 2); G.null.falaIntro = M.som(SOM('Null_PreBoss_Start'), { de: nul, alcance: 400 }); }
     document.body.classList.add('nullGlitch');
   };
@@ -86,7 +86,13 @@
       J.evento(`NULL  ${nul.acertos}/${ACERTOS}`);
     }
     // objetos flutuantes para jogar
-    if ((B.proxObj -= dt) <= 0) { B.proxObj = M.rnd(3, 6); if (B.objs.length < 7) novoObjeto(G, B); }
+    if ((B.proxObj -= dt) <= 0) {
+      // os longes somem (a luta acontece perto de você); com poucos por perto, aparecem mais rápido
+      for (const o of B.objs.filter((o) => Math.hypot(o.x - p.x, o.z - p.z) > 70 || noPorao(o.x) != noPorao(p.x))) { J.cena.remove(o.m); B.objs.splice(B.objs.indexOf(o), 1); }
+      const pertos = B.objs.filter((o) => Math.hypot(o.x - p.x, o.z - p.z) < 35).length;
+      B.proxObj = pertos < 5 ? 0.7 : M.rnd(2.5, 4);
+      if (B.objs.length < 12) novoObjeto(G, B, 8, pertos < 2 ? 25 : 40);
+    }
     for (const o of B.objs) o.m.position.y = 3 + Math.sin(B.t * 2 + o.x) * 0.4;
     if (!B.segurando) {
       const o = B.objs.find((o) => Math.hypot(o.x - p.x, o.z - p.z) < 3.5);
@@ -135,13 +141,22 @@
     return de;
   }
 
-  function novoObjeto(G, B) {
-    const p = G.p, base = noPorao(p.x) ? J.E.porao.pontos : J.E.ronda.concat(J.E.rondaCorr || []), l = base.filter((r) => { const d = Math.hypot(r[0] - p.x, r[1] - p.z); return d > 12 && d < 70; });
-    const r = l[M.rndInt(0, l.length - 1)] || J.ronda(false);
-    const tex = OBJETOS[M.rndInt(0, OBJETOS.length - 1)], m = J.sprite(tex, 2, 2);
-    const x = r[0] + M.rnd(-2, 2), z = r[1] + M.rnd(-2, 2);
-    m.position.set(x, 3, z);
-    B.objs.push({ x, z, m, tex });
+  // objeto novo perto do jogador, em qualquer lugar onde dá para andar (corredor, sala, porão), com caminho até ele
+  function novoObjeto(G, B, perto = 10, longe = 40) {
+    const p = G.p, N = J.nav, nul = B.nul;
+    for (let k = 0; k < 40; k++) {
+      const ang = Math.random() * Math.PI * 2, d = M.rnd(perto, longe);
+      const [i, j] = N.cel(p.x + Math.sin(ang) * d, p.z + Math.cos(ang) * d);
+      if (!N.ok(i, j)) continue;
+      const x = N.x0 + (i + 0.5) * 2.5, z = N.z0 + (j + 0.5) * 2.5;
+      if (noPorao(x) != noPorao(p.x) || Math.hypot(x - nul.x, z - nul.z) < 10 || B.objs.some((o) => Math.hypot(o.x - x, o.z - z) < 8)) continue;
+      if (!N.caminho(p.x, p.z, x, z).length) continue;
+      const tex = OBJETOS[M.rndInt(0, OBJETOS.length - 1)], m = J.sprite(tex, 2, 2);
+      m.position.set(x, 3, z);
+      B.objs.push({ x, z, m, tex });
+      return true;
+    }
+    return false;
   }
   function mostraNaMao(tex) {
     let el = $('naMao');

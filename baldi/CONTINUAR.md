@@ -64,7 +64,7 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Botão de olhar para trás (`#bTras`, ícone `Mirror.png` do Baldi de celular; Espaço no PC fora da corda): segurando, a câmera vira 180°; os sprites viram para a câmera (`camera.rotation.y`). Teste: `test/tras.mjs`.
 - Versão no título: `python3 tools/titulo.py 1.10` escreve "Modded v1.10" no lugar do "V1.4.3" (parte de `tools/title_original.png`). Rodar a cada versão nova, junto com o `versionName` do manifesto.
 - Visual do porão como o Baldi's Basement do Classic Remastered: parede de tábuas (`beta/porao/parede.png`, a SaloonWall do Baldi's Basics Plus), carpete bege (`chao.png`, o Carpet do jogo recolorido), teto amarelado (Ceiling com `cor`), lâmpadas azuis penduradas (`lampada.png`), neblina marrom. A porta misteriosa do porão (`PoraoMysteryDoor_0/80`) tem a madeira em volta no lugar dos tijolos; `kit.porta` aceita a parede fina como último argumento.
-- Luta do Null no porão: `alvoNull` faz ele ir até a escada do lado dele e passar para o outro (porão ↔ escola); `E.porao.pontos` (corredores do labirinto) recebem objetos para jogar quando o jogador está lá. Teste: `test/porao2.mjs`.
+- Luta do Null no porão: `alvoNull` faz ele ir até a escada do lado dele e passar para o outro (porão ↔ escola); Objetos para jogar (`novoObjeto`): aparecem a 8-40 de você em qualquer célula livre da navegação com caminho (corredor, sala ou porão, do mesmo lado da escada), longe do Null; os muito longes somem; com menos de 5 por perto aparece um a cada 0,7 s (máx. 12). Testes: `test/porao2.mjs`, `test/objetos.mjs`.
 - Em Android 12 ou menor as notificações já vêm ligadas: lá a tela do Null aparece direto depois do 1º discurso.
 
 ## Ideias para as próximas versões
