@@ -495,6 +495,10 @@
   $('bUsa').addEventListener('pointerdown', () => usaItem());
   $('bToca').addEventListener('pointerdown', () => interage());
   $('bPausa').addEventListener('pointerdown', () => pausa(true));
+  // olhar para trás (como o Mirror do Baldi de celular): segurando, a câmera vira 180°
+  const tras = (on) => (e) => { e.preventDefault(); ent.tras = on; $('bTras').classList.toggle('on', on); };
+  $('bTras').addEventListener('pointerdown', tras(true));
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('bTras').addEventListener(ev, tras(false));
   $('bPulo').addEventListener('pointerdown', () => pula());
   document.querySelectorAll('.slot').forEach((s) => s.addEventListener('pointerdown', (e) => { e.stopPropagation(); G.sel = +s.dataset.s; atualizaHud(); }));
   addEventListener('keydown', (e) => {
@@ -895,11 +899,12 @@
     const p = G.p;
     camera.position.set(p.x, ALTURA + p.pulo, p.z);
     // um desvio mínimo evita um defeito de desenho quando a câmera fica exatamente alinhada às paredes
-    camera.rotation.set(0, p.yaw + 0.0001, 0, 'YXZ');
+    const atras = ent.tras || (ent.teclas.Space && !p.corda); // Espaço também olha para trás (fora da corda)
+    camera.rotation.set(0, p.yaw + 0.0001 + (atras ? Math.PI : 0), 0, 'YXZ');
     for (const n of Object.values(G.npcs)) { if (n.spr) { n.spr.position.set(n.x, n.oy, n.z); if (n.anima && n.spr.visible) n.anima(); } }
     if (G.tutor && G.tutor.visible) { troca(G.tutor, 'Texture2D/CharacterSprites/Baldi/Baldi_Wave' + String(Math.floor(G.t * 30) % 100).padStart(4, '0') + '.png'); }
     for (const o of G.objs) if (o.tipo == 'item' && o.m && o.m.visible) o.m.position.y = o.y0 + Math.sin(G.t * 2 + o.x) * 0.25;
-    for (const s of sprites) s.rotation.y = p.yaw;
+    for (const s of sprites) s.rotation.y = camera.rotation.y; // de frente para a câmera (também olhando para trás)
     render.render(cena, camera);
   }
 
