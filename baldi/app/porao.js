@@ -35,7 +35,7 @@
   const FALA2 = ['NULL: Ahá! Seu bobo!', 'NULL: Você achou mesmo que conseguiria vencer isso?', 'NULL: Não, não, não.', 'NULL: Eu fechei a última saída.', 'NULL: Não tem como você ganhar. Isso não deveria acontecer!', 'NULL: Não há NADA que você possa fazer agora!', 'NULL: Feche o jogo... e NUNCA volte.', 'NULL: Por favor! Só POR FAVOR!', 'NULL: Só vá embora...', 'NULL: PARE!', 'NULL: Me escute!'];
   const FALA3 = ['NULL: Hehehe... Tá bom, tá bom! Sabe de uma coisa?', 'NULL: Você VAI se arrepender disso.', 'NULL: AAAAAAAAAHHHHHHH!!!'];
 
-  const FOG_NULL = new THREE.Fog(0x000000, 2, 30), FOG_SALA = new THREE.Fog(0x000000, 1, 13), FOG_PORAO = new THREE.Fog(0x000000, 4, 55);
+  const FOG_NULL = new THREE.Fog(0x000000, 2, 30), FOG_SALA = new THREE.Fog(0x000000, 1, 13), FOG_PORAO = new THREE.Fog(0x1c140a, 8, 75);
 
   // ---------- começo da partida ----------
   J.ganchos.inicia.push((G) => {

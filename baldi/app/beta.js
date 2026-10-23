@@ -59,9 +59,9 @@
       E.segs.push(Object.assign({ a, b, y: extra.ent ? [10, 20] : [0, 10] }, extra.ent ? { ent: extra.ent } : {}));
     };
     // porta de 5 (ou 10, vai-e-vem) no meio de uma parede de 10, com os dois pedaços de parede fina
-    const porta = (ex, ez, n, mat = 'Door_0', tipo = 'porta', pai = 'Gerado') => {
+    const porta = (ex, ez, n, mat = 'Door_0', tipo = 'porta', pai = 'Gerado', parede = 'WhiteBrickWallThin') => {
       const larg = tipo == 'vaivem' ? 10 : 5, eixoX = n[0] == 0;
-      if (larg < 10) for (const k of [-3.75, 3.75]) muro(eixoX ? ex + k : ex, eixoX ? ez : ez + k, 2.5, n, 'WhiteBrickWallThin', true);
+      if (larg < 10) for (const k of [-3.75, 3.75]) muro(eixoX ? ex + k : ex, eixoX ? ez : ez + k, 2.5, n, parede, true);
       const Mq = (k) => quadV(ex + k * n[0] * 0.02, ez + k * n[1] * 0.02, larg, [k * n[0], k * n[1]]);
       const h = larg / 2, ba = eixoX ? [ex - h, ez] : [ex, ez - h], bb = eixoX ? [ex + h, ez] : [ex, ez + h];
       E.portas.push({ tipo, pos: [ex, 5, ez], quads: [{ M: Mq(1), mat: mi(mat), lado: '_DoorIn' }, { M: Mq(-1), mat: mi(mat), lado: '_DoorOut' }], bar: { a: ba, b: bb, y: [0, 10] }, pai });

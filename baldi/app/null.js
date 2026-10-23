@@ -72,7 +72,7 @@
       if (B.loopEm > 0 && (B.loopEm -= dt) <= 0) B.musica = M.som(SOM('Mus_boss_loop'), { loop: true, vol: 0.7 });
       if (B.espera > 0) { B.espera -= dt; nul.anda(dt, 0); } // luta direta: um tempinho para correr
       else if (nul.tonto > 0) { nul.tonto -= dt; nul.anda(dt, 0); }
-      else { nul.vai(p.x, p.z); nul.anda(dt, nul.vel); }
+      else { const [ax, az] = alvoNull(G, B); nul.vai(ax, az); nul.anda(dt, nul.vel); }
       // falas de vez em quando
       if ((B.proxFala -= dt) <= 0) {
         B.proxFala = M.rnd(14, 24);
@@ -121,8 +121,22 @@
     return toqueAntes ? toqueAntes(sx, sy, camera) : false;
   };
 
+  // porão: ele desce e sobe pela escada atrás do jogador
+  const noPorao = (x) => !!(J.E.porao && x > J.E.porao.OX - 6);
+  function alvoNull(G, B) {
+    const p = G.p, nul = B.nul, P = J.E.porao;
+    if (!P || noPorao(p.x) == noPorao(nul.x)) return [p.x, p.z];
+    const [de, para] = noPorao(nul.x) ? [P.entrada, P.escada] : [P.escada, P.entrada];
+    if (Math.hypot(nul.x - de[0], nul.z - de[1]) < 2.5) {
+      nul.x = para[0]; nul.z = para[1]; nul.cam = []; nul.dest = null;
+      M.som('Sounds/Doors/door_close', { de: nul, vol: 0.8 });
+      return [p.x, p.z];
+    }
+    return de;
+  }
+
   function novoObjeto(G, B) {
-    const p = G.p, l = J.E.ronda.concat(J.E.rondaCorr || []).filter((r) => { const d = Math.hypot(r[0] - p.x, r[1] - p.z); return d > 12 && d < 70; });
+    const p = G.p, base = noPorao(p.x) ? J.E.porao.pontos : J.E.ronda.concat(J.E.rondaCorr || []), l = base.filter((r) => { const d = Math.hypot(r[0] - p.x, r[1] - p.z); return d > 12 && d < 70; });
     const r = l[M.rndInt(0, l.length - 1)] || J.ronda(false);
     const tex = OBJETOS[M.rndInt(0, OBJETOS.length - 1)], m = J.sprite(tex, 2, 2);
     const x = r[0] + M.rnd(-2, 2), z = r[1] + M.rnd(-2, 2);

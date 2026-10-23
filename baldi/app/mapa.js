@@ -493,18 +493,22 @@
     }
     const X = (i) => OX + i * T + 5, Z = (j) => -(j * T + 5);
     const esp = (i, j) => c[j]?.[i] || 0;
+    // texturas do porão (como o Baldi's Basement do Classic Remastered): tábuas de madeira, carpete bege, teto amarelado
+    const mat = (n, tex, rep, cor = [0.96, 0.96, 0.96, 1]) => { if (!E.mats.some((m) => m.n === n)) E.mats.push({ n, tex, rep, off: [0, 0], cor }); return n; };
+    const PAREDE = mat('Porao_Parede', 'beta/porao/parede.png', [1, 1]), PAREDE_FINA = mat('Porao_ParedeFina', 'beta/porao/parede.png', [0.25, 1]);
+    const CHAO = mat('Porao_Chao', 'beta/porao/chao.png', [2, 2]), TETO = mat('Porao_Teto', 'Texture2D/SchoolHouse/Ceiling.png', [1, 1], [0.95, 0.8, 0.42, 1]);
     for (let j = 0; j < h; j++) for (let i = 0; i < w + 3; i++) {
       const e = esp(i, j); if (!e) continue;
-      E.objs.push({ m: 'quad', mat: [K.mi('Dark_TileFloor')], M: [0, 0, -T, 0, -T, 0, 0, 0, 0, 1, 0, 0, X(i), 0, Z(j), 1] });
-      E.objs.push({ m: 'quad', mat: [K.mi('Dark_Ceiling')], M: [T, 0, 0, 0, 0, 0, -T, 0, 0, -1, 0, 0, X(i), 10, Z(j), 1] });
+      E.objs.push({ m: 'quad', mat: [K.mi(CHAO)], M: [0, 0, -T, 0, -T, 0, 0, 0, 0, 1, 0, 0, X(i), 0, Z(j), 1] });
+      E.objs.push({ m: 'quad', mat: [K.mi(TETO)], M: [T, 0, 0, 0, 0, 0, -T, 0, 0, -1, 0, 0, X(i), 10, Z(j), 1] });
       for (const [di, dj] of D4) {
         const v = esp(i + di, j + dj);
         if (v === e) continue;
         const ex = X(i) + di * 5, ez = Z(j) - dj * 5, n = [-di, dj];
         if (v && !(di > 0 || dj > 0)) continue;
         const ehPorta = sala && ((e == 1 && v == 2 && i == sala.porta[0] && j == sala.porta[1]) || (e == 2 && v == 1 && i + di == sala.porta[0] && j + dj == sala.porta[1]));
-        if (ehPorta) K.porta(ex, ez, n, 'MysteryDoor_0', 'porta', 'Porao/secreta');
-        else K.muro(ex, ez, T, n, 'Dark_WhiteBrickWall', !!v);
+        if (ehPorta) K.porta(ex, ez, n, 'PoraoMysteryDoor_0', 'porta', 'Porao/secreta', PAREDE_FINA);
+        else K.muro(ex, ez, T, n, PAREDE, !!v);
       }
     }
     // enfeites: quadrinhos nas paredes de alguns cruzamentos
@@ -516,7 +520,13 @@
     // escadas: uma no beco da escola (desce) e outra no começo do labirinto (sobe)
     const desenho = (x, z) => ({ n: 'Escada', pai: 'Environment/Porao/Escada', tex: 'beta/null/escada.png', ppu: 100, piv: [0.5, 0.5], a: 1, M: [4, 0, 0, 0, 0, 4, 0, 0, 0, 0, 1, 0, x, 2.6, z, 1] });
     E.spr.push(desenho(X(0), Z(0)), desenho(escada[0], escada[1]));
-    E.porao = { OX, entrada: [X(0), Z(0)], escada };
+    // lâmpadas azuis penduradas no teto dos cruzamentos
+    for (let j = 0; j < h; j += 2) for (let i = 0; i < w; i += 2) if (esp(i, j) == 1 && (i + j) % 4 == 0)
+      E.spr.push({ n: 'Lampada', pai: 'Environment/Porao/Lampada', tex: 'beta/porao/lampada.png', ppu: 100, piv: [0.5, 0.5], a: 1, M: [3, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1, 0, X(i), 8.5, Z(j), 1] });
+    // pontos do labirinto (para os objetos da luta do Null aparecerem aqui também)
+    const pontos = [];
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (esp(i, j) == 1) pontos.push([X(i), Z(j)]);
+    E.porao = { OX, entrada: [X(0), Z(0)], escada, pontos };
     if (sala) {
       const cxs = X(sala.i0) + 5, czs = Z(sala.j0) - 5;
       K.movel('mesaProf', cxs, czs, 0);

@@ -32,7 +32,8 @@ export default async function (p, out) {
   console.log('discurso1:', await p.evaluate(() => [Jogo.G.discurso1, document.getElementById('aviso').textContent]));
   // pula o fim do discurso (para a fala) e espera o jogo "travar" e recarregar
   await p.evaluate(() => Motor.paraTudo());
-  await p.waitForTimeout(6500);
+  await p.waitForTimeout(4000);
+  await p.waitForFunction(() => window.Jogo && document.getElementById('titulo') && !Jogo.G, null, { timeout: 30000 }).catch(() => {});
   console.log('depois de recarregar:', await p.evaluate(() => localStorage.getItem('baldiNull')));
   // com as notificações (simuladas) a tela inicial muda
   await p.evaluate(() => { Jogo.forcaNotif = true; Jogo.atualizaTitulo(); });

@@ -24,6 +24,9 @@ Sprites e vozes do **Dr. Reflex**, do **Cloudy Copter** e do **The Test**, baixa
 | Texture2D/SchoolHouse/DoorTextures/MysteryDoor_* | porta misteriosa da sala secreta (Baldi's Basics Plus) |
 | Texture2D/.../Posters/MapExits/* | cartazes de saída do próprio jogo, usados nas portas bugadas |
 
+| beta/porao/parede.png | SaloonWall (Baldi's Basics Plus), parede do porão |
+| beta/porao/chao.png, lampada.png, DoorTextures/PoraoMysteryDoor_* | feitos para o porão a partir do Carpet e da MysteryDoor do jogo, imitando o Baldi's Basement (Classic Remastered) |
+
 ## Outro material (domínio público / CC0 / OFL)
 
 | Arquivo | Origem | Autor | Licença |
