@@ -168,10 +168,15 @@
       }
     }
   }
+  // trava (ou destrava) na navegação só as células em cima da porta (a linha da barreira), não o corredor em volta
   function trancaNav(d, on) {
     nav.trava = nav.trava || new Set();
-    const [i0, j0] = nav.cel(d.x, d.z);
-    for (let di = -2; di <= 2; di++) for (let dj = -2; dj <= 2; dj++) { const k = (j0 + dj) * nav.W + i0 + di; on ? nav.trava.add(k) : nav.trava.delete(k); }
+    const s = d.seg, [i0, j0] = nav.cel(Math.min(s.ax, s.bx) - 2, Math.min(s.az, s.bz) - 2), [i1, j1] = nav.cel(Math.max(s.ax, s.bx) + 2, Math.max(s.az, s.bz) + 2);
+    const vx = s.bx - s.ax, vz = s.bz - s.az, L2 = vx * vx + vz * vz || 1;
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const x = nav.x0 + (i + 0.5) * 2.5, z = nav.z0 + (j + 0.5) * 2.5, t = Math.max(0, Math.min(1, ((x - s.ax) * vx + (z - s.az) * vz) / L2));
+      if (Math.hypot(x - (s.ax + vx * t), z - (s.az + vz * t)) < 1.6) { const k = j * nav.W + i; on ? nav.trava.add(k) : nav.trava.delete(k); }
+    }
   }
 
   /* ---------- personagens ---------- */

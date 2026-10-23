@@ -52,6 +52,7 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Playtime: espera `ESPERA_PLAYTIME` (20 s) depois que a corda acaba, antes de pegar de novo (`test/playtime2.mjs`); fala com intervalo (`diz`), contagem "3, 2, 1, PULE!" antes da corda; 1st Prize e Dr. Reflex ignoram o jogador enquanto ele pula corda (`test/playtime.mjs`).
 - Mapa aleatório: móveis só entram se couberem inteiros na sala (`cabe`/`poe` em `mobilia`); cadernos ficam em cima de uma carteira (`s.mesas`).
 - Mapa aleatório: só têm porta as salas com caderno, diretoria, professores, clínica e o armário do Gotta Sweep; cantina e biblioteca ficam abertas; as outras salas viram parede (`s.fechada`). Porta por tipo: aula `Door_0` (99), diretoria `PrincipalDoor_0`, professores `FacultyDoor_0`, clínica `DoctorDoor_0`, armário `SuppliesDoor_0` (o `kit.mi` cria o material). Na escola original a porta da diretoria também vira "Principal".
+- Mapa aleatório como o clássico: o chunk da entrada tem pelo menos 2 salas de aula com os 2 primeiros cadernos e o Baldi; portas amarelas (vai-e-vem) em todas as saídas de corredor desse chunk, trancadas até o 2º caderno, com `DoorAudioTrigger` (o Baldi avisa). Como no Classic, a porta amarela trancada pelos 2 cadernos segura só o jogador; a trava amarela (item) segura todo mundo (`trancaNav`, só na linha da porta). Teste: `test/portoes.mjs`.
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 
 ## Ideias para as próximas versões

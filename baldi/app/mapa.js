@@ -75,7 +75,9 @@
     const praca = new Set(), lista = [], porLetra = {};
     const usados = {};
     for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
-      const op = VARIANTES.filter((v) => v.m === m[y][x]);
+      let op = VARIANTES.filter((v) => v.m === m[y][x]);
+      // o chunk da entrada (como no mapa clássico) precisa ter pelo menos 2 salas de aula para os 2 primeiros cadernos
+      if (x == sx && y == 0) op = op.filter((v) => aulasNoChunk(v.l) >= 2);
       // evita repetir o mesmo chunk muitas vezes
       op.sort((a, b) => (usados[a.nome] || 0) - (usados[b.nome] || 0) + rnd(-0.8, 0.8));
       const v = op[0]; usados[v.nome] = (usados[v.nome] || 0) + 1;
@@ -105,7 +107,20 @@
       const xs = s.cel.map((p) => p[0]), ys = s.cel.map((p) => p[1]);
       Object.assign(s, { i0: Math.min(...xs), i1: Math.max(...xs), j0: Math.min(...ys), j1: Math.max(...ys), area: s.cel.length });
     }
-    return { c, id, lista, saidas, praca, W, H };
+    // portas amarelas: em toda saída de corredor do chunk da entrada (menos a da escola), trancadas até o 2º caderno
+    const portoes = [];
+    const ox = 1 + sx * C, oy = 1;
+    if (m[0][sx] & 2) portoes.push({ i: ox + C - 1, j: oy + MEIO, n: [1, 0] });
+    if (m[0][sx] & 8) portoes.push({ i: ox, j: oy + MEIO, n: [1, 0] });
+    if (m[0][sx] & 4) portoes.push({ i: ox + MEIO, j: oy + C - 1, n: [0, 1] });
+    const zona = { i0: ox, i1: ox + C - 1, j0: oy, j1: oy + C - 1 };
+    return { c, id, lista, saidas, praca, W, H, portoes, zona };
+  }
+  // quantas salas de aula (letras de aula com pelo menos 6 quadrados) tem um chunk
+  function aulasNoChunk(l) {
+    const n = {};
+    for (const r of l) for (const ch of r) if ('aAeEgG'.includes(ch)) n[ch] = (n[ch] || 0) + 1;
+    return Object.values(n).filter((k) => k >= 6).length;
   }
   function conectado(c, W, H) {
     let ini = null, total = 0;
@@ -121,7 +136,8 @@
     return null;
   }
   function tenta(base, nCad) {
-    const { c, id, lista, saidas, praca, W, H } = montaChunks();
+    const { c, id, lista, saidas, praca, W, H, portoes, zona } = montaChunks();
+    const naZona = (s) => s.cel.every(([i, j]) => i >= zona.i0 && i <= zona.i1 && j >= zona.j0 && j <= zona.j1);
     const ehCorr = (i, j) => c[j]?.[i] == 1;
     // centro de um quadrado em coordenadas do jogo (x cresce para a direita, z diminui para o norte)
     const cx = (i) => i * T + 5, cz = (j) => -(j * T + 5);
@@ -159,7 +175,10 @@
     lista.filter((s) => s.tipo == 'especial').forEach((s) => (s.tipo = 'deposito'));
     const aulas = lista.filter((s) => s.tipo == 'aula' && !s.porta.vizinha);
     if (aulas.length < nCad + 1) return null;
-    const cadernos = embaralha(aulas.slice()).slice(0, nCad);
+    // 2 cadernos na área da entrada (antes das portas amarelas) e o resto no resto da escola, como no mapa clássico
+    const aulasZona = embaralha(aulas.filter(naZona)), aulasFora = embaralha(aulas.filter((s) => !naZona(s)));
+    if (aulasZona.length < 2 || aulasFora.length < nCad - 2) return null;
+    const cadernos = aulasZona.slice(0, 2).concat(aulasFora.slice(0, nCad - 2));
     // Só tem porta onde vale a pena entrar: salas com caderno, diretoria, professores, clínica do Dr. Reflex
     // e o armário do Gotta Sweep. Cantina e biblioteca ficam abertas (sem porta). As outras salas viram parede.
     const F = J.betaFeat || {};
@@ -204,6 +223,11 @@
         } else K.muro(ex, ez, T, n, 'WhiteBrickWall', !!v);
       }
     }
+    // portas amarelas (vai-e-vem) separando a área da entrada do resto da escola; o Baldi avisa quando você chega perto
+    portoes.forEach((g, k) => {
+      K.porta(cx(g.i), cz(g.j), g.n, 'SwingDoor0', 'vaivem', 'Gerado/portao');
+      E.gat.push({ n: 'DoorAudioTrigger' + (k ? ` (${k})` : ''), c: [cx(g.i), 5, cz(g.j)], h: [7, 5, 7], ang: 0 });
+    });
     // saídas: vestíbulo com a parede que sobe e desce, o gatilho e a placa de saída
     const nomes = ['EntranceSouth', 'EntranceNorth', 'EntranceWest', 'EntranceEast'];
     const placa = base.spr.find((s) => s.n == 'ExitSignSprite');
@@ -258,7 +282,7 @@
     while (pontosCorr.length < 16) pontosCorr.push(pontosCorr[pontosCorr.length % Math.max(1, pontosCorr.length)]);
     E.ronda = pontosCorr.slice(0, 16).concat(Object.values(rondaSala));
     E.rondaCorr = pontosCorr.slice(16);
-    enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca, saidas);
+    enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca, saidas, portoes, zona);
     const cl = abertas.find((s) => s.tipo == 'clinica'); if (cl) E.clinica = rondaSala[cl.n]; // casa do Dr. Reflex
 
     // ---------- jogador, personagens e itens ----------
@@ -272,7 +296,9 @@
       const sp = base.spr.find((s) => s.pai.startsWith('NPC/' + nome) && s.n != 'New Sprite');
       if (sp) E.spr.push(Object.assign({}, sp, { M: sp.M.slice(0, 12).concat([pos[0], sp.M[13], pos[1], 1]) }));
     };
-    coloca('Baldi', corrLonge(60));
+    const corrZona = corr.filter(([i, j]) => i >= zona.i0 && i <= zona.i1 && j >= zona.j0 && j <= zona.j1 && !portoes.some((g) => g.i == i && g.j == j)).map(([i, j]) => [cx(i), cz(j)]);
+    const baldiIni = corrZona.sort((a, b) => longe(b, ini) - longe(a, ini))[0];
+    coloca('Baldi', baldiIni && longe(baldiIni, ini) > 25 ? baldiIni : corrLonge(60));
     coloca('Principal of the Thing', [E.pontos.principalDetentionPoint[0], E.pontos.principalDetentionPoint[2]]);
     coloca('Playtime', corrLonge(50));
     coloca('Gotta Sweep', sweepSala && !sweepSala.fechada ? rondaSala[sweepSala.n] : corrLonge(40));
@@ -416,9 +442,9 @@
     }
   }
 
-  function enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca, saidas) {
+  function enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca, saidas, portoes, zona) {
     // perto das saídas o corredor fica limpo (o Baldi do tutorial acena logo na entrada)
-    const pertoSaida = (i, j) => saidas.some((s) => Math.abs(s.i - i) + Math.abs(s.j - j) <= 4);
+    const pertoSaida = (i, j) => saidas.some((s) => Math.abs(s.i - i) + Math.abs(s.j - j) <= 4) || portoes.some((g) => Math.abs(g.i - i) + Math.abs(g.j - j) <= 1);
     const ehCorr = (i, j) => c[j]?.[i] == 1;
     const POST = ['SchoolRulesPoster', 'SchoolAttention', 'BootsPoster', 'WD_NoSqueePoster', 'PhonePoster', 'ScissorsPoster', 'recyclefood', 'what', 'comic00', 'comic01'];
     let vaivem = 0;
@@ -431,7 +457,8 @@
       // porta vai-e-vem no meio de trechos retos, de vez em quando
       // (elas ficam trancadas até o 2º caderno: não podem separar nenhum pedaço da escola)
       const naPraca = praca.has(i + ',' + j);
-      if (!naPraca && reto && vaivem < 6 && Math.random() < 0.03 && !D4.some(([di, dj]) => ehSaida(i + di, j + dj)) && ((copia[j][i] = 3), conectado(copia, W, H) || ((copia[j][i] = 1), false))) {
+      const naZona = i >= zona.i0 && i <= zona.i1 && j >= zona.j0 && j <= zona.j1; // dentro da área da entrada não (os 2 primeiros cadernos ficam livres)
+      if (!naPraca && !naZona && reto && vaivem < 6 && Math.random() < 0.03 && !D4.some(([di, dj]) => ehSaida(i + di, j + dj)) && ((copia[j][i] = 3), conectado(copia, W, H) || ((copia[j][i] = 1), false))) {
         const [di, dj] = viz[0];
         K.porta(cx(i), cz(j), [di, -dj], 'SwingDoor0', 'vaivem', 'Gerado/vaivem'); // atravessada no corredor
         vaivem++;
