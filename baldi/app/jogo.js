@@ -562,7 +562,7 @@
     else if (id == 7) { despertador(); gasta(); }
     else if (id == 8) { const a = alvo(['porta'], 0.4); if (a && a.o.tipo != 'vaivem') { a.o.silencio = 4; M.som('Sounds/Items/can_spray'); gasta(); } }
     else if (id == 9) {
-      if (p.corda) { acabaCorda(); G.npcs.playtime.triste = 15; M.som('Characters/Playtime/PT_Sad', { de: G.npcs.playtime }); gasta(); }
+      if (p.corda) { acabaCorda(true); gasta(); } // tesoura corta a corda: ela fica triste e espera 20 s
       else { const a = alvo(['prize'], 0.3); if (a) { G.npcs.prize.louco = 15; gasta(); } }
     } else if (id == 10) { p.botas = 15; gasta(); aviso('Botas grandes: nada te empurra por 15s', 2); }
     else if (id == 11) { teleporte(); gasta(); }
@@ -697,12 +697,18 @@
     const p = G.p; p.corda = true; p.cordaPos = [p.x, p.z];
     // a Playtime recua 10 unidades para longe do jogador, como no jogo
     const d = Math.hypot(pt.x - p.x, pt.z - p.z) || 1, o = { x: pt.x + (pt.x - p.x) / d * 8, z: pt.z + (pt.z - p.z) / d * 8 };
-    mundo.resolve(o, 1); pt.x = o.x; pt.z = o.z; pt.cam = []; pt.jogaCool = 15;
+    mundo.resolve(o, 1); pt.x = o.x; pt.z = o.z; pt.cam = []; pt.jogaCool = 1e9; // espera conta só depois que a corda acaba
     Object.assign(corda, { pulos: 0, espera: 3, pos: 0, bateu: true, comecou: false, conta: 3.8 });
     $('corda').hidden = false; $('bPulo').hidden = false; $('pulos').textContent = '0/5';
     M.som('Characters/Playtime/PT_ReadyGo', { de: pt });
   }
-  function acabaCorda() { G.p.corda = false; $('corda').hidden = true; $('bPulo').hidden = true; }
+  // fim da corda (pulou os 5 ou saiu andando): a Playtime espera 20 s antes de chamar de novo
+  const ESPERA_PLAYTIME = 20;
+  function acabaCorda(fugiu) {
+    G.p.corda = false; $('corda').hidden = true; $('bPulo').hidden = true;
+    const pt = G.npcs.playtime; pt.jogaCool = ESPERA_PLAYTIME; pt.viu = false; pt.vagar();
+    if (fugiu) { pt.triste = ESPERA_PLAYTIME; pt.voz = 0; pt.diz('Sad', 10); }
+  }
   function pula() { const p = G.p; if (p.corda && p.pulo <= 0) p.vy = 5; }
   function tiqueCorda(dt) {
     const p = G.p, pt = G.npcs.playtime;
@@ -759,7 +765,7 @@
     // energia
     if (andou > 0.1) { if (corre) { p.est -= 10 * G.dif.gasto * dt; if (andou > 0.1 && p.varrendo <= 0 && p.abracando <= 0 && !J.correLiberado) culpa('running', 0.1); } if (p.est < 0 && p.est > -5) p.est = -5; }
     else if (p.est < 100) p.est += 10 * dt;
-    if (p.corda && Math.hypot(p.x - p.cordaPos[0], p.z - p.cordaPos[1]) >= 1) acabaCorda();
+    if (p.corda && Math.hypot(p.x - p.cordaPos[0], p.z - p.cordaPos[1]) >= 1) acabaCorda(true);
     p.culpa -= dt; p.varrendo -= dt; p.abracando -= dt; p.botas -= dt;
     $('aviso').hidden = !(p.est < 0) || G.avisoT > 0;
     if (p.est < 0 && !(G.avisoT > 0)) $('aviso').textContent = 'Você precisa descansar!';
