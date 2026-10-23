@@ -15,6 +15,9 @@ interno (o Unity não é usado). Código também em `Heitorcoser/Claude`, pasta 
 | `app/jogo.js` | Regras portadas dos scripts C#: jogador (andar 10, correr 16, energia), portas e portas vai-e-vem, cadernos e contas (conta impossível no 3º problema), itens 1 a 11, Baldi (tapa, raiva, ouvir), Diretor (culpa e detenção 15-99 s), Playtime (pular corda), Gotta Sweep, Arts and Crafters, 1st Prize (16 sprites de ângulo), Bully, modo final com as saídas, modo infinito. Tem ganchos `Jogo.ganchos.monta/inicia/tique/caderno`. |
 | `app/beta.js` | Modo Beta: tela de Beta Features (`J.betaFeat`), ala nova (`PLANTA`, `PORTAS`, `decora()`), `kit(E)` com as peças de montar mapa, personagens do Baldi's Basics Plus (Dr. Reflex com o teste de reflexo, Cloudy Copter com vento, The Test que mexe no tempo `G.escala`) e eventos (`EVENTOS`). |
 | `app/mapa.js` | Mapa aleatório por **chunks prontos** (`CHUNKS`: desenhos 9x9 feitos à mão, com saídas de corredor no meio dos lados). Os chunks são girados/espelhados e escolhidos para bater com uma grade de ligações (árvore + laços). Letras: c corredor, p praça, a/A/e/E aula, s/S especiais (diretoria, professores, clínica do Dr. Reflex, depósito), k cantina, b biblioteca. Cada sala do desenho precisa encostar num corredor. O jogo gera, confere com a navegação (`valida`) e tenta de novo se algo ficar sem caminho. Testes: `test/planta.mjs` (planta vista de cima), `test/muitos.mjs` (40 mapas). |
+| `app/null.js` | Bossfight do NULL (`J.chefaoNull(G, op)`): ele persegue, barreiras de PlaceFace, objetos flutuantes (banana, planta, globo) que o jogador pega e joga; 10 acertos vencem. `op.direto` começa a luta na hora. |
+| `app/porao.js` | Caminho até o NULL: porão (escada, neblina), sala secreta, fita verde no toca-fitas, 1º discurso, tela de título do Null, partida especial com portas bugadas, 2º discurso e a luta. Progresso em localStorage `baldiNull` (`{d1, d2}`). |
+| `app/tester.js` | Só no APK de tester (`TESTER=1 ./build.sh`): menu "Teste do Null" com atalhos (`J.testeNull` = sala, discurso1, portas, boss; `J.forcaNotif`; `J.forcaSecreta`). |
 | `app/escola.json` | Mapa gerado pelos scripts de `tools/` a partir da cena `School.unity`. |
 | `app/assets/` | Texturas e sons do jogo (convertidos), `beta/` com material novo (domínio público/CC0, ver `CREDITOS.md`), `fonts/`, `ui/`. |
 | `tools/` | `extrai.py` (lê a cena YAML do Unity), `malhas.py` (modelos .asset), `compacta.py` (gera `app/escola.json`), `assets.sh` (copia texturas e converte sons). |
@@ -30,7 +33,8 @@ python3 tools/malhas.py <Assets> escola.json app/malhas.json
 python3 tools/compacta.py escola.json app/escola.json
 tools/assets.sh <Assets>
 # APK
-./build.sh
+./build.sh            # BaldiModded.apk
+TESTER=1 ./build.sh   # BaldiNullTester.apk (outro pacote, instala junto)
 ```
 A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no zip, não no GitHub. Use sempre a mesma para o APK novo instalar por cima do antigo.
 
@@ -54,6 +58,9 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Mapa aleatório: só têm porta as salas com caderno, diretoria, professores, clínica e o armário do Gotta Sweep; cantina e biblioteca ficam abertas; as outras salas viram parede (`s.fechada`). Porta por tipo: aula `Door_0` (99), diretoria `PrincipalDoor_0`, professores `FacultyDoor_0`, clínica `DoctorDoor_0`, armário `SuppliesDoor_0` (o `kit.mi` cria o material). Na escola original a porta da diretoria também vira "Principal".
 - Mapa aleatório como o clássico: o chunk da entrada tem pelo menos 2 salas de aula com os 2 primeiros cadernos e o Baldi; portas amarelas (vai-e-vem) em todas as saídas de corredor desse chunk, trancadas até o 2º caderno, com `DoorAudioTrigger` (o Baldi avisa). Como no Classic, a porta amarela trancada pelos 2 cadernos segura só o jogador; a trava amarela (item) segura todo mundo (`trancaNav`, só na linha da porta). Teste: `test/portoes.mjs`.
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
+
+- Caminho do NULL (só Beta + mapa aleatório): a opção Porão só liga com o mapa aleatório. `geraPorao` (mapa.js) monta um labirinto escuro ao lado da escola, com escada num beco do corredor. Sala secreta com 35% de chance (porta `MysteryDoor_0`, mesa e fita verde, item 12). Fita verde no toca-fitas toca `fita_null` por 75 s; entrar na sala secreta nesse tempo chama o 1º discurso (Null_Demo, legendas em português, falso travamento e recarrega). Com `d1` salvo e as notificações do app ligadas (`window.Android.notificacoes()`, ponte `Ponte.java`; o app declara POST_NOTIFICATIONS mas nunca pede), o título vira o do Null (`body.telaNull`). Aí o Beta com mapa aleatório vira a partida especial: sem NPCs e sem cadernos, toda porta tocada vira cartaz de saída (`J.portaHook`), a porta certa (sala de aula longe) tem o Null: 2º discurso (Null_PreBoss_Intro), grito com tremor e `chefaoNull({direto:true})`. Testes: `test/porao.mjs`, `test/null2.mjs` (`JS='Jogo.testeNull="portas"'`), `test/tester.mjs`, `test/null.mjs`.
+- Em Android 12 ou menor as notificações já vêm ligadas: lá a tela do Null aparece direto depois do 1º discurso.
 
 ## Ideias para as próximas versões
 - Testes por modo: `FEAT='{"mapa":true}' EXTRA=$PWD/test/planta.mjs node test/ver.mjs beta /tmp` (mapa), `test/plus.mjs` (personagens novos), `test/betamenu.mjs`.

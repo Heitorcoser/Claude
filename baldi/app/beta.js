@@ -225,12 +225,12 @@
 
   /* ---------- tela de Beta Features ---------- */
   // padrão: tudo ligado menos o mapa aleatório; a escolha fica guardada no aparelho
-  J.betaFeat = { mapa: false, reflex: true, cloudy: true, test: true, eventos: true, ala: true };
+  J.betaFeat = { mapa: false, reflex: true, cloudy: true, test: true, eventos: true, ala: true, porao: false };
   try { Object.assign(J.betaFeat, JSON.parse(localStorage.getItem('baldiBeta') || '{}')); } catch (e) {}
   const marca = () => {
-    document.querySelectorAll('.feat').forEach((b) => { b.classList.toggle('on', !!J.betaFeat[b.dataset.f]); b.classList.toggle('off', b.dataset.f == 'ala' && J.betaFeat.mapa); });
+    document.querySelectorAll('.feat').forEach((b) => { b.classList.toggle('on', !!J.betaFeat[b.dataset.f]); b.classList.toggle('off', (b.dataset.f == 'ala' && J.betaFeat.mapa) || (b.dataset.f == 'porao' && !J.betaFeat.mapa)); }); // o porão só existe no mapa aleatório
   };
-  document.querySelectorAll('.feat').forEach((b) => (b.onclick = () => { J.betaFeat[b.dataset.f] = !J.betaFeat[b.dataset.f]; try { localStorage.setItem('baldiBeta', JSON.stringify(J.betaFeat)); } catch (e) {} marca(); }));
+  document.querySelectorAll('.feat').forEach((b) => (b.onclick = () => { if (b.classList.contains('off')) return; J.betaFeat[b.dataset.f] = !J.betaFeat[b.dataset.f]; try { localStorage.setItem('baldiBeta', JSON.stringify(J.betaFeat)); } catch (e) {} marca(); }));
   J.abreBeta = () => { marca(); $('menu').hidden = true; $('telaBeta').hidden = false; };
   $('betaVolta').onclick = () => { $('telaBeta').hidden = true; $('menu').hidden = false; };
   $('betaSegue').onclick = () => { $('telaBeta').hidden = true; J.escolheDificuldade('beta'); };
@@ -544,7 +544,7 @@
     J.aviso('Caderno dourado: ganhou um item!', 2);
   };
   J.ganchos.tique.push((G, dt) => {
-    if (G.modo != 'beta' || !G.spoop || (J.betaFeat || {}).eventos === false) return;
+    if (G.modo != 'beta' || !G.spoop || G.null || (J.betaFeat || {}).eventos === false) return;
     const ev = G.ev, mostra = () => J.evento(ev.atual ? `${EVENTOS[ev.atual].nome}  ${Math.ceil(ev.fim)}s` + (EVENTOS[ev.atual].sub ? `\n${EVENTOS[ev.atual].sub}` : '') : '');
     if (ev.atual) {
       const e = EVENTOS[ev.atual];
@@ -560,6 +560,5 @@
   });
   J.EVENTOS = EVENTOS;
   // ao sair do jogo, desliga o que um evento deixou ligado
-  const menuOriginal = J.menu;
-  J.menu = () => { J.escuro = false; J.correLiberado = false; if (J.cena) J.cena.fog = null; teste.fecha(); teste.dr = null; menuOriginal(); };
+  J.ganchos.menu.push(() => { J.escuro = false; J.correLiberado = false; if (J.cena) J.cena.fog = null; teste.fecha(); teste.dr = null; });
 })();

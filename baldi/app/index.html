@@ -42,6 +42,16 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #difs .bt{flex-direction:column;gap:2px;font-size:24px}
 #difs .bt img{height:min(30vh,120px)}
 #difs .bt.sel{border-bottom-color:#000}
+/* tela inicial do Null (1º discurso feito + notificações do app ligadas) */
+body.telaNull #titulo{background:#000 url(assets/beta/null/titulo_null.jpg) center/cover no-repeat;animation:nullTela 3s steps(6) infinite}
+body.telaNull #tocaTxt{color:#fff;text-shadow:2px 0 #f00,-2px 0 #0ff}
+body.telaNull #miniTitulo{filter:invert(1) hue-rotate(120deg)}
+body.telaNull #menu{background:#111}
+body.telaNull #menu .bt{color:#ddd}
+@keyframes nullTela{0%{filter:none}40%{filter:hue-rotate(90deg) contrast(1.4)}45%{filter:invert(1)}50%{filter:none}80%{filter:saturate(3) hue-rotate(-60deg)}}
+body.nullTreme canvas#c{animation:treme .08s infinite}
+@keyframes treme{0%{transform:translate(6px,-4px)}25%{transform:translate(-8px,5px)}50%{transform:translate(5px,7px)}75%{transform:translate(-6px,-6px)}}
+#naMao{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);height:24vh;image-rendering:pixelated;pointer-events:none}
 #detencao{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-size:24px;font-weight:700;text-shadow:var(--sombra);text-align:center;color:#fff;white-space:pre-line}
 .aviso{font-size:11px;color:#555;text-align:center;max-width:560px}
 /* HUD */
@@ -142,23 +152,6 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 </div>
 
 
-  <div id="evento" hidden></div>
-  <div id="detencao" hidden></div><div id="aviso" hidden></div>
-  <div id="mira"></div>
-  <div id="estamina"><i></i></div>
-  <div id="itens"><div id="slots"><div class="slot sel" data-s="0"></div><div class="slot" data-s="1"></div><div class="slot" data-s="2"></div></div><div id="nomeItem">Nada</div></div>
-</div>
-
-<div id="toque" hidden>
-  <div id="stick"><i></i></div>
-  <div class="bot" id="bCorre"></div>
-  <div class="bot" id="bUsa"></div>
-  <div class="bot" id="bToca"></div>
-  <div class="bot" id="bPausa"></div>
-  <div class="bot" id="bPulo" hidden>Pular</div>
-</div>
-
-
 <div class="tela" id="titulo"><div id="tocaTxt">Toque para começar</div></div>
 <div class="tela" id="menu" hidden>
   <img src="assets/Texture2D/MenuTextures/title_final.png" id="miniTitulo" alt="Baldi's Basics">
@@ -181,6 +174,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
     <button class="feat" data-f="test"><img src="assets/beta/img2/test.png" alt=""><span>The Test</span><i></i></button>
     <button class="feat" data-f="eventos"><img src="assets/Texture2D/SchoolHouse/PickUps/AlarmClockItem.png" alt=""><span>Eventos</span><i></i></button>
     <button class="feat" data-f="ala"><img src="assets/Texture2D/SchoolHouse/Locker/Locker.png" alt=""><span>Ala nova</span><i></i></button>
+    <button class="feat" data-f="porao"><img src="assets/beta/null/escada.png" alt=""><span>Porão</span><i></i></button>
   </div>
   <div class="botoes"><button class="bt" id="betaVolta">Voltar</button><button class="bt" id="betaSegue">Continuar</button></div>
 </div>
@@ -235,5 +229,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 <script src="jogo.js"></script>
 <script src="beta.js"></script>
 <script src="mapa.js"></script>
+<script src="null.js"></script>
+<script src="porao.js"></script>
 </body>
 </html>

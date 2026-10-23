@@ -10,14 +10,15 @@ Porte do **Baldi's Basics Classic 1.4.3** para a web (Three.js), feito a partir 
   - **Dr. Reflex**: corre até você e faz o teste de reflexo (toque na mão com o círculo); se você fugir, volta com o martelo;
   - **Cloudy Copter**: sopra vento nos corredores;
   - **The Test**: olhar para ele deixa o tempo lento; olhar demais e ele explode;
-  - **Eventos** aleatórios e a **ala nova** da escola (com móveis e enfeites).
+  - **Eventos** aleatórios e a **ala nova** da escola (com móveis e enfeites);
+  - **Porão** (só com o mapa aleatório): labirinto escuro embaixo da escola. Às vezes tem uma sala secreta... e um segredo do **NULL**.
 
 Dificuldade (Fácil, Normal, Difícil) em todos os modos. Os personagens andam só para frente, trás e para os lados, pelo meio dos corredores.
 
 ## Arquivos
-- `app/`: o jogo (`index.html`, `motor.js`, `jogo.js`, `beta.js`, `mapa.js`, `escola.json`, `malhas.json`, `assets/`).
+- `app/`: o jogo (`index.html`, `motor.js`, `jogo.js`, `beta.js`, `mapa.js`, `null.js`, `porao.js`, `tester.js`, `escola.json`, `malhas.json`, `assets/`).
 - `tools/`: `extrai.py` lê a cena do Unity, `malhas.py` converte os modelos, `compacta.py` gera `app/escola.json`, `assets.sh` copia texturas e converte sons.
-- `android/` + `build.sh`: gera `BaldiModded.apk` (a chave de assinatura não vai para o repositório).
+- `android/` + `build.sh`: gera `BaldiModded.apk`; `TESTER=1 ./build.sh` gera `BaldiNullTester.apk`, com atalhos para testar o NULL (a chave de assinatura não vai para o repositório).
 - `test/`: testes no navegador (Playwright).
 - `CREDITOS.md`: origem de tudo que é novo.
 

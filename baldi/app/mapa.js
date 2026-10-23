@@ -15,7 +15,7 @@
   /* ---------- chunks prontos ----------
      c = corredor, p = praça (corredor largo), . = maciço
      a A e E g = salas de aula (letras diferentes = salas diferentes)
-     s S = salas especiais (viram diretoria, professores, clínica do Dr. Reflex ou depósito)
+     s S t T = salas especiais (viram diretoria, professores, clínica do Dr. Reflex ou depósito)
      k = cantina, b = biblioteca */
   const CHUNKS = [
     { nome: 'cruzamento', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'ccccccccc', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE'] },
@@ -30,6 +30,11 @@
     { nome: 'reto com praça', l: ['aaaacAAAA', 'aaaacAAAA', 'aaapppAAA', 'ssspppSSS', 'ssspppSSS', 'eeepppEEE', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE'] },
     { nome: 'fim com cantina', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'ssspppSSS', 'kkkkkkkkk', 'kkkkkkkkk', 'kkkkkkkkk', 'kkkkkkkkk', 'kkkkkkkkk'] },
     { nome: 'fim com salas', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE', 'sssssssss', 'sssssssss'] },
+    { nome: 'átrio', l: ['aaaacAAAA', 'aaaacAAAA', 'aapppppAA', 'aapppppAA', 'ccpppppcc', 'eepppppEE', 'eepppppEE', 'eeeecEEEE', 'eeeecEEEE'] },
+    { nome: 'escritórios', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'sssscSSSS', 'ttttcTTTT', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE', 'eeeecEEEE'] },
+    { nome: 'volta', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'eeeecAAAA', 'eeeecSScc', 'eeeecSScE', 'eeeeccccE', 'eeeeeEEEE', 'eeeeeEEEE'] },
+    { nome: 'fim com biblioteca', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'ssspppSSS', 'bbbbbbbbb', 'bbbbbbbbb', 'bbbbbbbbb', 'bbbbbbbbb', 'bbbbbbbbb'] },
+    { nome: 'tê com praça', l: ['aaaacAAAA', 'aaaacAAAA', 'aaaacAAAA', 'aaapppAAA', 'cccpppccc', 'eeepppEEE', 'eeeeEEEEE', 'eeeeEEEEE', 'eeeeEEEEE'] },
   ];
   const corr = (ch) => ch == 'c' || ch == 'p';
   // giros e espelhos de cada chunk, com a máscara das saídas (1 = norte/j-, 2 = leste/i+, 4 = sul/j+, 8 = oeste/i-)
@@ -220,6 +225,7 @@
           // cada tipo de sala tem a sua porta (como no Baldi's Basics Plus)
           const mat = { professores: 'FacultyDoor_0', diretoria: 'PrincipalDoor_0', clinica: 'DoctorDoor_0', deposito: 'SuppliesDoor_0' }[s.tipo] || 'Door_0';
           K.porta(ex, ez, n, mat, 'porta', 'Gerado/' + s.tipo);
+          (E.portaSala = E.portaSala || []).push({ x: ex, z: ez, tipo: s.tipo, centro: [cx((s.i0 + s.i1) / 2), cz((s.j0 + s.j1) / 2)] }); // usado pela partida do Null
         } else K.muro(ex, ez, T, n, 'WhiteBrickWall', !!v);
       }
     }
@@ -272,6 +278,9 @@
       const m = s.mesas.length ? s.mesas.splice(rndInt(0, s.mesas.length - 1), 1)[0] : (() => { const q = pontoSala(s); return [cx(q[0]), cz(q[1])]; })();
       E.spr.push(Object.assign({}, nb, { pai: 'Environment/Objects/Notebooks/Gerado' + k, tex: 'Texture2D/SchoolHouse/PickUps/Notebook/' + cores[k % cores.length] + '.png', M: nb.M.slice(0, 12).concat([m[0], nb.M[13], m[1], 1]) }));
     });
+    // toca-fitas em cima de uma carteira livre de uma sala com caderno (use a fita nele)
+    const toca = base.spr.find((s) => s.n == 'TapeSprite'), salaFita = cadernos.find((s) => (s.mesas || []).length);
+    if (toca && salaFita) { const m = salaFita.mesas.pop(); E.spr.push(Object.assign({}, toca, { M: toca.M.slice(0, 12).concat([m[0], toca.M[13], m[1], 1]) })); }
     for (const s of abertas) for (const m of s.mesas || []) if (Math.random() < 0.4) K.enfeite(['Notebooks', 'pencils', 'papers'][rndInt(0, 2)], m[0], m[1], 4.4);
 
     // ---------- corredores: ronda, armários, cartazes, plantas, portas vai-e-vem ----------
@@ -288,6 +297,7 @@
     // ---------- jogador, personagens e itens ----------
     const sul0 = saidas[0];
     const ini = [cx(sul0.i), cz(sul0.j)];
+    const pertoDaSaida = (i, j) => saidas.some((q) => Math.abs(q.i - i) + Math.abs(q.j - j) <= 3);
     E.esp.push({ s: 'PlayerScript', n: 'Player', pos: [ini[0], 4, ini[1]] });
     const longe = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
     const corrLonge = (d) => { const l = pontosCorr.filter((p) => longe(p, ini) > d); return l[rndInt(0, l.length - 1)] || pontosCorr[0]; };
@@ -321,6 +331,23 @@
       const q = cand.length ? cand[rndInt(0, cand.length - 1)] : s.cel[0]; res(q[0], q[1]);
       E.spr.push(Object.assign({}, item, { a: 1, pai: 'Environment/Objects/Pickups/Pickup_' + n, tex: 'Texture2D/SchoolHouse/PickUps/' + (TEX[n] || n) + '.png', M: item.M.slice(0, 12).concat([cx(q[0]) + rnd(-2, 2), item.M[13], cz(q[1]) + rnd(-2, 2), 1]) }));
     });
+    // orelhão num corredor (moeda nele deixa o Baldi surdo)
+    const fone = base.spr.find((s) => s.n == 'PhoneSprite');
+    const corrLivres = embaralha(corr.filter(([i, j]) => !pertoDaSaida(i, j)));
+    for (const [i, j] of corrLivres) {
+      const w = D4.find(([di, dj]) => c[j + dj]?.[i + di] !== 1 && !ehSaida(i + di, j + dj));
+      if (!w || !fone) continue;
+      E.spr.push(Object.assign({}, fone, { M: fone.M.slice(0, 12).concat([cx(i) + w[0] * 3.8, fone.M[13], cz(j) - w[1] * 3.8, 1]) }));
+      break;
+    }
+    // porão (recurso do Beta, só com o mapa aleatório): escada num beco do corredor, fora da área da entrada
+    if (F.porao) {
+      const naZonaC = (i, j) => i >= zona.i0 && i <= zona.i1 && j >= zona.j0 && j <= zona.j1;
+      const beco = (i, j) => D4.filter(([di, dj]) => ehCorr(i + di, j + dj)).length == 1;
+      const cand = embaralha(corr.filter(([i, j]) => !naZonaC(i, j) && !pertoDaSaida(i, j) && !praca.has(i + ',' + j)));
+      const esc = cand.find(([i, j]) => beco(i, j)) || cand[0];
+      if (esc) geraPorao(E, K, [cx(esc[0]), cz(esc[1])], (W + 6) * T);
+    }
     E.totalCadernos = nCad;
     E.gerado = { W, H };
     Object.defineProperty(E, 'debug', { value: { lista, id, c } }); // só para os testes
@@ -442,6 +469,63 @@
     }
   }
 
+  /* ---------- porão: labirinto escuro de corredores (como o Baldi's Basement) ----------
+     Às vezes (é raro) tem a sala secreta: porta misteriosa num beco, sala toda escura com uma mesa e a fita verde. */
+  function geraPorao(E, K, escada, OX) {
+    const NX = 6, NZ = 6, w = NX * 2 - 1, h = NZ * 2 - 1, c = Array.from({ length: h }, () => new Array(w + 3).fill(0));
+    // labirinto: nós nas posições pares, ligados por uma árvore aleatória + alguns laços
+    const vis = new Set(['0,0']), pilha = [[0, 0]]; c[0][0] = 1;
+    while (pilha.length) {
+      const [x, y] = pilha[pilha.length - 1];
+      const viz = embaralha(D4.slice()).filter(([dx, dy]) => x + dx >= 0 && y + dy >= 0 && x + dx < NX && y + dy < NZ && !vis.has([x + dx, y + dy] + ''));
+      if (!viz.length) { pilha.pop(); continue; }
+      const [dx, dy] = viz[0]; c[y * 2 + dy][x * 2 + dx] = 1; c[(y + dy) * 2][(x + dx) * 2] = 1; vis.add([x + dx, y + dy] + ''); pilha.push([x + dx, y + dy]);
+    }
+    for (let y = 0; y < NZ; y++) for (let x = 0; x < NX - 1; x++) if (Math.random() < 0.12) c[y * 2][x * 2 + 1] = 1;
+    for (let y = 0; y < NZ - 1; y++) for (let x = 0; x < NX; x++) if (Math.random() < 0.12) c[y * 2 + 1][x * 2] = 1;
+    // sala secreta (rara): 2x2 encostada num nó da borda leste do labirinto
+    const secreta = J.forcaSecreta || (J.betaFeat || {})._secreta || Math.random() < 0.35;
+    let sala = null;
+    if (secreta) {
+      const yn = rndInt(0, NZ - 1) * 2, j0 = Math.min(h - 2, yn);
+      sala = { i0: w, j0, porta: [w - 1, yn] };
+      for (const [i, j] of [[w, j0], [w + 1, j0], [w, j0 + 1], [w + 1, j0 + 1]]) c[j][i] = 2;
+    }
+    const X = (i) => OX + i * T + 5, Z = (j) => -(j * T + 5);
+    const esp = (i, j) => c[j]?.[i] || 0;
+    for (let j = 0; j < h; j++) for (let i = 0; i < w + 3; i++) {
+      const e = esp(i, j); if (!e) continue;
+      E.objs.push({ m: 'quad', mat: [K.mi('Dark_TileFloor')], M: [0, 0, -T, 0, -T, 0, 0, 0, 0, 1, 0, 0, X(i), 0, Z(j), 1] });
+      E.objs.push({ m: 'quad', mat: [K.mi('Dark_Ceiling')], M: [T, 0, 0, 0, 0, 0, -T, 0, 0, -1, 0, 0, X(i), 10, Z(j), 1] });
+      for (const [di, dj] of D4) {
+        const v = esp(i + di, j + dj);
+        if (v === e) continue;
+        const ex = X(i) + di * 5, ez = Z(j) - dj * 5, n = [-di, dj];
+        if (v && !(di > 0 || dj > 0)) continue;
+        const ehPorta = sala && ((e == 1 && v == 2 && i == sala.porta[0] && j == sala.porta[1]) || (e == 2 && v == 1 && i + di == sala.porta[0] && j + dj == sala.porta[1]));
+        if (ehPorta) K.porta(ex, ez, n, 'MysteryDoor_0', 'porta', 'Porao/secreta');
+        else K.muro(ex, ez, T, n, 'Dark_WhiteBrickWall', !!v);
+      }
+    }
+    // enfeites: quadrinhos nas paredes de alguns cruzamentos
+    for (let j = 0; j < h; j += 2) for (let i = 0; i < w; i += 2) {
+      if (esp(i, j) != 1 || Math.random() > 0.15 || (i == 0 && j == 0)) continue;
+      const lado = D4.find(([di, dj]) => !esp(i + di, j + dj));
+      if (lado) K.naParede(Math.random() < 0.5 ? 'comic00' : 'comic01', X(i) + lado[0] * 5, Z(j) - lado[1] * 5, [-lado[0], lado[1]]);
+    }
+    // escadas: uma no beco da escola (desce) e outra no começo do labirinto (sobe)
+    const desenho = (x, z) => ({ n: 'Escada', pai: 'Environment/Porao/Escada', tex: 'beta/null/escada.png', ppu: 100, piv: [0.5, 0.5], a: 1, M: [4, 0, 0, 0, 0, 4, 0, 0, 0, 0, 1, 0, x, 2.6, z, 1] });
+    E.spr.push(desenho(X(0), Z(0)), desenho(escada[0], escada[1]));
+    E.porao = { OX, entrada: [X(0), Z(0)], escada };
+    if (sala) {
+      const cxs = X(sala.i0) + 5, czs = Z(sala.j0) - 5;
+      K.movel('mesaProf', cxs, czs, 0);
+      E.spr.push({ n: 'ItemSprite', pai: 'Environment/Objects/Pickups/Pickup_FitaVerde', tex: 'beta/null/fita_verde.png', ppu: 100, piv: [0.5, 0.5], a: 1, M: [2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, cxs, 4.3, czs, 1] });
+      E.gat.push({ n: 'SalaSecreta', c: [cxs, 5, czs], h: [10, 5, 10], ang: 0 });
+      E.porao.sala = [cxs, czs];
+    }
+  }
+
   function enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca, saidas, portoes, zona) {
     // perto das saídas o corredor fica limpo (o Baldi do tutorial acena logo na entrada)
     const pertoSaida = (i, j) => saidas.some((s) => Math.abs(s.i - i) + Math.abs(s.j - j) <= 4) || portoes.some((g) => Math.abs(g.i - i) + Math.abs(g.j - j) <= 1);
@@ -487,7 +571,7 @@
     const N = new M.Nav(mu, [x0 - 5, z0 - 5, x1 + 5, z1 + 5]);
     const pl = E.esp.find((e) => e.s == 'PlayerScript').pos;
     const alvos = E.ronda.concat(E.rondaCorr || []);
-    for (const s of E.spr) if ((s.n == '_nbSprite' && /Notebooks\//.test(s.pai)) || /Pickup_/.test(s.pai)) alvos.push([s.M[12], s.M[14]]);
+    for (const s of E.spr) if (((s.n == '_nbSprite' && /Notebooks\//.test(s.pai)) || /Pickup_/.test(s.pai)) && !/FitaVerde/.test(s.pai)) alvos.push([s.M[12], s.M[14]]); // a fita verde fica no porão
     for (const e of E.esp) if (e.s == 'EntranceScript') alvos.push([e.pos[0], e.pos[2]]);
     return alvos.every((a) => N.caminho(pl[0], pl[2], a[0], a[1]).length);
   }

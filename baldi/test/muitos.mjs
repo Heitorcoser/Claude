@@ -12,7 +12,7 @@ export default async function (p, out) {
       const N = new Motor.Nav(mu, [x0 - 5, z0 - 5, x1 + 5, z1 + 5]);
       const pl = E.esp.find((e) => e.s == 'PlayerScript').pos;
       const alvos = E.ronda.concat(E.rondaCorr || []).map((r) => [r[0], r[1], 'ronda']);
-      for (const s of E.spr) if ((s.n == '_nbSprite' && /Notebooks\//.test(s.pai)) || /Pickup_/.test(s.pai)) alvos.push([s.M[12], s.M[14], s.n == '_nbSprite' ? 'caderno' : 'item']);
+      for (const s of E.spr) if (((s.n == '_nbSprite' && /Notebooks\//.test(s.pai)) || /Pickup_/.test(s.pai)) && !/FitaVerde/.test(s.pai)) alvos.push([s.M[12], s.M[14], s.n == '_nbSprite' ? 'caderno' : 'item']);
       for (const e of E.esp.filter((e) => e.s == 'EntranceScript')) alvos.push([e.pos[0], e.pos[2], 'saida']);
       const sem = alvos.filter((a) => !N.caminho(pl[0], pl[2], a[0], a[1]).length);
       if (sem.length) { res.ruins++; if (res.exemplos.length < 4) res.exemplos.push(sem.map((a) => { const i = Math.floor(a[0] / 10), j = Math.floor(-a[1] / 10), d = E.debug, v = d.id[j][i], s = d.lista[v]; return a[2] + ' cel ' + i + ',' + j + (s ? ' sala ' + s.tipo + ' (' + s.chunk + '/' + s.letra + ') area ' + s.area + ' porta ' + JSON.stringify(s.porta) : ' c=' + d.c[j][i]); }).join(' | ')); if (!Jogo.ruim) Jogo.ruim = { E, sem }; }

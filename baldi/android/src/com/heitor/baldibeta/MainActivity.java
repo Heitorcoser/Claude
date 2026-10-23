@@ -22,6 +22,7 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
+        web.addJavascriptInterface(new Ponte(this), "Android");
         setContentView(web);
         telaCheia();
         try {
@@ -61,5 +62,6 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         web.onResume();
+        web.evaluateJavascript("window.Jogo && Jogo.atualizaTitulo && !Jogo.G && Jogo.atualizaTitulo()", null);
     }
 }

@@ -17,6 +17,13 @@ Sprites e vozes do **Dr. Reflex**, do **Cloudy Copter** e do **The Test**, baixa
 | beta/sons2/LAt_*, Explosion | sons do The Test |
 | Texture2D/SchoolHouse/DoorTextures/PrincipalDoor_*, DoctorDoor_*, SuppliesDoor_* | portas da diretoria, da clínica e do armário (Baldi's Basics Plus / Classic Remastered) |
 
+| beta/null/null.png, Null_*, NullHit, NullEnd, NullFinaleBackground | NULL e as falas (Baldi's Basics Plus / Classic Remastered) |
+| beta/null/Mus_boss_*, fita_null.mp3 | música da luta e da fita (Mus_error_drumloop) |
+| beta/null/titulo_null.jpg, fim.jpg, pego.jpg | telas do Null (wiki do Baldi's Basics) |
+| beta/null/escada.png, fita_verde.png | escada do porão e fita verde |
+| Texture2D/SchoolHouse/DoorTextures/MysteryDoor_* | porta misteriosa da sala secreta (Baldi's Basics Plus) |
+| Texture2D/.../Posters/MapExits/* | cartazes de saída do próprio jogo, usados nas portas bugadas |
+
 ## Outro material (domínio público / CC0 / OFL)
 
 | Arquivo | Origem | Autor | Licença |

@@ -2,11 +2,11 @@
 (function () {
   'use strict';
   const M = window.Motor, $ = (id) => document.getElementById(id);
-  const J = (window.Jogo = { ganchos: { monta: [], inicia: [], tique: [], caderno: [] } });
+  const J = (window.Jogo = { ganchos: { monta: [], inicia: [], tique: [], caderno: [], menu: [] } });
   const FIXO = 1 / 50; // o Unity roda a física (FixedUpdate) a 50 por segundo
-  const ITEM = ['Nada', 'Barra Zesty de Energia', 'Trava Amarela de Porta', 'Chaves do Diretor', 'BSODA', 'Moeda de 25 centavos', 'Fita "Baldi Anti Hearing"', 'Despertador', 'WD-Sem Ranger', 'Tesoura sem ponta', 'Botas Grandes', 'Teletransportador Perigoso'];
-  const ICONE = [null, 'EnergyFlavoredZestyBar', 'YellowDoorLock', 'Key', 'BSODA', 'Quarter', 'Tape', 'AlarmClockItem', 'wd_nosquee', 'SafetyScissors', 'BootsIcon', 'TeleporterIcon'];
-  const PEGA = { Pickup_EnergyFlavoredZestyBar: 1, Pickup_YellowDoorLock: 2, Pickup_Key: 3, Pickup_BSODA: 4, Pickup_Quarter: 5, Pickup_Tape: 6, Pickup_AlarmClock: 7, 'Pickup_WD-3D': 8, Pickup_SafetyScissors: 9, Pickup_BigBoots: 10, Pickup_Teleporter: 11 };
+  const ITEM = ['Nada', 'Barra Zesty de Energia', 'Trava Amarela de Porta', 'Chaves do Diretor', 'BSODA', 'Moeda de 25 centavos', 'Fita "Baldi Anti Hearing"', 'Despertador', 'WD-Sem Ranger', 'Tesoura sem ponta', 'Botas Grandes', 'Teletransportador Perigoso', 'Fita verde'];
+  const ICONE = [null, 'EnergyFlavoredZestyBar', 'YellowDoorLock', 'Key', 'BSODA', 'Quarter', 'Tape', 'AlarmClockItem', 'wd_nosquee', 'SafetyScissors', 'BootsIcon', 'TeleporterIcon', '../../../beta/null/fita_verde'];
+  const PEGA = { Pickup_EnergyFlavoredZestyBar: 1, Pickup_YellowDoorLock: 2, Pickup_Key: 3, Pickup_BSODA: 4, Pickup_Quarter: 5, Pickup_Tape: 6, Pickup_AlarmClock: 7, 'Pickup_WD-3D': 8, Pickup_SafetyScissors: 9, Pickup_BigBoots: 10, Pickup_Teleporter: 11, Pickup_FitaVerde: 12 };
   const SONS = ['Characters/Baldi/Sounds/BAL_Slap', 'Characters/Baldi/Sounds/BAL_Screech', 'Characters/Baldi/BaldiTutor/BAL_Hi', 'Characters/Baldi/BaldiTutor/BAL_GetPrize', 'Characters/Baldi/BaldiTutor/BAL_Door', 'Characters/Baldi/BAL_AllNotebooks',
     'Characters/Baldi/MathGame/BAL_Math_Plus', 'Characters/Baldi/MathGame/BAL_Math_Minus', 'Characters/Baldi/MathGame/BAL_Math_Times', 'Characters/Baldi/MathGame/BAL_Math_Equals', 'Characters/Baldi/MathGame/Intro/BAL_Math_Intro', 'Characters/Baldi/MathGame/Intro/BAL_General_HowTo',
     ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => 'Characters/Baldi/MathGame/Numbers/BAL_Math_' + n), ...[1, 2, 3, 4, 5].map((n) => 'Characters/Baldi/MathGame/Praises/BAL_Praise' + n), ...[1, 2, 3].map((n) => 'Characters/Baldi/MathGame/Problems/BAL_General_Problem' + n),
@@ -119,7 +119,7 @@
       const nome = s.pai.split('/').pop();
       if (/Notebooks\//.test(s.pai) && s.n == '_nbSprite') G.objs.push({ tipo: 'caderno', m, x: m.position.x, z: m.position.z, nome, ativo: true });
       else if (PEGA[nome]) G.objs.push({ tipo: 'item', id: PEGA[nome], m, x: m.position.x, z: m.position.z, y0: m.position.y, nome, ativo: !!s.a });
-      else if (nome == 'DisorientingDevices') G.objs.push({ tipo: s.n == 'PhoneSprite' ? 'telefone' : 'fita', m, x: m.position.x, z: m.position.z });
+      else if (/\/DisorientingDevices\//.test(s.pai)) G.objs.push({ tipo: s.n == 'PhoneSprite' ? 'telefone' : 'fita', m, x: m.position.x, z: m.position.z }); // orelhão e toca-fitas
     }
     for (const c of E.caixas) if (/BSODAMachine|ZestyMachine/.test(c.n)) G.objs.push({ tipo: 'maquina', id: /BSODA/.test(c.n) ? 4 : 1, x: c.c[0], z: c.c[2] });
     criaNPCs();
@@ -131,6 +131,7 @@
     d.malhas.forEach((q) => { if (q.mesh.material.map) { const mt = M.tex(t); if (q.mesh.material.map.image !== mt.image) { q.mesh.material.map = mt; q.mesh.material.needsUpdate = true; } } });
   }
   function abrePorta(d, quem) {
+    if (quem == 'jogador' && J.portaHook && J.portaHook(d) === false) return; // ex.: portas bugadas da partida do Null
     if (d.tipo == 'vaivem') {
       if (d.travada) return;
       if (!d.aberta) M.som('Sounds/Doors/swingdoor_open', { de: d, vol: 0.8 });
@@ -571,6 +572,7 @@
       else { const a = alvo(['prize'], 0.3); if (a) { G.npcs.prize.louco = 15; gasta(); } }
     } else if (id == 10) { p.botas = 15; gasta(); aviso('Botas grandes: nada te empurra por 15s', 2); }
     else if (id == 11) { teleporte(); gasta(); }
+    else if (J.usaItemExtra) J.usaItemExtra(id, G, gasta, alvo); // itens novos (fita verde do porão)
   }
   function fita(o) { if (o.tipo == 'fita') troca(o.m, 'Texture2D/SchoolHouse/PickUps/TapePlayer/TapePlayerClosed.png'); M.som('Sounds/Items/AntiHearing', { de: o }); G.npcs.baldi.surdo = 30; G.npcs.baldi.vagar(); }
   function despertador() {
@@ -661,7 +663,7 @@
   }
   function teclaConta(k) {
     if (conta.prob > 3) return;
-    if (/^[0-9]$/.test(k) && conta.txt.length < 8) conta.txt += k;
+    if (/^[0-9]$/.test(k) && conta.txt.length < 10) conta.txt += k;
     else if (k == '-' && !conta.txt) conta.txt = '-';
     else if (k == 'Backspace') conta.txt = conta.txt.slice(0, -1);
     else if (k == 'Enter') return responde();
@@ -690,8 +692,15 @@
     if (G.p.est < 100) G.p.est = 100;
     if (!G.spoop) { M.para(G.sons.aprende); G.sons.musica = M.som('Music/mus_School', { loop: true, vol: 0.6 }); }
     if (G.cadernos == 1 && !G.spoop) {
-      const q = G.objs.find((o) => o.tipo == 'item' && o.id == 5 && !o.ativo && o.m && !o.usado);
-      if (q) { q.usado = true; const r = E.ronda[M.rndInt(1, 15)]; q.x = r[0]; q.z = r[1]; q.m.position.set(r[0], 4, r[1]); q.y0 = 4; q.ativo = true; q.m.visible = true; }
+      // acertou as 3 do primeiro caderno: o Baldi da entrada dá uma moeda de prêmio, ao lado dele
+      const tut = G.tutor && G.tutor.visible ? G.tutor.position : null;
+      const base = tut ? { x: tut.x, z: tut.z } : { x: G.p.x - Math.sin(G.p.yaw) * 5, z: G.p.z - Math.cos(G.p.yaw) * 5 };
+      // para o lado de quem olha o Baldi (do jogador até ele), 3,5 para a direita
+      const dx = base.x - G.p.x, dz = base.z - G.p.z, d = Math.hypot(dx, dz) || 1, o = { x: base.x + (-dz / d) * 3.5 - (dx / d) * 1.5, z: base.z + (dx / d) * 3.5 - (dz / d) * 1.5 };
+      mundo.resolve(o, 1.5);
+      let q = G.objs.find((o) => o.tipo == 'item' && o.id == 5 && !o.ativo && o.m && !o.usado);
+      if (!q) { q = { tipo: 'item', id: 5, m: sprite('Texture2D/SchoolHouse/PickUps/Quarter.png', 2, 2), nome: 'Pickup_Quarter' }; G.objs.push(q); }
+      q.usado = true; q.x = o.x; q.z = o.z; q.m.position.set(o.x, 3, o.z); q.y0 = 3; q.ativo = true; q.m.visible = true;
       M.som('Characters/Baldi/BaldiTutor/BAL_GetPrize');
     } else if (G.cadernos == G.totalCadernos && G.modo != 'infinito') { M.som('Characters/Baldi/BAL_AllNotebooks', { vol: 0.8 }); modoFinal(); }
   }
@@ -896,6 +905,7 @@
 
   /* ---------- telas ---------- */
   function menu() {
+    J.ganchos.menu.forEach((f) => f()); // cada módulo desliga o que deixou ligado (eventos, luta do Null...)
     G = null; J.G = null;
     M.paraTudo(); // música, alarmes e vozes: senão tocam de novo por cima no próximo jogo
     document.body.classList.remove('vermelho');
@@ -928,7 +938,8 @@
     G.sons.musica = M.som('Music/mus_School', { loop: true, vol: 0.6 });
     M.som('Characters/Baldi/BaldiTutor/BAL_Hi');
   }
-  J.comeca = comeca; J.menu = menu; J.pegaCaderno = pegaCaderno; J.mostraPorta = mostraPorta; J.dist = dist; J.ve = ve; J.spoop = spoop; J.sprite = sprite; J.troca = troca; J.Agente = Agente; J.ronda = ronda; J.dentro = dentro; J.abrePorta = abrePorta; J.gameOver = gameOver; J.vitoria = vitoria;
+  J.contaSol = () => conta.sol; // usado pelos testes
+  J.comeca = comeca; J.fim = fim; J.menu = menu; J.pegaCaderno = pegaCaderno; J.mostraPorta = mostraPorta; J.dist = dist; J.ve = ve; J.spoop = spoop; J.sprite = sprite; J.troca = troca; J.Agente = Agente; J.ronda = ronda; J.dentro = dentro; J.abrePorta = abrePorta; J.gameOver = gameOver; J.vitoria = vitoria;
   $('titulo').onclick = () => { $('titulo').hidden = true; $('menu').hidden = false; M.audio().resume(); M.carregaSom('Characters/Baldi/BAL_MainMenu').then(() => M.som('Characters/Baldi/BAL_MainMenu')).catch(() => {}); };
   // escolher o modo abre a tela de dificuldade; a escolhida fica guardada para a próxima vez
   let modoEscolhido = 'historia';
