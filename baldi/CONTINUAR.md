@@ -51,6 +51,7 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Jogador criança: `ALTURA` 3,6 (olhos) e `RAIO` 1,5 em `jogo.js`.
 - Playtime: fala com intervalo (`diz`), contagem "3, 2, 1, PULE!" antes da corda; 1st Prize e Dr. Reflex ignoram o jogador enquanto ele pula corda (`test/playtime.mjs`).
 - Mapa aleatório: móveis só entram se couberem inteiros na sala (`cabe`/`poe` em `mobilia`); cadernos ficam em cima de uma carteira (`s.mesas`).
+- Mapa aleatório: só têm porta as salas com caderno, diretoria, professores, clínica e o armário do Gotta Sweep; cantina e biblioteca ficam abertas; as outras salas viram parede (`s.fechada`). Porta por tipo: aula `Door_0` (99), diretoria `PrincipalDoor_0`, professores `FacultyDoor_0`, clínica `DoctorDoor_0`, armário `SuppliesDoor_0` (o `kit.mi` cria o material). Na escola original a porta da diretoria também vira "Principal".
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 
 ## Ideias para as próximas versões

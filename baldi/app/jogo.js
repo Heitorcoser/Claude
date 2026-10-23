@@ -110,6 +110,8 @@
     // a porta da diretoria é a mais perto do ponto de detenção
     const pd = E.pontos.principalDetentionPoint;
     G.diretoria = G.portas.reduce((a, b) => (Math.hypot(b.x - pd[0], b.z - pd[2]) < Math.hypot(a.x - pd[0], a.z - pd[2]) ? b : a));
+    // a porta da diretoria tem a placa "Principal"
+    if (G.diretoria.tipo == 'porta') { G.diretoria.tex = { f: 'Texture2D/SchoolHouse/DoorTextures/PrincipalDoor_0.png', a: 'Texture2D/SchoolHouse/DoorTextures/PrincipalDoor_80.png' }; mostraPorta(G.diretoria); }
     // sprites soltos (enfeites, cadernos, itens, placas)
     for (const s of E.spr) {
       if (s.pai.startsWith('NPC/') || /PrototypeStuff|Old/.test(s.pai)) continue;

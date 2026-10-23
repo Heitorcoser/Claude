@@ -43,7 +43,12 @@
   };
   // Ferramentas para montar peças no mapa (usadas pela ala e pelo mapa aleatório)
   function kit(E) {
-    const mi = (n) => E.mats.findIndex((m) => m.n === n);
+    // material pelo nome; portas novas (PrincipalDoor_0, DoctorDoor_0, SuppliesDoor_0) são criadas a partir da porta comum
+    const mi = (n) => {
+      let k = E.mats.findIndex((m) => m.n === n);
+      if (k < 0 && /Door_0$/.test(n)) { const base = E.mats.find((m) => m.n === 'Door_0'); E.mats.push(Object.assign({}, base, { n, tex: 'Texture2D/SchoolHouse/DoorTextures/' + n + '.png' })); k = E.mats.length - 1; }
+      return k;
+    };
     // quad de largura w centrado em (x,z), virado para n = [nx, nz] (só a frente aparece)
     const quadV = (x, z, w, n, y = 5, alt = 10) => [w * n[1], 0, -w * n[0], 0, 0, alt, 0, 0, n[0], 0, n[1], 0, x, y, z, 1];
     // parede virada para n; dupla = também do outro lado
@@ -193,7 +198,10 @@
           muro(...d(-3.75), 2.5, n, fina, !!v); muro(...d(3.75), 2.5, n, fina, !!v);
           const Mq = (k) => quadV(ex + k * n[0] * 0.02, ez + k * n[1] * 0.02, 5, [k * n[0], k * n[1]]);
           const ba = eixo == 'x' ? [ex - 2.5, ez] : [ex, ez - 2.5], bb = eixo == 'x' ? [ex + 2.5, ez] : [ex, ez + 2.5];
-          E.portas.push({ tipo: 'porta', pos: [ex, 5, ez], quads: [{ M: Mq(1), mat: porta, lado: '_DoorIn' }, { M: Mq(-1), mat: porta, lado: '_DoorOut' }], bar: { a: ba, b: bb, y: [0, 10] }, pai: 'AlaBeta' });
+          // porta de cada tipo: laboratório = clínica do Dr. Reflex, depósito = Supplies, salas = 99
+          const sala = [area(i, j), area(i + ({ o: -1, l: 1 }[lado] || 0), j + ({ n: -1, s: 1 }[lado] || 0))].find((x) => x && x != 'c');
+          const mp = sala == 'l' ? kit(E).mi('DoctorDoor_0') : sala == 'd' ? kit(E).mi('SuppliesDoor_0') : porta;
+          E.portas.push({ tipo: 'porta', pos: [ex, 5, ez], quads: [{ M: Mq(1), mat: mp, lado: '_DoorIn' }, { M: Mq(-1), mat: mp, lado: '_DoorOut' }], bar: { a: ba, b: bb, y: [0, 10] }, pai: 'AlaBeta' });
         } else muro(ex, ez, T, n, parede, !!v);
       }
     }

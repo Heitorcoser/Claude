@@ -15,6 +15,7 @@ Sprites e vozes do **Dr. Reflex**, do **Cloudy Copter** e do **The Test**, baixa
 | beta/sons2/DrR_*, Boink | vozes e martelo do Dr. Reflex |
 | beta/sons2/Cmlo_Blowing, Blowing | sopro do Cloudy Copter |
 | beta/sons2/LAt_*, Explosion | sons do The Test |
+| Texture2D/SchoolHouse/DoorTextures/PrincipalDoor_*, DoctorDoor_*, SuppliesDoor_* | portas da diretoria, da clínica e do armário (Baldi's Basics Plus / Classic Remastered) |
 
 ## Outro material (domínio público / CC0 / OFL)
 

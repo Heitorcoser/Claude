@@ -159,9 +159,23 @@
     lista.filter((s) => s.tipo == 'especial').forEach((s) => (s.tipo = 'deposito'));
     const aulas = lista.filter((s) => s.tipo == 'aula' && !s.porta.vizinha);
     if (aulas.length < nCad + 1) return null;
+    const cadernos = embaralha(aulas.slice()).slice(0, nCad);
+    // Só tem porta onde vale a pena entrar: salas com caderno, diretoria, professores, clínica do Dr. Reflex
+    // e o armário do Gotta Sweep. Cantina e biblioteca ficam abertas (sem porta). As outras salas viram parede.
+    const F = J.betaFeat || {};
+    const sweepSala = lista.find((s) => s.tipo == 'deposito' && !s.porta.vizinha);
+    for (const s of lista) {
+      if (s.tipo == 'cantina' || s.tipo == 'biblioteca') s.aberta = true;
+      const fica = cadernos.includes(s) || s.aberta || s === sweepSala || s.tipo == 'diretoria' || s.tipo == 'professores' || (s.tipo == 'clinica' && F.reflex !== false);
+      if (!fica) s.fechada = true;
+    }
+    for (const s of lista) if (!s.fechada && s.porta.vizinha != null && lista[s.porta.vizinha].fechada) s.fechada = true;
+    if (cadernos.some((s) => s.fechada) || dir.fechada) return null;
+    for (const s of lista) if (s.fechada) for (const [i, j] of s.cel) { c[j][i] = 0; id[j][i] = -1; }
+    const abertas = lista.filter((s) => !s.fechada);
 
     // ---------- geometria ----------
-    const E = { mats: base.mats, objs: [], portas: [], segs: [], caixas: [], gat: [], esp: [], spr: [], ronda: [], pontos: {} };
+    const E = { mats: base.mats.slice(), objs: [], portas: [], segs: [], caixas: [], gat: [], esp: [], spr: [], ronda: [], pontos: {} };
     const K = J.kit(E);
     const espaco = (i, j) => (c[j]?.[i] == 1 ? 'c' : id[j]?.[i] >= 0 ? 's' + id[j][i] : null);
     const PISO = { aula: 'Carpet', professores: 'Carpet', diretoria: 'Carpet', biblioteca: 'Carpet', cantina: 'TileFloor', deposito: 'TileFloor', clinica: 'TileFloor' };
@@ -181,9 +195,11 @@
         const doLado = v && (di > 0 || dj > 0); // parede entre dois espaços: faz uma vez só
         if (v && !doLado) continue;
         const pt = portaEm(lista, id, i, j, di, dj);
+        if (pt && lista[pt.sala].aberta) continue; // cantina e biblioteca: passagem aberta
         if (pt) {
           const s = lista[pt.sala];
-          const mat = s.tipo == 'professores' ? 'FacultyDoor_0' : 'Door_0';
+          // cada tipo de sala tem a sua porta (como no Baldi's Basics Plus)
+          const mat = { professores: 'FacultyDoor_0', diretoria: 'PrincipalDoor_0', clinica: 'DoctorDoor_0', deposito: 'SuppliesDoor_0' }[s.tipo] || 'Door_0';
           K.porta(ex, ez, n, mat, 'porta', 'Gerado/' + s.tipo);
         } else K.muro(ex, ez, T, n, 'WhiteBrickWall', !!v);
       }
@@ -213,13 +229,12 @@
     const reservado = new Set(); // quadrados que ficam livres (porta, caderno, ponto de ronda)
     const res = (i, j) => reservado.add(i + ',' + j);
     const livre = (i, j) => !reservado.has(i + ',' + j);
-    for (const s of lista) { const p = s.porta; res(p.i, p.j); }
+    for (const s of abertas) { const p = s.porta; res(p.i, p.j); }
     const pontoSala = (s) => { const l = s.cel.filter(([i, j]) => !(i == s.porta.i && j == s.porta.j)); const q = l[rndInt(0, l.length - 1)] || [s.porta.i, s.porta.j]; res(q[0], q[1]); return q; };
     const nb = base.spr.find((s) => s.n == '_nbSprite');
     const cores = ['_nbBlue', '_nbRed', '_nbGreen', '_nbYellow', '_nbCyan', '_nbSalmon', '_nbBlack'];
-    const cadernos = embaralha(aulas.slice()).slice(0, nCad);
-    const rondaSala = [];
-    for (const s of lista) { const q = pontoSala(s); rondaSala.push([cx(q[0]), cz(q[1])]); }
+    const rondaSala = {};
+    for (const s of abertas) { const q = pontoSala(s); rondaSala[s.n] = [cx(q[0]), cz(q[1])]; }
     // diretoria: o Diretor fica perto da porta (assim a porta dele é a mais perto), você fica lá dentro
     const pd = [dir.porta.i, dir.porta.j], fundo = dir.cel.reduce((a, b) => (Math.hypot(b[0] - pd[0], b[1] - pd[1]) > Math.hypot(a[0] - pd[0], a[1] - pd[1]) ? b : a));
     res(fundo[0], fundo[1]);
@@ -227,13 +242,13 @@
     E.pontos.playerDetentionPoint = [cx(fundo[0]), 0, cz(fundo[1])];
     E.gat.push(gatSala('Office Trigger', dir, cx, cz));
     lista.filter((s) => s.tipo == 'professores').forEach((s, k) => E.gat.push(gatSala('_FacultyTrigger' + (k ? ` (${k})` : ''), s, cx, cz)));
-    for (const s of lista) mobilia(K, s, cx, cz, livre, res);
+    for (const s of abertas) mobilia(K, s, cx, cz, livre, res);
     // cadernos em cima de uma carteira; nas outras carteiras, de vez em quando, cadernos, lápis e papéis
     cadernos.forEach((s, k) => {
       const m = s.mesas.length ? s.mesas.splice(rndInt(0, s.mesas.length - 1), 1)[0] : (() => { const q = pontoSala(s); return [cx(q[0]), cz(q[1])]; })();
       E.spr.push(Object.assign({}, nb, { pai: 'Environment/Objects/Notebooks/Gerado' + k, tex: 'Texture2D/SchoolHouse/PickUps/Notebook/' + cores[k % cores.length] + '.png', M: nb.M.slice(0, 12).concat([m[0], nb.M[13], m[1], 1]) }));
     });
-    for (const s of lista) for (const m of s.mesas || []) if (Math.random() < 0.4) K.enfeite(['Notebooks', 'pencils', 'papers'][rndInt(0, 2)], m[0], m[1], 4.4);
+    for (const s of abertas) for (const m of s.mesas || []) if (Math.random() < 0.4) K.enfeite(['Notebooks', 'pencils', 'papers'][rndInt(0, 2)], m[0], m[1], 4.4);
 
     // ---------- corredores: ronda, armários, cartazes, plantas, portas vai-e-vem ----------
     const corr = [];
@@ -241,10 +256,10 @@
     const cruz = corr.filter(([i, j]) => D4.filter(([di, dj]) => ehCorr(i + di, j + dj)).length >= 3);
     const pontosCorr = embaralha(cruz.concat(corr.filter(() => Math.random() < 0.08))).map(([i, j]) => [cx(i), cz(j)]);
     while (pontosCorr.length < 16) pontosCorr.push(pontosCorr[pontosCorr.length % Math.max(1, pontosCorr.length)]);
-    E.ronda = pontosCorr.slice(0, 16).concat(rondaSala);
+    E.ronda = pontosCorr.slice(0, 16).concat(Object.values(rondaSala));
     E.rondaCorr = pontosCorr.slice(16);
     enfeitaCorredores(K, c, W, H, id, lista, cx, cz, ehSaida, praca, saidas);
-    const cl = lista.find((s) => s.tipo == 'clinica'); if (cl) E.clinica = rondaSala[cl.n]; // casa do Dr. Reflex
+    const cl = abertas.find((s) => s.tipo == 'clinica'); if (cl) E.clinica = rondaSala[cl.n]; // casa do Dr. Reflex
 
     // ---------- jogador, personagens e itens ----------
     const sul0 = saidas[0];
@@ -260,8 +275,7 @@
     coloca('Baldi', corrLonge(60));
     coloca('Principal of the Thing', [E.pontos.principalDetentionPoint[0], E.pontos.principalDetentionPoint[2]]);
     coloca('Playtime', corrLonge(50));
-    const dep = lista.find((s) => s.tipo == 'deposito') || lista[0];
-    coloca('Gotta Sweep', rondaSala[dep.n]);
+    coloca('Gotta Sweep', sweepSala && !sweepSala.fechada ? rondaSala[sweepSala.n] : corrLonge(40));
     coloca('Arts and Crafters', rondaSala[cadernos[cadernos.length - 1].n]);
     coloca('1st Prize', corrLonge(70));
     coloca('Its a Bully', [ini[0], ini[1]], -20);
@@ -275,7 +289,7 @@
     const item = base.spr.find((s) => s.pai.endsWith('Pickup_Quarter'));
     const ITENS = ['EnergyFlavoredZestyBar', 'YellowDoorLock', 'Key', 'BSODA', 'Quarter', 'Tape', 'AlarmClock', 'WD-3D', 'SafetyScissors', 'BigBoots', 'Quarter', 'BSODA', 'EnergyFlavoredZestyBar', 'Quarter'];
     const TEX = { AlarmClock: 'AlarmClockItem', 'WD-3D': 'wd_nosquee', BigBoots: 'BootsIcon' };
-    const lugares = embaralha(lista.map((s) => s).filter((s) => s.tipo != 'diretoria'));
+    const lugares = embaralha(abertas.filter((s) => s.tipo != 'diretoria' && s.tipo != 'professores'));
     ITENS.forEach((n, k) => {
       const s = lugares[k % lugares.length], cand = s.cel.filter(([i, j]) => livre(i, j));
       const q = cand.length ? cand[rndInt(0, cand.length - 1)] : s.cel[0]; res(q[0], q[1]);
@@ -433,7 +447,7 @@
         if (naPraca) { if (r < 0.2) K.maquina(Math.random() < 0.5 ? 'BSODAMachine' : 'ZestyMachine', x + n[0] * 1.2, z + n[1] * 1.2, n); else if (r < 0.5) K.enfeite('Plant', x + n[0] * 1.5, z + n[1] * 1.5); else if (r < 0.75) K.naParede(POST[rndInt(0, POST.length - 1)], x, z, n); continue; }
         if (r < 0.12 && !comArmario.has(i + ',' + j) && !comArmario.has((i - di) + ',' + (j - dj)) && (comArmario.add(i + ',' + j), true)) K.armarios(x - Math.abs(n[1]) * 4, z - Math.abs(n[0]) * 4, x + Math.abs(n[1]) * 4, z + Math.abs(n[0]) * 4, n);
         else if (r < 0.32) K.naParede(POST[rndInt(0, POST.length - 1)], x, z, n);
-        else if (r < 0.40 && c[j + dj]?.[i + di] === 0) K.naParede('Window', x, z, n);
+        else if (r < 0.40 && (i + di <= 0 || j + dj <= 0 || i + di >= W - 1 || j + dj >= H - 1)) K.naParede('Window', x, z, n);
         else if (r < 0.43) K.enfeite('Plant', x + n[0] * 1.5, z + n[1] * 1.5);
       }
     }
