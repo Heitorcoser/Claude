@@ -5,7 +5,7 @@ export default async function (p, out) {
   for (let i = 0; i < 2; i++) {
     await p.click('#bPausa'); await p.waitForTimeout(300); await p.click('#sair'); await p.waitForTimeout(300);
     console.log('no menu:', await musicas());
-    await p.click('#jBeta'); await p.waitForTimeout(300);
+    await p.click('#jBeta'); await p.waitForTimeout(300); await p.click('#betaSegue'); await p.waitForTimeout(300);
     if (i == 0) await p.screenshot({ path: out + '/dificuldade.png' });
     await p.click(i == 0 ? '#difs [data-d=dificil]' : '#difs [data-d=facil]');
     await p.waitForFunction(() => Jogo.G && document.getElementById('carregando').hidden, null, { timeout: 120000 });

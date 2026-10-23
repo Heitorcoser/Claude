@@ -11,10 +11,7 @@ export default async function (p, out) {
   await p.screenshot({ path: out + '/beta_corredor.png' });
   // caminho do Baldi até a ala (a navegação conhece a ala?)
   console.log('caminho até o laboratório:', await p.evaluate(() => Jogo.nav.caminho(5, -125, 290, -290).length));
-  // liga o modo bravo e força os eventos
-  await p.evaluate(() => { Jogo.spoop(); const G = Jogo.G; G.npcs.robo.x = 160; G.npcs.robo.z = -295; G.p.x = 200; G.p.z = -295; G.p.yaw = -Math.PI / 2 * -1; });
-  await p.waitForTimeout(1500); await p.screenshot({ path: out + '/beta_robo.png' });
-  console.log('robo viu:', await p.evaluate(() => Jogo.G.npcs.robo.viu));
+  await p.evaluate(() => Jogo.spoop());
   for (const ev of ['apagao', 'incendio', 'chuva']) {
     await p.evaluate((ev) => { const G = Jogo.G; if (G.ev.atual) { Jogo.EVENTOS[G.ev.atual].fim?.(G); } G.ev.atual = ev; G.ev.fim = Jogo.EVENTOS[ev].dur; Jogo.EVENTOS[ev].ini(G); }, ev);
     await p.waitForTimeout(2500); await p.screenshot({ path: out + '/beta_' + ev + '.png' });

@@ -1,11 +1,12 @@
 // Modo Beta Tester: testa o que vem por aí.
 // - Ala Beta: escola maior, aberta no corredor leste, com salas, biblioteca, laboratório e 3 cadernos a mais.
-// - Personagens novos: Robô Inspetor (entrega sua posição ao Baldi) e Fantasma do Apagão.
+// - Personagens do Baldi's Basics Plus: Dr. Reflex, Cloudy Copter e The Test.
 // - Eventos aleatórios: Apagão, Simulado de Incêndio, Chuva de Cadernos, Hora do Lanche e Sinal do Recreio.
 (function () {
   'use strict';
   const J = window.Jogo, M = window.Motor, $ = (id) => document.getElementById(id);
-  J.SONS_EXTRA = ['alarme', 'apagao', 'bipe', 'fantasma', 'fantasma_respira', 'robo_TargetFound', 'robo_TargetLost', 'robo_WhereAreYou', 'robo_Initializing', 'robo_BackupRequested', 'robo_Ouch', 'robo_WhereDidYouGo'].map((n) => 'beta/sons/' + n);
+  J.SONS_EXTRA = ['alarme', 'apagao'].map((n) => 'beta/sons/' + n).concat(
+    ['DrR_Normal_TakeMyTest', 'DrR_Think_Intro', 'DrR_Fast', 'DrR_Faster', 'DrR_TooSlow', 'DrR_HitCircle', 'DrR_Wrong', 'DrR_TryAgain', 'DrR_GoodJob', 'DrR_FirstTry', 'DrR_AllDone', 'DrR_Angry_HeyGetBack', 'DrR_Angry_Random_0', 'DrR_Angry_Random_1', 'DrR_Angry_Random_2', 'DrR_Hammer', 'Boink', 'Cmlo_Blowing', 'LAt_Sighted', 'LAt_Loop', 'LAt_Buildup', 'Explosion'].map((n) => 'beta/sons2/' + n));
   const beta = () => J.G && J.G.modo == 'beta';
 
   /* ---------- Ala Beta ---------- */
@@ -40,7 +41,26 @@
     mesaLonga: { m: 'Mesh/CombinedMeshes_Desk_-856402.asset', mat: ['Desk'], y: 1.5, h: [10, 1.5, 2.5], pes: { m: 'Mesh/CombinedMeshes_BSODA_Side_-856454.asset', mat: ['BSODA_Side'] } },
     armario: { m: 'Mesh/CombinedMeshes_Locker_-826616.asset', mat: ['Locker'], y: 4, h: [1, 4, 1], lado: { m: 'Mesh/CombinedMeshes_LockerSide_-826668.asset', mat: ['Locker_Side'] } },
   };
-  function decora(E, mi, quadV) {
+  // Ferramentas para montar peças no mapa (usadas pela ala e pelo mapa aleatório)
+  function kit(E) {
+    const mi = (n) => E.mats.findIndex((m) => m.n === n);
+    // quad de largura w centrado em (x,z), virado para n = [nx, nz] (só a frente aparece)
+    const quadV = (x, z, w, n, y = 5, alt = 10) => [w * n[1], 0, -w * n[0], 0, 0, alt, 0, 0, n[0], 0, n[1], 0, x, y, z, 1];
+    // parede virada para n; dupla = também do outro lado
+    const muro = (x, z, w, n, mat = 'WhiteBrickWall', dupla = false, extra = {}) => {
+      E.objs.push(Object.assign({ m: 'quad', mat: [mi(mat)], M: quadV(x, z, w, n, extra.y ?? 5) }, extra.ent ? { ent: extra.ent } : {}));
+      if (dupla) E.objs.push(Object.assign({ m: 'quad', mat: [mi(mat)], M: quadV(x, z, w, [-n[0], -n[1]], extra.y ?? 5) }, extra.ent ? { ent: extra.ent } : {}));
+      const a = n[0] == 0 ? [x - w / 2, z] : [x, z - w / 2], b = n[0] == 0 ? [x + w / 2, z] : [x, z + w / 2];
+      E.segs.push(Object.assign({ a, b, y: extra.ent ? [10, 20] : [0, 10] }, extra.ent ? { ent: extra.ent } : {}));
+    };
+    // porta de 5 (ou 10, vai-e-vem) no meio de uma parede de 10, com os dois pedaços de parede fina
+    const porta = (ex, ez, n, mat = 'Door_0', tipo = 'porta', pai = 'Gerado') => {
+      const larg = tipo == 'vaivem' ? 10 : 5, eixoX = n[0] == 0;
+      if (larg < 10) for (const k of [-3.75, 3.75]) muro(eixoX ? ex + k : ex, eixoX ? ez : ez + k, 2.5, n, 'WhiteBrickWallThin', true);
+      const Mq = (k) => quadV(ex + k * n[0] * 0.02, ez + k * n[1] * 0.02, larg, [k * n[0], k * n[1]]);
+      const h = larg / 2, ba = eixoX ? [ex - h, ez] : [ex, ez - h], bb = eixoX ? [ex + h, ez] : [ex, ez + h];
+      E.portas.push({ tipo, pos: [ex, 5, ez], quads: [{ M: Mq(1), mat: mi(mat), lado: '_DoorIn' }, { M: Mq(-1), mat: mi(mat), lado: '_DoorOut' }], bar: { a: ba, b: bb, y: [0, 10] }, pai });
+    };
     // giro em y: a = 0 é a posição original da peça; a frente (z local) aponta para (-sen a, cos a)
     const giro = (a, sx = 1, sy = 1, sz = 1) => { const c = Math.cos(a), s = Math.sin(a); return [c * sx, 0, s * sx, 0, 0, sy, 0, 0, -s * sz, 0, c * sz, 0]; };
     const caixa = (n, x, y, z, h, a) => E.caixas.push({ n, c: [x, y, z], h, ang: a });
@@ -82,6 +102,11 @@
       E.spr.push(Object.assign({}, b, { pai: 'Environment/Objects/Billboards/AlaBeta', a: 1, M: M.concat([x, y ?? b.M[13], z, 1]) }));
     }
 
+    return { mi, quadV, muro, porta, giro, caixa, movel, virado, armarios, naParede, maquina, estante, caixote, enfeite };
+  }
+  J.kit = kit;
+  function decora(E) {
+    const { naParede, movel, enfeite, armarios, maquina, caixote, estante } = kit(E);
     const S = [0, 1], N = [0, -1], L = [-1, 0], O = [1, 0]; // para onde a peça olha (+z, -z, -x, +x)
     // Sala 1 (x 130-180, z -240 a -290): quadro ao norte, carteiras viradas para ele
     naParede('Math', 155, -240, N);
@@ -181,75 +206,247 @@
     poe(it, 'Environment/Objects/Pickups/Pickup_BSODA', 'Texture2D/SchoolHouse/PickUps/BSODA.png', 8, 1);
     poe(it, 'Environment/Objects/Pickups/Pickup_AlarmClock', 'Texture2D/SchoolHouse/PickUps/AlarmClockItem.png', 3, 8);
     poe(it, 'Environment/Objects/Pickups/Pickup_Teleporter', 'Texture2D/SchoolHouse/PickUps/TeleporterIcon.png', 16, 3);
-    decora(E, mi, quadV);
+    decora(E);
     // pontos de ronda: o corredor da ala vale como corredor, as salas como salas
     E.rondaCorr = [[X0 + 45, zc], [X0 + 105, zc], [X0 + 135, Z0 - 15], [X0 + 135, Z0 - 105]];
     E.rondaSala = [[X0 + 30, Z0 - 25], [X0 + 30, Z0 - 85], [X0 + 85, Z0 - 85], [X0 + 85, Z0 - 25], [X0 + 175, Z0 - 50]];
     E.totalCadernos = 10;
   }
-  J.ganchos.monta.push((E, _J, modo) => { if (modo == 'beta') constroiAla(E); });
+  J.ganchos.monta.push((E, _J, modo) => { const f = J.betaFeat || {}; if (modo == 'beta' && !f.mapa && f.ala !== false) constroiAla(E); });
 
-  /* ---------- personagens novos ---------- */
+  /* ---------- tela de Beta Features ---------- */
+  // padrão: tudo ligado menos o mapa aleatório; a escolha fica guardada no aparelho
+  J.betaFeat = { mapa: false, reflex: true, cloudy: true, test: true, eventos: true, ala: true };
+  try { Object.assign(J.betaFeat, JSON.parse(localStorage.getItem('baldiBeta') || '{}')); } catch (e) {}
+  const marca = () => {
+    document.querySelectorAll('.feat').forEach((b) => { b.classList.toggle('on', !!J.betaFeat[b.dataset.f]); b.classList.toggle('off', b.dataset.f == 'ala' && J.betaFeat.mapa); });
+  };
+  document.querySelectorAll('.feat').forEach((b) => (b.onclick = () => { J.betaFeat[b.dataset.f] = !J.betaFeat[b.dataset.f]; try { localStorage.setItem('baldiBeta', JSON.stringify(J.betaFeat)); } catch (e) {} marca(); }));
+  J.abreBeta = () => { marca(); $('menu').hidden = true; $('telaBeta').hidden = false; };
+  $('betaVolta').onclick = () => { $('telaBeta').hidden = true; $('menu').hidden = false; };
+  $('betaSegue').onclick = () => { $('telaBeta').hidden = true; J.escolheDificuldade('beta'); };
+
+  /* ---------- personagens novos (vindos do Baldi's Basics Plus) ---------- */
+  const IMG = (n) => 'beta/img2/' + n + '.png', SOM = (n) => 'beta/sons2/' + n;
+  const quadro2 = (n, k) => IMG(n + String(k).padStart(2, '0'));
   function npcSprite(tex, alt) {
     const m = J.sprite(tex, alt, alt); m.visible = false; return m;
   }
+  // o jogador está olhando para (x,z)? (dentro de um cone na frente da câmera e sem parede no meio)
+  const olhando = (G, x, z, abertura = 0.4, max = 90) => {
+    const p = G.p, dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz);
+    if (d > max || !J.mundo.ve(p.x, p.z, x, z)) return false;
+    const fx = -Math.sin(p.yaw), fz = -Math.cos(p.yaw);
+    return (dx * fx + dz * fz) / d > Math.cos(abertura);
+  };
+  const corredor = () => J.ronda(false);
+
   J.ganchos.inicia.push((G) => {
     if (G.modo != 'beta') return;
-    const mundo = J.mundo, N = G.npcs;
-    // Robô Inspetor: anda pelos corredores e, quando te vê, avisa o Baldi onde você está
-    const r0 = J.E.rondaCorr[1];
-    N.robo = Object.assign(J.Agente('Robô Inspetor', r0[0], r0[1], 12), {
-      spr: npcSprite('beta/img/robo.png', 2.4), oy: 3.2, viu: false, cool: 0, aviso: 0, tonto: 0, fala: null,
-      ativa() { this.ativo = true; this.spr.visible = true; this.diz('Initializing'); this.vagar(); },
-      diz(n) { if (!this.fala || this.fala.fim) this.fala = M.som('beta/sons/robo_' + n, { de: this, alcance: 90 }); },
-      vagar() { const r = J.ronda(false); this.vai(r[0], r[1]); this.cool = 1; },
-      tique(dt) { this.cool -= dt; this.aviso -= dt; this.tonto -= dt; },
-      fixo(dt) {
-        if (this.empurro > 0 && this.tonto <= 0) { this.diz('Ouch'); this.tonto = 4; }
-        if (this.tonto > 0) { this.anda(dt, 0); return; }
-        const p = G.p, d = J.dist(this, p);
-        if (J.ve(this) && d < 70 && !J.escuro) {
-          if (!this.viu) { this.diz('TargetFound'); M.som('beta/sons/bipe', { de: this }); }
-          this.viu = true;
-          // fica de olho de longe e chama o Baldi a cada 3 segundos
-          if (d > 18) this.vai(p.x, p.z); else this.cam = [];
-          if (this.aviso <= 0) { this.aviso = G.dif.robo; G.npcs.baldi.ouve(p.x, p.z, 2); M.som('beta/sons/bipe', { de: this, vol: 0.6 }); if (Math.random() < 0.3) this.diz('BackupRequested'); }
-          this.cool = 1.5;
-        } else if (this.viu && this.cool <= 0) { this.viu = false; this.diz(Math.random() < 0.5 ? 'TargetLost' : 'WhereDidYouGo'); this.vagar(); }
-        else if (this.parado() && this.cool <= 0) { this.vagar(); if (Math.random() < 0.15) this.diz('WhereAreYou'); }
-        this.anda(dt, this.viu ? 16 : 12);
-      },
-    });
-    // Fantasma do Apagão: só aparece no escuro, atravessa paredes e te deixa sem fôlego
-    N.fantasma = Object.assign(J.Agente('Fantasma', 0, 0, 7), {
-      spr: npcSprite('beta/img/fantasma.png', 2.2), oy: 4, abrePortas: false,
-      ativa() {},
-      surge() {
-        const p = G.p, a = Math.random() * Math.PI * 2;
-        this.x = p.x + Math.cos(a) * 45; this.z = p.z + Math.sin(a) * 45;
-        this.ativo = true; this.spr.visible = true; M.som('beta/sons/fantasma', { de: this, alcance: 100 });
-      },
-      some() { this.ativo = false; this.spr.visible = false; M.para(this.respira); },
-      tique(dt) {
-        if (!J.escuro) return this.some();
-        const p = G.p, dx = p.x - this.x, dz = p.z - this.z, d = Math.hypot(dx, dz);
-        this.x += (dx / d) * this.vel * dt; this.z += (dz / d) * this.vel * dt;
-        if (d < 25 && (!this.respira || this.respira.fim)) this.respira = M.som('beta/sons/fantasma_respira', { de: this, alcance: 40 });
-        if (d < 2.5) { p.est = -5; J.aviso('O fantasma te assustou! Sem fôlego!', 2.5); this.some(); }
-      },
-      fixo() {},
-    });
-    N.fantasma.spr.material.transparent = true; N.fantasma.spr.material.opacity = 0.75; N.fantasma.spr.material.alphaTest = 0.05;
-    for (const n of [N.robo, N.fantasma]) n.spr.position.set(n.x, n.oy, n.z);
+    const N = G.npcs, F = J.betaFeat || {};
+    G.escala = 1;
+
+    /* Dr. Reflex: anda pelos corredores parando e virando; só enxerga o que está na frente dele.
+       Quando te vê, corre e faz o teste de reflexo: toque na mão com o círculo bem rápido.
+       Se você fugir no meio do teste, ele volta com o martelo e te esmaga (fica lento por 30 s). */
+    if (F.reflex !== false) {
+      const r0 = J.E.rondaSala ? J.E.rondaSala[J.E.rondaSala.length - 1] : J.ronda(true);
+      N.reflex = Object.assign(J.Agente('Dr. Reflex', r0[0], r0[1], 9), {
+        spr: npcSprite(IMG('reflex'), 1.9), oy: 4.6, estado: 'anda', dir: 0, pausa: 0, cool: 10, fala: null, t: 0,
+        ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
+        diz(n, forca) { if (forca) M.para(this.fala); if (forca || !this.fala || this.fala.fim) this.fala = M.som(SOM('DrR_' + n), { de: this, alcance: 110 }); },
+        vagar() { const r = corredor(); this.vai(r[0], r[1]); },
+        // enxerga só na frente (cone de ~70° para cada lado)
+        enxerga() {
+          const p = G.p, dx = p.x - this.x, dz = p.z - this.z, d = Math.hypot(dx, dz);
+          if (d > 80 || !J.ve(this)) return false;
+          return d < 6 || (dx * Math.sin(this.dir) + dz * Math.cos(this.dir)) / d > 0.35;
+        },
+        tique(dt) { this.cool -= dt; this.t += dt; },
+        fixo(dt) {
+          const p = G.p, d = J.dist(this, p);
+          if (this.vx || this.vz) this.dir = Math.atan2(this.vx, this.vz);
+          if (this.estado == 'anda') {
+            if (this.cool <= 0 && this.enxerga()) { this.estado = 'corre'; this.diz('Normal_TakeMyTest', true); }
+            else if (this.chegou()) { if ((this.pausa += dt) > 2) { this.pausa = 0; this.vagar(); } }
+            this.anda(dt, 9);
+          } else if (this.estado == 'corre') {
+            if (!J.ve(this) && d > 15) { this.estado = 'anda'; this.vagar(); }
+            this.vai(p.x, p.z); this.anda(dt, 24);
+            if (d < 5 && !G.aprendendo && !p.corda) teste.comeca(this);
+          } else if (this.estado == 'teste') {
+            this.cam = []; this.anda(dt, 0);
+            if (d > 14) { teste.fecha(); this.estado = 'bravo'; this.bravoT = 45; this.diz('Angry_HeyGetBack', true); }
+          } else if (this.estado == 'bravo') {
+            this.bravoT -= dt;
+            if (J.ve(this) || this.cam.length == 0) this.vai(p.x, p.z);
+            this.anda(dt, 20);
+            if (Math.random() < dt * 0.15) this.diz('Angry_Random_' + M.rndInt(0, 2));
+            // esmaga quem encostar
+            for (const n of Object.values(N)) if (n !== this && n.ativo && J.dist(n, this) < 3.5 && !(n.esmagado > 0)) { n.esmagado = 30; M.som(SOM('Boink'), { de: n }); }
+            if (d < 3.5 && G.p.botas <= 0) {
+              p.esmagado = 30; M.som(SOM('DrR_Hammer'), { de: this }); M.som(SOM('Boink'));
+              J.aviso('Esmagado! Você está mais lento', 2.5);
+              p.yaw = Math.atan2(-(this.x - p.x), -(this.z - p.z));
+              this.estado = 'anda'; this.cool = 45; this.vagar();
+            } else if (this.bravoT <= 0) { this.estado = 'anda'; this.cool = 20; this.vagar(); }
+          }
+        },
+        anima() {
+          const mexe = Math.hypot(this.vx, this.vz) > 1, k = Math.floor(this.t * 12);
+          if (this.estado == 'bravo') J.troca(this.spr, quadro2('reflex_martelo', k % 14));
+          else if (this.estado == 'teste') J.troca(this.spr, teste.quadro || IMG('reflex'));
+          else J.troca(this.spr, mexe ? quadro2('reflex_anda', k % 16) : IMG('reflex'));
+        },
+      });
+    }
+
+    /* Cloudy Copter: flutua pelos corredores e de vez em quando para e sopra vento por 10 a 30 s
+       ao longo do corredor. O vento empurra você e muda a velocidade de quem anda nele. */
+    if (F.cloudy !== false) {
+      const c0 = corredor();
+      N.cloudy = Object.assign(J.Agente('Cloudy Copter', c0[0], c0[1], 8), {
+        spr: npcSprite(IMG('cloudy'), 1.6), oy: 6, sopra: 0, prox: M.rnd(8, 15), dirV: [1, 0], alcance: 0, som: null, t: 0, solido: 0,
+        ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
+        vagar() { const r = corredor(); this.vai(r[0], r[1]); },
+        tique(dt) {
+          this.t += dt;
+          this.oy = 6 + Math.sin(this.t * 2) * 0.4;
+          if (this.sopra > 0) {
+            if ((this.sopra -= dt) <= 0) { M.para(this.som); this.som = null; this.faixas.visible = false; this.prox = M.rnd(12, 25); this.vagar(); return; }
+            this.textura.offset.x -= dt * 1.6; // as riscas correm na direção do vento
+          } else if ((this.prox -= dt) <= 0) this.comecaVento();
+        },
+        // escolhe o lado do corredor mais comprido e sopra para lá
+        comecaVento() {
+          let melhor = null;
+          for (const d of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const a = J.mundo.raio(this.x, this.z, d[0], d[1], 120); if (!melhor || a > melhor[1]) melhor = [d, a]; }
+          if (melhor[1] < 20) { this.prox = 3; return; }
+          this.dirV = melhor[0]; this.alcance = melhor[1]; this.sopra = M.rnd(10, 30); this.cam = [];
+          this.som = M.som(SOM('Cmlo_Blowing'), { de: this, loop: true, alcance: 120 });
+          // três faixas verticais ao longo do corredor com riscas de vento andando
+          if (!this.faixas) {
+            const t = M.tex(IMG('vento')).clone(); t.needsUpdate = true;
+            t.wrapS = t.wrapT = THREE.RepeatWrapping; t.center.set(0.5, 0.5); t.rotation = Math.PI / 2;
+            this.textura = t;
+            const mat = new THREE.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
+            this.faixas = new THREE.Group();
+            for (const l of [-2.6, 0.2, 2.8]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); m.position.set(0.5, 0.5, l); this.faixas.add(m); }
+            J.cena.add(this.faixas);
+          }
+          const f = this.faixas;
+          f.children.forEach((m) => { m.scale.set(1, 1, 1); });
+          f.scale.set(this.alcance, 8, 1); f.position.set(this.x, 0.5, this.z);
+          f.rotation.set(0, Math.atan2(-this.dirV[1], this.dirV[0]), 0);
+          this.textura.repeat.set(this.alcance / 12, 1);
+          f.visible = true;
+        },
+        // dentro da faixa do vento?
+        noVento(x, z) {
+          if (!(this.sopra > 0)) return false;
+          const dx = x - this.x, dz = z - this.z, ao = dx * this.dirV[0] + dz * this.dirV[1], lado = Math.abs(dx * this.dirV[1] - dz * this.dirV[0]);
+          return ao > 0 && ao < this.alcance && lado < 5;
+        },
+        fixo(dt) { if (this.sopra > 0) { this.anda(dt, 0); return; } if (this.chegou()) this.vagar(); this.anda(dt, 8); },
+      });
+      const cl = N.cloudy;
+      G.vento = (x, z, ux, uz) => (cl.noVento(x, z) ? Math.max(0.3, 1 + (ux * cl.dirV[0] + uz * cl.dirV[1]) * 0.6) : 1);
+      G.empurraJogador = (x, z) => (cl.noVento(x, z) && G.p.botas <= 0 ? [cl.dirV[0] * 11, cl.dirV[1] * 11] : [0, 0]);
+    }
+
+    /* The Test: aparece num corredor. Olhar para ele deixa o tempo mais lento e as luzes piscam;
+       quando você olha para outro lado ele some e aparece em outro corredor.
+       Olhar demais faz ele explodir, e aí tudo fica mais rápido por um minuto. */
+    if (F.test !== false) {
+      const t0 = corredor();
+      N.test = Object.assign(J.Agente('The Test', t0[0], t0[1], 0), {
+        spr: npcSprite(IMG('test'), 2.2), oy: 5.2, olhado: 0, visto: false, som: null, morto: false, rapido: 0, explosao: null, solido: 0,
+        ativa() { this.ativo = true; this.spr.visible = true; this.muda(); },
+        // vai para um corredor longe da vista
+        muda() { for (let k = 0; k < 20; k++) { const r = corredor(); if (Math.hypot(r[0] - G.p.x, r[1] - G.p.z) > 40) { this.x = r[0]; this.z = r[1]; break; } } },
+        tique(dt) {
+          dt = dt / (G.escala || 1); // ele não sofre o próprio efeito
+          if (this.morto) {
+            if (this.rapido > 0 && (this.rapido -= dt) <= 0) { G.escala = 1; J.evento(''); }
+            if (this.explosao) { this.explosao.k += dt * 20; if (this.explosao.k >= 13) { J.cena.remove(this.explosao.m); this.explosao = null; } else J.troca(this.explosao.m, quadro2('explosao', Math.floor(this.explosao.k))); }
+            return;
+          }
+          const vendo = olhando(G, this.x, this.z, 0.45, 100);
+          if (vendo) {
+            if (!this.visto) { this.visto = true; M.som(SOM('LAt_Sighted'), { de: this }); this.som = M.som(SOM('LAt_Loop'), { de: this, loop: true, alcance: 120 }); }
+            this.olhado += dt;
+            G.escala = Math.max(0.3, G.escala - dt * 0.5);
+            // luzes piscando
+            J.cena.fog = Math.random() < 0.15 ? new THREE.Fog(0x000000, 1, 25 + Math.random() * 40) : null;
+            if (this.olhado > 5 && !this.aviso) { this.aviso = true; M.som(SOM('LAt_Buildup'), { de: this }); }
+            if (this.olhado > 8) this.explode();
+          } else {
+            if (this.visto) { this.visto = false; M.para(this.som); J.cena.fog = null; this.muda(); this.aviso = false; }
+            this.olhado = Math.max(0, this.olhado - dt * 0.5);
+            G.escala = Math.min(1, G.escala + dt * 0.6);
+          }
+        },
+        explode() {
+          this.morto = true; M.para(this.som); J.cena.fog = null;
+          M.som(SOM('Explosion'), { de: this, alcance: 200 });
+          const m = J.sprite(quadro2('explosao', 0), 6, 6); m.position.set(this.x, 5, this.z); this.explosao = { m, k: 0 };
+          J.troca(this.spr, IMG('test_caido')); this.spr.scale.y = this.spr.scale.x * 0.7; this.oy = this.spr.scale.y * 0.4;
+          G.escala = 1.35; this.rapido = 60; J.aviso('The Test explodiu! Tudo ficou mais rápido', 3);
+        },
+        fixo() {},
+        anima() { if (!this.morto) this.spr.position.y = this.oy + (this.visto ? Math.sin(G.t * (12 + this.olhado * 4)) * 0.25 : 0); },
+      });
+    }
+    for (const n of Object.values(N)) if (n.spr) n.spr.position.set(n.x, n.oy, n.z);
     G.ev = { prox: 45, atual: null, fim: 0 };
     J.escuro = false; J.correLiberado = false;
   });
+
+  /* ---------- teste de reflexo do Dr. Reflex ---------- */
+  const teste = {
+    dr: null, fase: '', t: 0, lado: 0, quadro: null, erros: 0,
+    comeca(dr) {
+      const G = J.G, p = G.p;
+      this.dr = dr; dr.estado = 'teste'; this.erros = 0;
+      p.yaw = Math.atan2(-(dr.x - p.x), -(dr.z - p.z)); // vira para ele
+      $('reflexo').hidden = false; this.rodada();
+    },
+    rodada() {
+      this.fase = 'pensa'; this.t = M.rnd(1.6, 2.6); this.lado = Math.random() < 0.5 ? 0 : 1; // 0: círculo à esquerda
+      this.quadro = quadro2(this.lado ? 'maos_dir' : 'maos_esq', 0); this.mostra();
+      this.dr.diz('Think_Intro', true);
+    },
+    mostra() { $('reflexoImg').src = 'assets/' + this.quadro; },
+    tique(dt) {
+      if (!this.dr || $('reflexo').hidden) return;
+      this.t -= dt;
+      if (this.fase == 'pensa' && this.t <= 0) { this.fase = 'abre'; this.t = 0; this.k = 0; this.dr.diz('Fast', true); }
+      else if (this.fase == 'abre') {
+        this.k += dt * 24; this.quadro = quadro2(this.lado ? 'maos_dir' : 'maos_esq', Math.min(5, Math.floor(this.k))); this.mostra();
+        if (this.k >= 5) { this.fase = 'espera'; this.t = J.G.dif.reflexo || 1; }
+      } else if (this.fase == 'espera' && this.t <= 0) this.falha('TooSlow');
+      else if (this.fase == 'erro' && this.t <= 0) this.rodada();
+    },
+    toque(ladoTocado) {
+      if (this.fase != 'espera') return;
+      if (ladoTocado === this.lado) {
+        this.dr.diz(this.erros ? 'GoodJob' : 'FirstTry', true); M.som(SOM('DrR_HitCircle'));
+        J.aviso(this.erros ? 'Passou no teste!' : 'Passou de primeira!', 2);
+        this.fecha(); this.dr.estado = 'anda'; this.dr.cool = 45; this.dr.vagar();
+      } else this.falha('Wrong');
+    },
+    falha(n) { this.erros++; this.fase = 'erro'; this.t = 1.6; this.dr.diz(n, true); this.quadro = IMG('reflex'); this.mostra(); },
+    fecha() { $('reflexo').hidden = true; this.fase = ''; },
+  };
+  $('reflexo').addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); teste.toque(e.clientX > innerWidth / 2 ? 1 : 0); });
+  J.ganchos.tique.push((G, dt) => { if (G.modo == 'beta') teste.tique(dt); });
+  J.testeReflexo = teste;
 
   /* ---------- eventos ---------- */
   const EVENTOS = {
     apagao: {
       nome: 'APAGÃO', dur: 25,
-      ini(G) { J.escuro = true; J.cena.fog = new THREE.Fog(0x000000, 1, 20); M.som('beta/sons/apagao'); G.npcs.fantasma.surge(); },
+      ini() { J.escuro = true; J.cena.fog = new THREE.Fog(0x000000, 1, 20); M.som('beta/sons/apagao'); },
       fim() { J.escuro = false; J.cena.fog = null; },
     },
     incendio: {
@@ -303,7 +500,7 @@
     J.aviso('Caderno dourado: ganhou um item!', 2);
   };
   J.ganchos.tique.push((G, dt) => {
-    if (G.modo != 'beta' || !G.spoop) return;
+    if (G.modo != 'beta' || !G.spoop || (J.betaFeat || {}).eventos === false) return;
     const ev = G.ev, mostra = () => J.evento(ev.atual ? `${EVENTOS[ev.atual].nome}  ${Math.ceil(ev.fim)}s` + (EVENTOS[ev.atual].sub ? `\n${EVENTOS[ev.atual].sub}` : '') : '');
     if (ev.atual) {
       const e = EVENTOS[ev.atual];
@@ -320,5 +517,5 @@
   J.EVENTOS = EVENTOS;
   // ao sair do jogo, desliga o que um evento deixou ligado
   const menuOriginal = J.menu;
-  J.menu = () => { J.escuro = false; J.correLiberado = false; if (J.cena) J.cena.fog = null; menuOriginal(); };
+  J.menu = () => { J.escuro = false; J.correLiberado = false; if (J.cena) J.cena.fog = null; teste.fecha(); menuOriginal(); };
 })();

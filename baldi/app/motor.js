@@ -231,48 +231,105 @@
     for (let r = 1; r < 8; r++) for (let a = -r; a <= r; a++) for (const [di, dj] of [[a, -r], [a, r], [-r, a], [r, a]]) if (this.ok(i + di, j + dj)) return [i + di, j + dj];
     return null;
   };
-  // A* com 8 vizinhos; devolve pontos (x,z) já alisados
-  N.caminho = function (ax, az, bx, bz) {
-    const a = this.maisPerto(...this.cel(ax, az)), b = this.maisPerto(...this.cel(bx, bz));
-    if (!a || !b) return [];
-    const W = this.W, ini = a[1] * W + a[0], fim = b[1] * W + b[0];
-    const g = new Float32Array(W * this.H).fill(1e9), de = new Int32Array(W * this.H).fill(-1), fechado = new Uint8Array(W * this.H);
-    const heap = [[0, ini]]; g[ini] = 0;
-    const h = (k) => { const dx = Math.abs((k % W) - b[0]), dz = Math.abs(((k / W) | 0) - b[1]); return Math.max(dx, dz) + 0.41 * Math.min(dx, dz); };
-    const push = (it) => { heap.push(it); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
-    const pop = () => { const t = heap[0], l = heap.pop(); if (heap.length) { heap[0] = l; let i = 0; for (;;) { const e = 2 * i + 1, d = e + 1; let m = i; if (e < heap.length && heap[e][0] < heap[m][0]) m = e; if (d < heap.length && heap[d][0] < heap[m][0]) m = d; if (m == i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return t; };
-    let n = 0;
-    while (heap.length && n++ < 60000) {
-      const [, k] = pop();
-      if (k === fim) break;
-      if (fechado[k]) continue; fechado[k] = 1;
-      const i = k % W, j = (k / W) | 0;
-      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
-        if (!di && !dj) continue;
-        const ni = i + di, nj = j + dj;
-        if (!this.ok(ni, nj)) continue;
-        if (di && dj) {
-          // diagonal: as duas células do lado e as quatro passagens em volta têm de estar livres
-          if (!this.ok(i + di, j) || !this.ok(i, j + dj) || !this.passa(i, j, di, 0) || !this.passa(i, j, 0, dj) || !this.passa(i + di, j, 0, dj) || !this.passa(i, j + dj, di, 0)) continue;
-        } else if (!this.passa(i, j, di, dj)) continue;
-        const nk = nj * W + ni, c = g[k] + (di && dj ? 1.414 : 1);
-        if (c < g[nk]) { g[nk] = c; de[nk] = k; push([c + h(nk), nk]); }
+  // distância (em células) de cada célula livre até a parede mais perto: o A* prefere o meio dos corredores
+  N.preparaMeio = function () {
+    const W = this.W, H = this.H, d = new Uint8Array(W * H), fila = [];
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      if (!this.ok(i, j)) continue;
+      let borda = false;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!this.ok(i + di, j + dj) || !this.passa(i, j, di, dj)) borda = true;
+      if (borda) { d[j * W + i] = 1; fila.push(j * W + i); }
+    }
+    for (let q = 0; q < fila.length; q++) {
+      const k = fila[q], i = k % W, j = (k / W) | 0;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const ni = i + di, nj = j + dj, nk = nj * W + ni;
+        if (this.ok(ni, nj) && !d[nk] && this.passa(i, j, di, dj)) { d[nk] = Math.min(255, d[k] + 1); fila.push(nk); }
       }
     }
-    if (de[fim] < 0 && fim !== ini) return [];
+    this.meio = d;
+  };
+  // largura livre em volta da célula, na direção perpendicular ao movimento; devolve [centro, largura]
+  N.vao = function (i, j, horiz) {
+    const lim = 8;
+    let a = 0, b = 0;
+    if (horiz) { while (a < lim && this.ok(i, j - a - 1) && this.passa(i, j - a, 0, -1)) a++; while (b < lim && this.ok(i, j + b + 1) && this.passa(i, j + b, 0, 1)) b++; return [this.z0 + (j + (b - a) / 2 + 0.5) * NC, a + b]; }
+    while (a < lim && this.ok(i - a - 1, j) && this.passa(i - a, j, -1, 0)) a++; while (b < lim && this.ok(i + b + 1, j) && this.passa(i + b, j, 1, 0)) b++;
+    return [this.x0 + (i + (b - a) / 2 + 0.5) * NC, a + b];
+  };
+  // A* em 4 direções (só frente, trás, esquerda e direita), evitando curvas à toa e beiradas.
+  // O caminho sai em linhas retas pelo meio dos corredores e das portas.
+  N.caminho = function (ax, az, bx, bz) {
+    if (!this.meio) this.preparaMeio();
+    const a = this.maisPerto(...this.cel(ax, az)), b = this.maisPerto(...this.cel(bx, bz));
+    if (!a || !b) return [];
+    const W = this.W, n = W * this.H, ini = a[1] * W + a[0], fim = b[1] * W + b[0];
+    const D = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    // estado = célula * 4 + direção em que chegou
+    const g = new Float32Array(n * 4).fill(1e9), de = new Int32Array(n * 4).fill(-1), fechado = new Uint8Array(n * 4);
+    const heap = [];
+    const h = (k) => Math.abs((k % W) - b[0]) + Math.abs(((k / W) | 0) - b[1]);
+    const push = (it) => { heap.push(it); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+    const pop = () => { const t = heap[0], l = heap.pop(); if (heap.length) { heap[0] = l; let i = 0; for (;;) { const e = 2 * i + 1, d = e + 1; let m = i; if (e < heap.length && heap[e][0] < heap[m][0]) m = e; if (d < heap.length && heap[d][0] < heap[m][0]) m = d; if (m == i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return t; };
+    for (let d = 0; d < 4; d++) { g[ini * 4 + d] = 0; push([h(ini), ini * 4 + d]); }
+    let achou = -1, it = 0;
+    while (heap.length && it++ < 200000) {
+      const [, st] = pop();
+      if (fechado[st]) continue; fechado[st] = 1;
+      const k = st >> 2, dir = st & 3;
+      if (k === fim) { achou = st; break; }
+      const i = k % W, j = (k / W) | 0;
+      for (let nd = 0; nd < 4; nd++) {
+        const [di, dj] = D[nd], ni = i + di, nj = j + dj;
+        if (!this.ok(ni, nj) || !this.passa(i, j, di, dj)) continue;
+        const nk = nj * W + ni, perto = this.meio[nk] || 1;
+        // beirada custa mais (até 2 células da parede); virar custa 3
+        const c = g[st] + 1 + (perto < 3 ? (3 - perto) * 0.8 : 0) + (nd !== dir && k !== ini ? 3 : 0);
+        const ns = nk * 4 + nd;
+        if (c < g[ns]) { g[ns] = c; de[ns] = st; push([c + h(nk), ns]); }
+      }
+    }
+    if (achou < 0) return ini === fim ? [[bx, bz]] : [];
+    const cels = [];
+    for (let st = achou; st !== -1; st = de[st]) cels.push(st >> 2);
+    cels.reverse();
+    // trechos retos: [horizontal?, células]
+    const trechos = [];
+    for (let q = 1; q < cels.length; q++) {
+      const horiz = cels[q] % W !== cels[q - 1] % W;
+      if (!trechos.length || trechos[trechos.length - 1][0] !== horiz) trechos.push([horiz, [cels[q - 1]]]);
+      trechos[trechos.length - 1][1].push(cels[q]);
+    }
+    const cx = (k) => this.x0 + ((k % W) + 0.5) * NC, cz = (k) => this.z0 + (((k / W) | 0) + 0.5) * NC;
+    // linha de cada trecho: o centro do vão mais estreito (meio do corredor ou da porta); se não der, a linha das células
+    const linhas = trechos.map(([horiz, ks]) => {
+      let melhor = null;
+      for (const k of ks) { const v = this.vao(k % W, (k / W) | 0, horiz); if (!melhor || v[1] < melhor[1]) melhor = v; }
+      const ks0 = ks[0], ks1 = ks[ks.length - 1], L = melhor[0];
+      const livre = horiz ? this.reto(cx(ks0), L, cx(ks1), L) : this.reto(L, cz(ks0), L, cz(ks1));
+      return livre ? L : horiz ? cz(ks0) : cx(ks0);
+    });
     const pts = [];
-    for (let k = fim; k !== -1 && k !== ini; k = de[k]) pts.push(k);
-    pts.reverse();
-    // alisa: pula pontos quando dá para ir em linha reta pela grade
-    const P2 = pts.map((k) => [this.x0 + ((k % W) + 0.5) * NC, this.z0 + (((k / W) | 0) + 0.5) * NC]);
-    const ul = P2.length ? P2[P2.length - 1] : [ax, az];
-    if (this.m.ve(ul[0], ul[1], bx, bz, true)) P2.push([bx, bz]); // o alvo pode estar dentro da parede
-    if (!P2.length) return [];
-    const out = []; let cx = ax, cz = az, i = 0;
-    while (i < P2.length) {
-      let j = Math.min(P2.length - 1, i + 12);
-      while (j > i && !this.reto(cx, cz, P2[j][0], P2[j][1])) j--;
-      out.push(P2[j]); cx = P2[j][0]; cz = P2[j][1]; i = j + 1;
+    if (!trechos.length) { pts.push([ax, bz], [bx, bz]); return pts.filter((p, q) => q == pts.length - 1 || Math.hypot(p[0] - ax, p[1] - az) > 0.05); }
+    // sai de onde está até a linha do 1º trecho, faz as curvas, e no fim vai de lado até o alvo
+    pts.push(trechos[0][0] ? [ax, linhas[0]] : [linhas[0], az]);
+    for (let q = 1; q < trechos.length; q++) pts.push(trechos[q][0] ? [linhas[q - 1], linhas[q]] : [linhas[q], linhas[q - 1]]);
+    const u = trechos.length - 1;
+    pts.push(trechos[u][0] ? [bx, linhas[u]] : [linhas[u], bz]);
+    if (this.m.ve(pts[pts.length - 1][0], pts[pts.length - 1][1], bx, bz, true)) pts.push([bx, bz]);
+    // tira pontos repetidos e confere se nenhum trecho bate em parede ou móvel
+    const limpa = (lista) => { const o = []; let px = ax, pz = az; for (const p of lista) if (Math.hypot(p[0] - px, p[1] - pz) > 0.05) { o.push(p); px = p[0]; pz = p[1]; } return o; };
+    const bom = (lista) => { let px = ax, pz = az; for (const p of lista) { if (!this.m.ve(px, pz, p[0], p[1], true)) return false; px = p[0]; pz = p[1]; } return true; };
+    let out = limpa(pts);
+    if (!bom(out)) {
+      // sem centralizar: pelas células, ainda só em linha reta
+      const alt = [[cx(cels[0]), cz(cels[0])]];
+      for (let q = 1; q < cels.length - 1; q++) { const a0 = cels[q - 1], a1 = cels[q + 1]; if (a0 % W !== a1 % W && ((a0 / W) | 0) !== ((a1 / W) | 0)) alt.push([cx(cels[q]), cz(cels[q])]); }
+      alt.push([cx(cels[cels.length - 1]), cz(cels[cels.length - 1])]);
+      const ul = alt[alt.length - 1];
+      if (Math.abs(ul[0] - bx) > 0.05 && Math.abs(ul[1] - bz) > 0.05) alt.push([bx, ul[1]]);
+      alt.push([bx, bz]);
+      out = limpa([[cx(cels[0]), az]].concat(alt));
     }
     return out;
   };

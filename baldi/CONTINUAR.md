@@ -1,6 +1,6 @@
-# Baldi Beta Tester: como continuar em outro chat
+# Baldi's Basics Modded: como continuar em outro chat
 
-Cole esta pasta (ou o zip) no chat novo e diga: "leia CONTINUAR.md e continue o Baldi Beta Tester".
+Cole esta pasta (ou o zip) no chat novo e diga: "leia CONTINUAR.md e continue o Baldi's Basics Modded".
 
 ## O que é
 Porte para a web (Three.js) do **Baldi's Basics Classic 1.4.3**, feito a partir do projeto aberto (decompile)
@@ -13,12 +13,13 @@ interno (o Unity não é usado). Código também em `Heitorcoser/Claude`, pasta 
 | `app/index.html` | Telas e estilos: título, menu (ícone + texto, como o original), HUD, controles de toque, tela das contas (posições tiradas do prefab MathGame, base 800x600), pausa, fim. Fonte Comic Neue embutida. |
 | `app/motor.js` | Monta a escola a partir do `escola.json` (junta os quads por material), colisão 2D (paredes = segmentos, móveis = caixas), navegação em grade com A* (no lugar do NavMesh), som (WebAudio, volume pela distância). |
 | `app/jogo.js` | Regras portadas dos scripts C#: jogador (andar 10, correr 16, energia), portas e portas vai-e-vem, cadernos e contas (conta impossível no 3º problema), itens 1 a 11, Baldi (tapa, raiva, ouvir), Diretor (culpa e detenção 15-99 s), Playtime (pular corda), Gotta Sweep, Arts and Crafters, 1st Prize (16 sprites de ângulo), Bully, modo final com as saídas, modo infinito. Tem ganchos `Jogo.ganchos.monta/inicia/tique/caderno`. |
-| `app/beta.js` | Modo Beta Tester: ala nova (planta em texto `PLANTA`, portas em `PORTAS`, 10 cadernos), Robô Inspetor, Fantasma do Apagão e eventos (`EVENTOS`: apagao, incendio, chuva, lanche, recreio). |
+| `app/beta.js` | Modo Beta: tela de Beta Features (`J.betaFeat`), ala nova (`PLANTA`, `PORTAS`, `decora()`), `kit(E)` com as peças de montar mapa, personagens do Baldi's Basics Plus (Dr. Reflex com o teste de reflexo, Cloudy Copter com vento, The Test que mexe no tempo `G.escala`) e eventos (`EVENTOS`). |
+| `app/mapa.js` | Mapa aleatório: grade de 10x10, anel de corredores + linhas no meio, quarteirões cortados em salas (aula, professores, diretoria, cantina, biblioteca, depósito), 4 saídas, portas vai-e-vem que não isolam nada. `test/planta.mjs` desenha a planta vista de cima. |
 | `app/escola.json` | Mapa gerado pelos scripts de `tools/` a partir da cena `School.unity`. |
 | `app/assets/` | Texturas e sons do jogo (convertidos), `beta/` com material novo (domínio público/CC0, ver `CREDITOS.md`), `fonts/`, `ui/`. |
 | `tools/` | `extrai.py` (lê a cena YAML do Unity), `malhas.py` (modelos .asset), `compacta.py` (gera `app/escola.json`), `assets.sh` (copia texturas e converte sons). |
 | `test/` | `ver.mjs` abre o jogo num celular simulado (Playwright); `jogar.mjs` testa caderno, contas e o Baldi; `beta.mjs` testa a ala e os eventos. Uso: `EXTRA=$PWD/test/beta.mjs node test/ver.mjs beta /tmp`. |
-| `android/` + `build.sh` | Gera `BaldiBetaTester.apk` sem Gradle (aapt2, javac, d8, zipalign, apksigner do SDK em `/opt/android/sdk`). |
+| `android/` + `build.sh` | Gera `BaldiModded.apk` sem Gradle (aapt2, javac, d8, zipalign, apksigner do SDK em `/opt/android/sdk`). |
 | `graphify-out/` | Grafo do código (`graph.html`, `GRAPH_REPORT.md`, `graph.json`). |
 
 ## Regenerar tudo
@@ -38,7 +39,7 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Visual: sem emojis; usar imagens do próprio jogo. Material novo vem de sites com licença livre (OpenGameArt/OpenClipart, CC0/domínio público) e entra em `CREDITOS.md`.
 - A câmera tem um desvio de 0,0001 rad no giro: alinhada exatamente às paredes, alguns renderizadores desenhavam as paredes cinza.
 - Materiais só com a frente (como no Unity). Malhas com escala negativa têm a ordem dos triângulos invertida em `M.monta`. Paredes novas (`beta.js`) usam `quadV` virado para dentro da área; parede entre duas áreas leva dois quads.
-- Navegação: `Nav.muro` marca passagens entre células cortadas por parede fina; o A* e o alisamento não atravessam paredes (`test/paredes.mjs`, `test/ronda.mjs`).
+- Navegação: `Nav.muro` marca passagens entre células cortadas por parede fina. A* em 4 direções com custo de curva e de beirada (`Nav.meio`); o caminho sai em linhas retas no centro do vão mais estreito (meio do corredor e da porta). Nada de diagonal (`test/paredes.mjs` conta tortos, `test/meio.mjs`).
 - Dificuldade: tela `#telaDif` depois de escolher o modo (`DIF` em `jogo.js`, guardada em localStorage): raiva e espera do Baldi, detenções (índices de 15/30/45/60/99 s, para a voz do Diretor bater), gasto de energia, tempo do Diretor para notar, intervalo do Robô.
 - Sons: `Motor.tocando` guarda tudo que toca; `menu()` e `comeca()` chamam `M.paraTudo()` (`test/menu.mjs`).
 - 1st Prize: acelera até 40 (12/s), vira 1 rad/s vendo o jogador; solta quando a velocidade cai abaixo de 4 e espera 2 s (`test/prize.mjs`).
@@ -47,7 +48,8 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - O HUD fica acima dos controles de toque (z-index 7) para os espaços de item receberem o toque.
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 
-## Ideias para as próximas versões do Beta Tester
+## Ideias para as próximas versões
+- Testes por modo: `FEAT='{"mapa":true}' EXTRA=$PWD/test/planta.mjs node test/ver.mjs beta /tmp` (mapa), `test/plus.mjs` (personagens novos), `test/betamenu.mjs`.
 - Mais personagens e eventos (estrutura pronta em `beta.js`).
 - 1st Prize, Arts and Crafters e Playtime mais fiéis ao original.
 - Salvar recorde do modo infinito; opções (sensibilidade, tamanho dos botões).

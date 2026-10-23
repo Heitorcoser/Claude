@@ -1,17 +1,25 @@
 # Créditos
 
-Fã-jogo sem fins lucrativos. **Baldi's Basics** é de Basically Games (mystman12). Texturas, sprites, sons e mapa vêm do projeto aberto (decompile) do Baldi's Basics Classic 1.4.3.
+Fã-jogo sem fins lucrativos (**Baldi's Basics Modded**). **Baldi's Basics** é de Basically Games (mystman12). Texturas, sprites, sons e mapa vêm do projeto aberto (decompile) do Baldi's Basics Classic 1.4.3.
 
-## Material novo do modo Beta Tester (todo em domínio público / CC0)
+## Personagens do modo Beta (do Baldi's Basics Plus, de Basically Games)
+
+Sprites e vozes do **Dr. Reflex**, do **Cloudy Copter** e do **The Test**, baixados do wiki do Baldi's Basics
+(baldis-basics-in-education-and-learning.fandom.com). Os direitos são de Basically Games / mystman12.
+
+| Pasta | O que tem |
+|---|---|
+| beta/img2/reflex*, maos_* | Dr. Reflex parado, andando, com martelo e as mãos do teste (círculo e X) |
+| beta/img2/cloudy.png, vento.png | Cloudy Copter e as riscas do vento |
+| beta/img2/test*.png, explosao*.png | The Test, caído e a explosão |
+| beta/sons2/DrR_*, Boink | vozes e martelo do Dr. Reflex |
+| beta/sons2/Cmlo_Blowing, Blowing | sopro do Cloudy Copter |
+| beta/sons2/LAt_*, Explosion | sons do The Test |
+
+## Outro material (domínio público / CC0 / OFL)
 
 | Arquivo | Origem | Autor | Licença |
 |---|---|---|---|
-| beta/img/fantasma.png | openclipart.org/detail/163945 | jbruce | Domínio público |
-| beta/img/robo.png | openclipart.org/detail/183281 | Pippi2011 | Domínio público |
 | beta/sons/alarme.mp3 | opengameart.org/content/alarm-2 | Frenchyboy | CC0 |
 | beta/sons/apagao.mp3 | opengameart.org/content/machine-shutting-down | Cough-E | CC0 |
-| beta/sons/fantasma.mp3 | opengameart.org/content/ghost | Ogrebane | CC0 |
-| beta/sons/fantasma_respira.mp3 | opengameart.org/content/ghost-breath | qubodup | CC0 |
-| beta/sons/bipe.mp3 | opengameart.org/content/beep-sound | (OpenGameArt) | CC0 |
-| beta/sons/robo_*.mp3 | opengameart.org/content/robot-voice-pack | someunusualgame | CC0 |
 | fonts/comic-neue-* | Comic Neue (Fontsource) | The Comic Neue Project Authors | SIL OFL 1.1 |

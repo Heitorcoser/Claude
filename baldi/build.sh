@@ -12,5 +12,5 @@ javac -source 8 -target 8 -bootclasspath $JAR -classpath $JAR -d build/classes $
 $BT/d8 --lib $JAR --output build/dex $(find build/classes -name '*.class')
 cp build/base.apk build/semdex.apk && (cd build/dex && zip -q ../semdex.apk classes.dex)
 $BT/zipalign -f 4 build/semdex.apk build/aligned.apk
-$BT/apksigner sign --ks baldi.keystore --ks-pass pass:${BALDI_PASS:-baldibeta} --ks-key-alias baldi --out ../BaldiBetaTester.apk build/aligned.apk
-$BT/apksigner verify ../BaldiBetaTester.apk && ls -la ../BaldiBetaTester.apk
+$BT/apksigner sign --ks baldi.keystore --ks-pass pass:${BALDI_PASS:-baldibeta} --ks-key-alias baldi --out ../BaldiModded.apk build/aligned.apk
+$BT/apksigner verify ../BaldiModded.apk && ls -la ../BaldiModded.apk

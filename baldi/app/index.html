@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <link rel="icon" href="assets/Texture2D/Miscellaneous/GameIcon.png">
-<title>Baldi's Basics: Beta Tester</title>
+<title>Baldi's Basics Modded</title>
 <style>
 @font-face{font-family:Comic;src:url(assets/fonts/comic-neue-latin-400-normal.woff2) format("woff2");font-weight:400}
 @font-face{font-family:Comic;src:url(assets/fonts/comic-neue-latin-700-normal.woff2) format("woff2");font-weight:700}
@@ -25,12 +25,27 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .bt:hover,.bt:focus-visible,.bt:active{border-bottom-color:#000;outline:none}
 .bt.claro{color:#fff}
 .bt.claro:hover,.bt.claro:active{border-bottom-color:#fff}
+#telaBeta{background:#fff;color:#000;gap:6px;overflow:auto}
+#betaTitulo{font-size:28px;font-weight:700}
+#betaSub{font-size:16px;color:#555}
+#feats{display:grid;grid-template-columns:repeat(3,minmax(0,170px));gap:6px 10px}
+@media (max-width:520px){#feats{grid-template-columns:repeat(2,minmax(0,170px))}}
+.feat{appearance:none;border:0;background:none;font:700 17px Comic,sans-serif;color:#000;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;position:relative;border-bottom:3px solid transparent}
+.feat img{height:min(16vh,74px);image-rendering:pixelated;object-fit:contain}
+.feat i{position:absolute;right:18px;top:2px;width:26px;height:26px;background:url(assets/Texture2D/YCTPTextures/X.png) center/contain no-repeat}
+.feat.on i{background-image:url(assets/Texture2D/YCTPTextures/Check.png)}
+.feat:not(.on) img{opacity:.45}
+.feat.off{opacity:.35;pointer-events:none}
 #telaDif{background:#fff;color:#000;gap:8px}
 #difModo{font-size:18px;color:#555}
 #difTitulo{font-size:28px;font-weight:700}
 #difs .bt{flex-direction:column;gap:2px;font-size:24px}
 #difs .bt img{height:min(30vh,120px)}
 #difs .bt.sel{border-bottom-color:#000}
+#reflexo{position:fixed;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;touch-action:none}
+#reflexo[hidden]{display:none}
+#reflexoImg{height:82vh;image-rendering:pixelated;pointer-events:none}
+#reflexoTxt{position:absolute;top:max(70px,calc(env(safe-area-inset-top) + 64px));font-size:22px;font-weight:700;color:#fff;text-shadow:var(--sombra)}
 #detencao{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-size:24px;font-weight:700;text-shadow:var(--sombra);text-align:center;color:#fff;white-space:pre-line}
 .aviso{font-size:11px;color:#555;text-align:center;max-width:560px}
 /* HUD */
@@ -129,16 +144,32 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
   <div class="bot" id="bPulo" hidden>Pular</div>
 </div>
 
+<div id="reflexo" hidden><div id="reflexoTxt">Toque na mão com o círculo!</div><img id="reflexoImg" alt=""></div>
+
 <div class="tela" id="titulo"><div id="tocaTxt">Toque para começar</div></div>
 <div class="tela" id="menu" hidden>
   <img src="assets/Texture2D/MenuTextures/title_final.png" id="miniTitulo" alt="Baldi's Basics">
   <div class="botoes">
     <button class="bt" id="jHistoria"><img src="assets/ui/historia.png" alt="">Modo História</button>
     <button class="bt" id="jInfinito"><img src="assets/ui/infinito.png" alt="">Modo Infinito</button>
-    <button class="bt" id="jBeta"><img src="assets/Texture2D/CharacterSprites/PlaceFace.png" alt="">Beta Tester</button>
+    <button class="bt" id="jBeta"><img src="assets/Texture2D/CharacterSprites/PlaceFace.png" alt="">Beta</button>
     <button class="bt" id="jComo">Como jogar</button>
   </div>
   <div class="aviso">Fã-jogo sem fins lucrativos, refeito na web a partir do projeto aberto do Baldi's Basics Classic. Baldi's Basics é de Basically Games (mystman12).</div>
+</div>
+
+<div class="tela" id="telaBeta" hidden>
+  <div id="betaTitulo">Beta Features</div>
+  <div id="betaSub">Escolha o que testar nesta partida</div>
+  <div id="feats">
+    <button class="feat" data-f="mapa"><img src="assets/Texture2D/SchoolHouse/WallTextures/Posters/MapExits/NorthExit.png" alt=""><span>Mapa aleatório</span><i></i></button>
+    <button class="feat" data-f="reflex"><img src="assets/beta/img2/reflex.png" alt=""><span>Dr. Reflex</span><i></i></button>
+    <button class="feat" data-f="cloudy"><img src="assets/beta/img2/cloudy.png" alt=""><span>Cloudy Copter</span><i></i></button>
+    <button class="feat" data-f="test"><img src="assets/beta/img2/test.png" alt=""><span>The Test</span><i></i></button>
+    <button class="feat" data-f="eventos"><img src="assets/Texture2D/SchoolHouse/PickUps/AlarmClockItem.png" alt=""><span>Eventos</span><i></i></button>
+    <button class="feat" data-f="ala"><img src="assets/Texture2D/SchoolHouse/Locker/Locker.png" alt=""><span>Ala nova</span><i></i></button>
+  </div>
+  <div class="botoes"><button class="bt" id="betaVolta">Voltar</button><button class="bt" id="betaSegue">Continuar</button></div>
 </div>
 
 <div class="tela" id="telaDif" hidden>
@@ -160,7 +191,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
   <p><b>Celular:</b> bolinha da esquerda anda, arraste a tela para olhar, a mão pega e abre o que está na mira, <b>Usar</b> usa o item escolhido (toque no item lá em cima para escolher), <b>Correr</b> gasta energia.</p>
   <p><b>Computador:</b> WASD anda, mouse olha, clique pega, botão direito ou E usa o item, Shift corre, 1/2/3 escolhe item.</p>
   <p><b>Cuidado:</b> o Diretor não deixa correr, beber no corredor nem entrar na sala dos professores. A Playtime quer pular corda. O Gotta Sweep varre tudo. O Bully cobra pedágio.</p>
-  <p><b>Beta Tester:</b> modo de teste do que vem por aí: escola maior, personagens novos e eventos.</p>
+  <p><b>Beta:</b> o mesmo jogo, com recursos em teste que você liga e desliga: mapa aleatório, Dr. Reflex (toque rápido na mão com o círculo), Cloudy Copter (vento nos corredores), The Test (não fique olhando para ele), eventos e a ala nova.</p>
   <button class="bt" id="fechaComo">Voltar</button>
 </div></div>
 
@@ -190,5 +221,6 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 <script src="motor.js"></script>
 <script src="jogo.js"></script>
 <script src="beta.js"></script>
+<script src="mapa.js"></script>
 </body>
 </html>

@@ -75,11 +75,11 @@
   let G = null; // jogo em andamento
   J.estado = () => G;
   const espDe = (s, n) => E.esp.filter((e) => e.s === s && (!n || e.n === n));
-  // dificuldade: raiva do Baldi, espera entre os passos, detenção, energia, Diretor e Robô
+  // dificuldade: raiva do Baldi, espera entre os passos, detenção, energia, Diretor e tempo do teste do Dr. Reflex
   const DIF = {
-    facil: { nome: 'Fácil', raiva: 0.6, espera: 1.35, deten: [0, 0, 1, 1, 1], gasto: 0.6, olhar: 1.2, robo: 5 },
-    normal: { nome: 'Normal', raiva: 1, espera: 1, deten: [0, 1, 2, 3, 4], gasto: 1, olhar: 0.5, robo: 3 },
-    dificil: { nome: 'Difícil', raiva: 1.3, espera: 0.85, deten: [1, 2, 3, 4, 4], gasto: 1.2, olhar: 0.35, robo: 2 },
+    facil: { nome: 'Fácil', raiva: 0.6, espera: 1.35, deten: [0, 0, 1, 1, 1], gasto: 0.6, olhar: 1.2, reflexo: 1.5 },
+    normal: { nome: 'Normal', raiva: 1, espera: 1, deten: [0, 1, 2, 3, 4], gasto: 1, olhar: 0.5, reflexo: 1 },
+    dificil: { nome: 'Difícil', raiva: 1.3, espera: 0.85, deten: [1, 2, 3, 4, 4], gasto: 1.2, olhar: 0.35, reflexo: 0.75 },
   };
   let dificuldade = 'normal';
   try { dificuldade = DIF[localStorage.getItem('baldiDificuldade')] ? localStorage.getItem('baldiDificuldade') : 'normal'; } catch (e) {}
@@ -176,11 +176,19 @@
   function Agente(nome, x, z, vel) {
     return {
       nome, x, z, vel, ativo: false, cam: [], dest: null, vx: 0, vz: 0, empurro: 0, ex: 0, ez: 0,
-      vai(tx, tz) { this.dest = [tx, tz]; this.cam = nav.caminho(this.x, this.z, tx, tz); },
+      vai(tx, tz) {
+        // perseguindo: recalcula no máximo 5 vezes por segundo se o alvo mexeu pouco
+        if (this.dest && this.cam.length && G && G.t - (this.tVai || -9) < 0.2 && Math.hypot(tx - this.dest[0], tz - this.dest[1]) < 3) return;
+        this.tVai = G ? G.t : 0; this.dest = [tx, tz]; this.cam = nav.caminho(this.x, this.z, tx, tz);
+      },
       anda(dt, v = this.vel) {
         let ox = this.x, oz = this.z;
         if (this.empurro > 0) { this.empurro -= dt; this.x += this.ex * dt; this.z += this.ez * dt; const o = { x: this.x, z: this.z }; mundo.resolve(o, 1, true); this.x = o.x; this.z = o.z; }
         else {
+          // esmagado pelo martelo do Dr. Reflex: parado 2 s, depois metade da velocidade
+          if (this.esmagado > 0) { this.esmagado -= dt; v = this.esmagado > 28 ? 0 : v * 0.5; }
+          // vento do Cloudy Copter: mais rápido a favor, mais devagar contra
+          if (this.cam.length && G.vento) { const [tx, tz] = this.cam[0], d = Math.hypot(tx - this.x, tz - this.z) || 1; v *= G.vento(this.x, this.z, (tx - this.x) / d, (tz - this.z) / d); }
           let passo = v * dt;
           while (passo > 0 && this.cam.length) {
             const [tx, tz] = this.cam[0], dx = tx - this.x, dz = tz - this.z, d = Math.hypot(dx, dz);
@@ -715,9 +723,12 @@
     if (k.ArrowLeft) p.yaw += 2.5 * dt; if (k.ArrowRight) p.yaw -= 2.5 * dt;
     const l = Math.hypot(f, s); if (l > 1) { f /= l; s /= l; }
     const corre = (ent.corre || k.ShiftLeft || k.ShiftRight) && p.est > 0;
-    const vel = corre ? 16 : 10;
+    let vel = corre ? 16 : 10;
+    // esmagado (Dr. Reflex): parado 2 s e depois devagar
+    if (p.esmagado > 0) { p.esmagado -= dt; vel = p.esmagado > 28 ? 0 : vel * 0.55; }
     const fx = -Math.sin(p.yaw), fz = -Math.cos(p.yaw), rx = Math.cos(p.yaw), rz = -Math.sin(p.yaw);
     let mx = (fx * f + rx * s) * vel * dt, mz = (fz * f + rz * s) * vel * dt;
+    if (G.empurraJogador) { const e = G.empurraJogador(p.x, p.z); mx += e[0] * dt; mz += e[1] * dt; } // vento
     if (p.corda) mx = mz = 0;
     else if (p.varrendo > 0 && p.botas <= 0) { mx = p.varreV[0] * dt + mx * 0.3; mz = p.varreV[1] * dt + mz * 0.3; }
     else if (p.abracando > 0 && p.botas <= 0) {
@@ -814,8 +825,10 @@
     if (G.p.corda) tiqueCorda(dt);
     portas(dt);
     gatilhos();
-    for (const n of Object.values(G.npcs)) if (n.ativo || n.pronto) n.tique(dt);
-    G.acum += dt;
+    // The Test mexe no tempo: os personagens ficam mais lentos (ou mais rápidos depois que ele explode)
+    const dn = dt * (G.escala ?? 1);
+    for (const n of Object.values(G.npcs)) if (n.ativo || n.pronto) n.tique(dn);
+    G.acum += dn;
     while (G.acum >= FIXO) { G.acum -= FIXO; for (const n of Object.values(G.npcs)) if (n.ativo) n.fixo(FIXO); }
     // BSODA e despertadores
     for (const b of G.bsodas || []) {
@@ -886,12 +899,13 @@
   $('titulo').onclick = () => { $('titulo').hidden = true; $('menu').hidden = false; M.audio().resume(); M.carregaSom('Characters/Baldi/BAL_MainMenu').then(() => M.som('Characters/Baldi/BAL_MainMenu')).catch(() => {}); };
   // escolher o modo abre a tela de dificuldade; a escolhida fica guardada para a próxima vez
   let modoEscolhido = 'historia';
-  const NOME_MODO = { historia: 'Modo História', infinito: 'Modo Infinito', beta: 'Beta Tester' };
+  const NOME_MODO = { historia: 'Modo História', infinito: 'Modo Infinito', beta: 'Beta' };
   function escolheDificuldade(modo) { modoEscolhido = modo; $('difModo').textContent = NOME_MODO[modo]; marcaDificuldade(); $('menu').hidden = true; $('telaDif').hidden = false; }
   $('jHistoria').onclick = () => escolheDificuldade('historia');
   $('jInfinito').onclick = () => escolheDificuldade('infinito');
-  $('jBeta').onclick = () => escolheDificuldade('beta');
-  $('difVolta').onclick = () => { $('telaDif').hidden = true; $('menu').hidden = false; };
+  $('jBeta').onclick = () => (J.abreBeta ? J.abreBeta() : escolheDificuldade('beta'));
+  J.escolheDificuldade = escolheDificuldade;
+  $('difVolta').onclick = () => { $('telaDif').hidden = true; if (modoEscolhido == 'beta' && J.abreBeta) J.abreBeta(); else $('menu').hidden = false; };
   $('jComo').onclick = () => ($('como').hidden = false);
   function marcaDificuldade() { document.querySelectorAll('#difs button').forEach((b) => b.classList.toggle('sel', b.dataset.d == dificuldade)); }
   document.querySelectorAll('#difs button').forEach((b) => (b.onclick = () => { dificuldade = b.dataset.d; try { localStorage.setItem('baldiDificuldade', dificuldade); } catch (e) {} comeca(modoEscolhido); }));
