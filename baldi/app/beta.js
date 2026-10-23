@@ -31,6 +31,102 @@
   const area = (i, j) => (j >= 0 && j < PLANTA.length ? PLANTA[j][i] || ' ' : ' ').trim();
   const PISO = { c: 'TileFloor', 1: 'Carpet', 2: 'Carpet', b: 'Carpet', d: 'TileFloor', l: 'TileFloor' };
 
+  /* ---------- móveis e enfeites da ala (peças do próprio jogo) ---------- */
+  // Malhas e tamanhos (meia largura em x e z) tirados dos móveis da escola original.
+  const MOVEL = {
+    carteira: { m: 'Mesh/CombinedMeshes_Desk_-177138.asset', mat: ['Desk'], y: 2, h: [1.5, 1.65, 1.7] },
+    cadeira: { m: 'Mesh/CombinedMeshes_Desk_-453584.asset', mat: ['Desk'], y: 1, h: [1, 2.5, 1] },
+    mesaProf: { m: 'Mesh/CombinedMeshes_Desk_-162226.asset', mat: ['Desk'], y: 1.5, h: [2, 1.5, 5] },
+    mesaLonga: { m: 'Mesh/CombinedMeshes_Desk_-856402.asset', mat: ['Desk'], y: 1.5, h: [10, 1.5, 2.5], pes: { m: 'Mesh/CombinedMeshes_BSODA_Side_-856454.asset', mat: ['BSODA_Side'] } },
+    armario: { m: 'Mesh/CombinedMeshes_Locker_-826616.asset', mat: ['Locker'], y: 4, h: [1, 4, 1], lado: { m: 'Mesh/CombinedMeshes_LockerSide_-826668.asset', mat: ['Locker_Side'] } },
+  };
+  function decora(E, mi, quadV) {
+    // giro em y: a = 0 é a posição original da peça; a frente (z local) aponta para (-sen a, cos a)
+    const giro = (a, sx = 1, sy = 1, sz = 1) => { const c = Math.cos(a), s = Math.sin(a); return [c * sx, 0, s * sx, 0, 0, sy, 0, 0, -s * sz, 0, c * sz, 0]; };
+    const caixa = (n, x, y, z, h, a) => E.caixas.push({ n, c: [x, y, z], h, ang: a });
+    const movel = (tipo, x, z, a = 0) => {
+      const t = MOVEL[tipo];
+      for (const p of [t, t.pes, t.lado]) if (p) E.objs.push({ m: p.m, mat: p.mat.map(mi), M: giro(a).concat([x, t.y, z, 1]) });
+      caixa(tipo, x, t.y, z, t.h, a);
+    };
+    const virado = (n) => Math.atan2(-n[0], n[1]); // giro para a frente olhar na direção n
+    // fileira de armários encostados na parede, olhando para n
+    const armarios = (x0, z0, x1, z1, n) => {
+      const L = Math.hypot(x1 - x0, z1 - z0), k = Math.floor(L / 2);
+      for (let i = 0; i < k; i++) { const f = (i + 0.5) / k; movel('armario', x0 + (x1 - x0) * f + n[0], z0 + (z1 - z0) * f + n[1], virado(n)); }
+    };
+    // quadro, cartaz ou janela na parede (quad de 10x10 como os da escola), um pouco à frente dela
+    const naParede = (mat, x, z, n) => E.objs.push({ m: 'quad', mat: [mi(mat)], M: quadV(x + n[0] * 0.03, z + n[1] * 0.03, 10, n) });
+    // máquina de refrigerante/lanche: frente de 4x8 e caixa com o nome que o jogo reconhece
+    const maquina = (mat, x, z, n) => {
+      E.objs.push({ m: 'quad', mat: [mi(mat)], M: quadV(x + n[0] * 1.01, z + n[1] * 1.01, 4, n, 4).map((v, i) => (i == 5 ? 8 : v)) });
+      E.objs.push({ m: 'cube', mat: [mi('Locker_Side')], M: giro(virado(n), 4, 8, 2).concat([x, 4, z, 1]) });
+      caixa(mat, x, 4, z, [2, 4, 1], virado(n));
+    };
+    // estante de madeira com pilhas de cadernos
+    const estante = (x, z, n, L) => {
+      const a = virado(n);
+      E.objs.push({ m: 'cube', mat: [mi('Desk')], M: giro(a, L, 8, 2).concat([x, 4, z, 1]) });
+      caixa('Estante', x, 4, z, [L / 2, 4, 1], a);
+      const ux = Math.cos(a), uz = Math.sin(a);
+      for (let k = -L / 2 + 1.5; k < L / 2 - 1; k += 3) for (const y of [2.2, 4.6, 7]) enfeite(Math.random() < 0.7 ? 'Notebooks' : 'papers', x + ux * k + n[0] * 1.3, z + uz * k + n[1] * 1.3, y, 0.8);
+    };
+    // caixote de madeira
+    const caixote = (x, z, t = 3, y = 0) => { E.objs.push({ m: 'cube', mat: [mi('Desk')], M: giro(0, t, t, t).concat([x, y + t / 2, z, 1]) }); caixa('Caixote', x, y + t / 2, z, [t / 2, t / 2, t / 2], 0); };
+    // enfeite em sprite (copia o tamanho do enfeite original)
+    const modelos = {};
+    for (const s of E.spr) for (const n of ['Globe', 'Plant', 'Notebooks', 'food', 'pencils', 'papers']) if (!modelos[n] && s.tex.endsWith('/' + n + '.png')) modelos[n] = s;
+    function enfeite(n, x, z, y, esc = 1) {
+      const b = modelos[n]; if (!b) return;
+      const M = b.M.slice(0, 12).map((v, i) => (i < 11 && i % 4 != 3 && i != 8 && i != 10 ? v * esc : v));
+      E.spr.push(Object.assign({}, b, { pai: 'Environment/Objects/Billboards/AlaBeta', a: 1, M: M.concat([x, y ?? b.M[13], z, 1]) }));
+    }
+
+    const S = [0, 1], N = [0, -1], L = [-1, 0], O = [1, 0]; // para onde a peça olha (+z, -z, -x, +x)
+    // Sala 1 (x 130-180, z -240 a -290): quadro ao norte, carteiras viradas para ele
+    naParede('Math', 155, -240, N);
+    naParede('Window', 130, -265, O); naParede('SchoolRulesPoster', 180, -265, L);
+    movel('mesaProf', 170, -246, Math.PI / 2); enfeite('Globe', 172, -246, 4.6, 0.35);
+    for (const x of [137, 147, 163, 173]) for (const z of [-260, -270, -280]) {
+      movel('carteira', x, z, Math.PI); movel('cadeira', x, z - 3, Math.PI);
+      if (Math.random() < 0.6) enfeite(['Notebooks', 'pencils', 'papers'][M.rndInt(0, 2)], x, z, 4.4, 0.7);
+    }
+    enfeite('Plant', 133, -243); enfeite('Plant', 177, -287);
+    // Sala 2 (x 130-180, z -300 a -350): espelho da sala 1, quadro ao sul
+    naParede('world', 155, -350, S);
+    naParede('Window', 130, -325, O); naParede('ScissorsPoster', 180, -325, L);
+    movel('mesaProf', 170, -344, Math.PI / 2); enfeite('papers', 168, -344, 4.4, 0.8);
+    for (const x of [137, 147, 163, 173]) for (const z of [-310, -320, -330]) {
+      movel('carteira', x, z, 0); movel('cadeira', x, z + 3, 0);
+      if (Math.random() < 0.6) enfeite(['Notebooks', 'pencils', 'papers'][M.rndInt(0, 2)], x, z, 4.4, 0.7);
+    }
+    enfeite('Plant', 133, -347); enfeite('Plant', 177, -303);
+    // Depósito (x 190-240, z -240 a -290): armários, máquinas, caixotes e mesa com lanches
+    armarios(192, -240, 238, -240, N); armarios(190, -244, 190, -276, O);
+    maquina('BSODAMachine', 238, -252, L); maquina('ZestyMachine', 238, -262, L);
+    movel('mesaLonga', 222, -268, Math.PI / 2); enfeite('food', 222, -262, 4.2); enfeite('food', 222, -272, 4.2);
+    caixote(195, -284); caixote(199, -285, 2.5); caixote(195.5, -284.5, 2, 3); caixote(235, -284); caixote(235.5, -279, 2.5);
+    naParede('recyclefood', 240, -280, L);
+    // Biblioteca (x 190-240, z -300 a -350): estantes nas paredes, mesas de leitura
+    estante(191, -312, O, 12); estante(191, -330, O, 12); estante(205, -349, S, 14); estante(225, -349, S, 14); estante(239, -315, L, 14);
+    movel('mesaLonga', 225, -327, Math.PI / 2);
+    for (const z of [-320, -327, -334]) { movel('cadeira', 221, z, -Math.PI / 2); movel('cadeira', 229, z, Math.PI / 2); enfeite('Notebooks', 225, z, 4.4, 0.7); }
+    enfeite('Globe', 235, -304); enfeite('Plant', 193, -303);
+    naParede('comic00', 205, -300, S); naParede('comic01', 235, -300, S); naParede('Lore', 240, -335, L);
+    // Laboratório (x 260-310, z -260 a -330): bancadas compridas, quadro e globos
+    for (const z of [-270, -282, -308, -320]) {
+      movel('mesaLonga', 290, z, 0);
+      for (const x of [283, 290, 297]) { movel('cadeira', x, z + (z > -295 ? -3.5 : 3.5), z > -295 ? Math.PI : 0); if (Math.random() < 0.7) enfeite(['pencils', 'papers', 'Notebooks'][M.rndInt(0, 2)], x, z, 4.2, 0.6); }
+    }
+    naParede(99, 310, -295, L); naParede('what', 285, -260, N); naParede('Window', 310, -270, L); naParede('Window', 310, -320, L);
+    enfeite('Globe', 305, -264); enfeite('Globe', 305, -326); enfeite('Plant', 264, -327);
+    // Corredores: armários, plantas e cartazes
+    armarios(160, -290, 178, -290, N); armarios(222, -290, 240, -290, N); armarios(160, -300, 178, -300, S); armarios(190, -300, 206, -300, S);
+    armarios(250, -242, 250, -280, O); armarios(250, -306, 250, -350, O);
+    naParede('SchoolAttention', 125, -300, S); naParede('BootsPoster', 235, -300, S); naParede('WD_NoSqueePoster', 255, -360, S); naParede('PhonePoster', 255, -240, N);
+    enfeite('Plant', 257, -243); enfeite('Plant', 257, -357); enfeite('Plant', 186, -292);
+  }
+
   function constroiAla(E) {
     const mi = (n) => E.mats.findIndex((m) => m.n === n);
     const parede = mi('WhiteBrickWall'), fina = mi('WhiteBrickWallThin'), teto = mi('Ceiling'), porta = mi('Door_0');
@@ -85,6 +181,7 @@
     poe(it, 'Environment/Objects/Pickups/Pickup_BSODA', 'Texture2D/SchoolHouse/PickUps/BSODA.png', 8, 1);
     poe(it, 'Environment/Objects/Pickups/Pickup_AlarmClock', 'Texture2D/SchoolHouse/PickUps/AlarmClockItem.png', 3, 8);
     poe(it, 'Environment/Objects/Pickups/Pickup_Teleporter', 'Texture2D/SchoolHouse/PickUps/TeleporterIcon.png', 16, 3);
+    decora(E, mi, quadV);
     // pontos de ronda: o corredor da ala vale como corredor, as salas como salas
     E.rondaCorr = [[X0 + 45, zc], [X0 + 105, zc], [X0 + 135, Z0 - 15], [X0 + 135, Z0 - 105]];
     E.rondaSala = [[X0 + 30, Z0 - 25], [X0 + 30, Z0 - 85], [X0 + 85, Z0 - 85], [X0 + 85, Z0 - 25], [X0 + 175, Z0 - 50]];

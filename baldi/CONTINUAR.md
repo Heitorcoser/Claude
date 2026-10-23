@@ -43,6 +43,8 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Sons: `Motor.tocando` guarda tudo que toca; `menu()` e `comeca()` chamam `M.paraTudo()` (`test/menu.mjs`).
 - 1st Prize: acelera até 40 (12/s), vira 1 rad/s vendo o jogador; solta quando a velocidade cai abaixo de 4 e espera 2 s (`test/prize.mjs`).
 - Empurrões (1st Prize, Gotta Sweep) movem o jogador em passos de 0,5 com colisão a cada passo (`test/dificuldade.mjs`).
+- Ala Beta decorada em `decora()` (`beta.js`): móveis do jogo (`MOVEL`: carteira, cadeira, mesa do professor, mesa comprida, armário), estantes e caixotes (cubos de madeira), máquinas BSODA/Zesty que funcionam, quadros, cartazes, janelas e enfeites em sprite. Cada peça leva caixa de colisão. `test/ala.mjs` tira fotos e confere caminhos.
+- O HUD fica acima dos controles de toque (z-index 7) para os espaços de item receberem o toque.
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 
 ## Ideias para as próximas versões do Beta Tester
