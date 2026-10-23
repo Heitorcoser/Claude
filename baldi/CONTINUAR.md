@@ -48,6 +48,9 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - O HUD fica acima dos controles de toque (z-index 7) para os espaços de item receberem o toque.
 - Dr. Reflex: nasce na clínica (`E.clinica`: laboratório da ala, sala especial do mapa aleatório). Teste de reflexo no próprio sprite (toque/raycast na mão com o círculo, `J.toqueMundo`). O jogador fica livre; se sair do teste ele vai buscar o martelo na clínica e volta para esmagar.
 - Cloudy Copter: vento de 14,5 (andando contra você volta, correndo contra avança devagar).
+- Jogador criança: `ALTURA` 3,6 (olhos) e `RAIO` 1,5 em `jogo.js`.
+- Playtime: fala com intervalo (`diz`), contagem "3, 2, 1, PULE!" antes da corda; 1st Prize e Dr. Reflex ignoram o jogador enquanto ele pula corda (`test/playtime.mjs`).
+- Mapa aleatório: móveis só entram se couberem inteiros na sala (`cabe`/`poe` em `mobilia`); cadernos ficam em cima de uma carteira (`s.mesas`).
 - Os nomes das texturas das portas trocam por convenção (`Door_0` fechada, `Door_80` aberta; `SwingDoor0`, `SwingDoor60`, `SwingDoor0_Locked`).
 
 ## Ideias para as próximas versões

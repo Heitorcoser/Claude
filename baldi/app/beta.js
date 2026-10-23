@@ -114,7 +114,7 @@
     movel('mesaProf', 170, -246, Math.PI / 2); enfeite('Globe', 172, -246, 4.6, 0.35);
     for (const x of [137, 147, 163, 173]) for (const z of [-260, -270, -280]) {
       movel('carteira', x, z, Math.PI); movel('cadeira', x, z - 3, Math.PI);
-      if (Math.random() < 0.6) enfeite(['Notebooks', 'pencils', 'papers'][M.rndInt(0, 2)], x, z, 4.4, 0.7);
+      if (Math.random() < 0.6) enfeite(['Notebooks', 'pencils', 'papers'][M.rndInt(0, 2)], x, z, 4.4);
     }
     enfeite('Plant', 133, -243); enfeite('Plant', 177, -287);
     // Sala 2 (x 130-180, z -300 a -350): espelho da sala 1, quadro ao sul
@@ -123,7 +123,7 @@
     movel('mesaProf', 170, -344, Math.PI / 2); enfeite('papers', 168, -344, 4.4, 0.8);
     for (const x of [137, 147, 163, 173]) for (const z of [-310, -320, -330]) {
       movel('carteira', x, z, 0); movel('cadeira', x, z + 3, 0);
-      if (Math.random() < 0.6) enfeite(['Notebooks', 'pencils', 'papers'][M.rndInt(0, 2)], x, z, 4.4, 0.7);
+      if (Math.random() < 0.6) enfeite(['Notebooks', 'pencils', 'papers'][M.rndInt(0, 2)], x, z, 4.4);
     }
     enfeite('Plant', 133, -347); enfeite('Plant', 177, -303);
     // Depósito (x 190-240, z -240 a -290): armários, máquinas, caixotes e mesa com lanches
@@ -135,13 +135,13 @@
     // Biblioteca (x 190-240, z -300 a -350): estantes nas paredes, mesas de leitura
     estante(191, -312, O, 12); estante(191, -330, O, 12); estante(205, -349, S, 14); estante(225, -349, S, 14); estante(239, -315, L, 14);
     movel('mesaLonga', 225, -327, Math.PI / 2);
-    for (const z of [-320, -327, -334]) { movel('cadeira', 221, z, -Math.PI / 2); movel('cadeira', 229, z, Math.PI / 2); enfeite('Notebooks', 225, z, 4.4, 0.7); }
+    for (const z of [-320, -327, -334]) { movel('cadeira', 221, z, -Math.PI / 2); movel('cadeira', 229, z, Math.PI / 2); enfeite('Notebooks', 225, z, 4.4); }
     enfeite('Globe', 235, -304); enfeite('Plant', 193, -303);
     naParede('comic00', 205, -300, S); naParede('comic01', 235, -300, S); naParede('Lore', 240, -335, L);
     // Laboratório (x 260-310, z -260 a -330): bancadas compridas, quadro e globos
     for (const z of [-270, -282, -308, -320]) {
       movel('mesaLonga', 290, z, 0);
-      for (const x of [283, 290, 297]) { movel('cadeira', x, z + (z > -295 ? -3.5 : 3.5), z > -295 ? Math.PI : 0); if (Math.random() < 0.7) enfeite(['pencils', 'papers', 'Notebooks'][M.rndInt(0, 2)], x, z, 4.2, 0.6); }
+      for (const x of [283, 290, 297]) { movel('cadeira', x, z + (z > -295 ? -3.5 : 3.5), z > -295 ? Math.PI : 0); if (Math.random() < 0.7) enfeite(['pencils', 'papers', 'Notebooks'][M.rndInt(0, 2)], x, z, 4.4); }
     }
     naParede(99, 310, -295, L); naParede('what', 285, -260, N); naParede('Window', 310, -270, L); naParede('Window', 310, -320, L);
     enfeite('Globe', 305, -264); enfeite('Globe', 305, -326); enfeite('Plant', 264, -327);
@@ -265,7 +265,7 @@
         // enxerga só na frente (cone de ~70° para cada lado)
         enxerga() {
           const p = G.p, dx = p.x - this.x, dz = p.z - this.z, d = Math.hypot(dx, dz);
-          if (d > 80 || !J.ve(this)) return false;
+          if (d > 80 || !J.ve(this) || p.corda) return false; // pulando corda com a Playtime: deixa para depois
           return d < 6 || (dx * Math.sin(this.dir) + dz * Math.cos(this.dir)) / d > 0.35;
         },
         tique(dt) { this.cool -= dt; this.t += dt; },

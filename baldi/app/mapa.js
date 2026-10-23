@@ -219,10 +219,6 @@
     const cores = ['_nbBlue', '_nbRed', '_nbGreen', '_nbYellow', '_nbCyan', '_nbSalmon', '_nbBlack'];
     const cadernos = embaralha(aulas.slice()).slice(0, nCad);
     const rondaSala = [];
-    cadernos.forEach((s, k) => {
-      const q = pontoSala(s);
-      E.spr.push(Object.assign({}, nb, { pai: 'Environment/Objects/Notebooks/Gerado' + k, tex: 'Texture2D/SchoolHouse/PickUps/Notebook/' + cores[k % cores.length] + '.png', M: nb.M.slice(0, 12).concat([cx(q[0]), nb.M[13], cz(q[1]), 1]) }));
-    });
     for (const s of lista) { const q = pontoSala(s); rondaSala.push([cx(q[0]), cz(q[1])]); }
     // diretoria: o Diretor fica perto da porta (assim a porta dele é a mais perto), você fica lá dentro
     const pd = [dir.porta.i, dir.porta.j], fundo = dir.cel.reduce((a, b) => (Math.hypot(b[0] - pd[0], b[1] - pd[1]) > Math.hypot(a[0] - pd[0], a[1] - pd[1]) ? b : a));
@@ -232,6 +228,12 @@
     E.gat.push(gatSala('Office Trigger', dir, cx, cz));
     lista.filter((s) => s.tipo == 'professores').forEach((s, k) => E.gat.push(gatSala('_FacultyTrigger' + (k ? ` (${k})` : ''), s, cx, cz)));
     for (const s of lista) mobilia(K, s, cx, cz, livre, res);
+    // cadernos em cima de uma carteira; nas outras carteiras, de vez em quando, cadernos, lápis e papéis
+    cadernos.forEach((s, k) => {
+      const m = s.mesas.length ? s.mesas.splice(rndInt(0, s.mesas.length - 1), 1)[0] : (() => { const q = pontoSala(s); return [cx(q[0]), cz(q[1])]; })();
+      E.spr.push(Object.assign({}, nb, { pai: 'Environment/Objects/Notebooks/Gerado' + k, tex: 'Texture2D/SchoolHouse/PickUps/Notebook/' + cores[k % cores.length] + '.png', M: nb.M.slice(0, 12).concat([m[0], nb.M[13], m[1], 1]) }));
+    });
+    for (const s of lista) for (const m of s.mesas || []) if (Math.random() < 0.4) K.enfeite(['Notebooks', 'pencils', 'papers'][rndInt(0, 2)], m[0], m[1], 4.4);
 
     // ---------- corredores: ronda, armários, cartazes, plantas, portas vai-e-vem ----------
     const corr = [];
@@ -325,6 +327,26 @@
       return embaralha(l);
     };
     const parede = lados();
+    // o móvel cabe inteiro na sala? (cantos e meios das bordas, com folga de 1 da parede)
+    const TAM = { carteira: [1.5, 1.7], cadeira: [1, 1], mesaProf: [2, 5], mesaLonga: [10, 2.5] };
+    const naSala = (x, z) => s.cel.some(([i, j]) => Math.floor(x / T) == i && Math.floor(-z / T) == j);
+    const cabe = (tipo, x, z, a) => {
+      const [hx, hz] = TAM[tipo], co = Math.cos(a), si = Math.sin(a);
+      for (const ux of [-1, 0, 1]) for (const uz of [-1, 0, 1]) {
+        if (!ux && !uz) continue;
+        const lx = ux * (hx + 1), lz = uz * (hz + 1);
+        if (!naSala(x + co * lx - si * lz, z + si * lx + co * lz)) return false;
+      }
+      return true;
+    };
+    // tenta pôr o móvel no lugar (ou girado, ou deslocado meio quadrado); devolve a posição usada
+    const poe = (tipo, x, z, a) => {
+      for (const [dx, dz] of [[0, 0], [5, 0], [-5, 0], [0, 5], [0, -5]]) for (const g of [a, a + Math.PI / 2]) {
+        if (cabe(tipo, x + dx, z + dz, g)) { K.movel(tipo, x + dx, z + dz, g); return [x + dx, z + dz]; }
+      }
+      return null;
+    };
+    s.mesas = [];
     const POST = ['SchoolRulesPoster', 'BootsPoster', 'ScissorsPoster', 'WD_NoSqueePoster', 'PhonePoster', 'recyclefood', 'what', 'SchoolAttention'];
     const QUADROS = ['Math', 'world', 'Lore', 99, 'Cheese', 'Homestar', 'dab', 'g', 'wow', 'sorry'];
     const cartaz = (k) => { const w = parede.pop(); if (w) K.naParede(POST[k % POST.length], w.x, w.z, w.n); };
@@ -340,22 +362,23 @@
         if ((w > 3 && (i == s.i0 || i == s.i1)) || (h > 3 && (j == s.j0 || j == s.j1))) continue;
         if (Math.abs(f.n[0] ? i - f.i : j - f.j) > 4) continue;
         const x = X(i), z = Z(j);
+        if (!cabe('carteira', x, z, a)) continue;
         K.movel('carteira', x, z, a); K.movel('cadeira', x + f.n[0] * 3, z + f.n[1] * 3, a);
-        if (Math.random() < 0.4) K.enfeite(['Notebooks', 'pencils', 'papers'][rndInt(0, 2)], x, z, 4.4, 0.7);
+        s.mesas.push([x, z]); // cadernos e enfeites vão em cima depois
       }
-      K.movel('mesaProf', f.x + f.n[0] * 4 + (f.n[1] ? 6 : 0), f.z + f.n[1] * 4 + (f.n[0] ? 6 : 0), f.n[0] ? 0 : Math.PI / 2);
+      poe('mesaProf', f.x + f.n[0] * 4 + (f.n[1] ? 6 : 0), f.z + f.n[1] * 4 + (f.n[0] ? 6 : 0), f.n[0] ? 0 : Math.PI / 2);
       cartaz(rndInt(0, 7)); cartaz(rndInt(0, 7));
       if (Math.random() < 0.6) { const w = parede.pop(); if (w) K.naParede('Window', w.x, w.z, w.n); }
       const c0 = cantos[0]; if (c0) K.enfeite('Plant', X(c0[0]) + 3, Z(c0[1]) + 3);
     } else if (s.tipo == 'professores') {
       const m = s.cel.find(([i, j]) => livre(i, j));
-      if (m) { const x = X(m[0]), z = Z(m[1]); res(m[0], m[1]); K.movel('mesaLonga', x, z, s.i1 - s.i0 >= s.j1 - s.j0 ? 0 : Math.PI / 2); for (const d of [-6, 0, 6]) K.enfeite('food', x + (s.i1 - s.i0 >= s.j1 - s.j0 ? d : 0), z + (s.i1 - s.i0 >= s.j1 - s.j0 ? 0 : d), 4.2); }
+      if (m) { res(m[0], m[1]); const q = poe('mesaLonga', X(m[0]), Z(m[1]), s.i1 - s.i0 >= s.j1 - s.j0 ? 0 : Math.PI / 2) || poe('mesaProf', X(m[0]), Z(m[1]), 0); if (q) K.enfeite('food', q[0], q[1], 4.2); }
       const w = parede.pop(); if (w) K.maquina(Math.random() < 0.5 ? 'BSODAMachine' : 'ZestyMachine', w.x + w.n[0] * 1.2, w.z + w.n[1] * 1.2, w.n);
       for (const n of ['PRI_Poster', 'Baldi_Poster', 'Prize_Poster', 'Sweep_Poster', 'Playtime_Poster', 'Bully_Poster', 'Crafters_Poster']) { const q = parede.pop(); if (q && Math.random() < 0.5) K.naParede(n, q.x, q.z, q.n); }
     } else if (s.tipo == 'clinica') {
       // clínica do Dr. Reflex: mesa, armários e o cartaz dele
       const f = paredeFundo(); K.naParede('PhonePoster', f.x, f.z, f.n);
-      K.movel('mesaProf', f.x + f.n[0] * 4, f.z + f.n[1] * 4, f.n[0] ? 0 : Math.PI / 2);
+      poe('mesaProf', f.x + f.n[0] * 4, f.z + f.n[1] * 4, f.n[0] ? 0 : Math.PI / 2);
       const w = parede.pop(); if (w) K.armarios(w.x - Math.abs(w.n[1]) * 3, w.z - Math.abs(w.n[0]) * 3, w.x + Math.abs(w.n[1]) * 3, w.z + Math.abs(w.n[0]) * 3, w.n);
       const c0 = cantos[cantos.length - 1]; if (c0) K.enfeite('Plant', X(c0[0]) + 3, Z(c0[1]) - 3);
     } else if (s.tipo == 'diretoria') {
@@ -364,15 +387,14 @@
     } else if (s.tipo == 'cantina') {
       for (const [i, j] of s.cel) if (livre(i, j) && (s.i1 - s.i0 >= s.j1 - s.j0 ? (i - s.i0) % 2 == 1 && j > s.j0 && j < s.j1 : (j - s.j0) % 2 == 1 && i > s.i0 && i < s.i1)) {
         const hor = s.i1 - s.i0 < s.j1 - s.j0; // mesas compridas atravessadas
-        K.movel('mesaLonga', X(i), Z(j), hor ? 0 : Math.PI / 2); res(i, j);
-        K.enfeite('food', X(i), Z(j), 4.2);
+        if (cabe('mesaLonga', X(i), Z(j), hor ? 0 : Math.PI / 2)) { K.movel('mesaLonga', X(i), Z(j), hor ? 0 : Math.PI / 2); res(i, j); K.enfeite('food', X(i), Z(j), 4.2); }
       }
       for (const n of ['BSODAMachine', 'ZestyMachine']) { const w = parede.pop(); if (w) K.maquina(n, w.x + w.n[0] * 1.2, w.z + w.n[1] * 1.2, w.n); }
       cartaz(5);
     } else if (s.tipo == 'biblioteca') {
       for (let k = 0; k < Math.min(6, parede.length); k++) { const w = parede.pop(); K.estante(w.x + w.n[0], w.z + w.n[1], w.n, 8); }
       const m = s.cel.find(([i, j]) => livre(i, j) && i > s.i0 && i < s.i1 && j > s.j0 && j < s.j1);
-      if (m) { res(m[0], m[1]); K.movel('mesaLonga', X(m[0]), Z(m[1]), 0); K.enfeite('Notebooks', X(m[0]), Z(m[1]), 4.4, 0.7); }
+      if (m) { res(m[0], m[1]); const q = poe('mesaLonga', X(m[0]), Z(m[1]), 0) || poe('mesaProf', X(m[0]), Z(m[1]), 0); if (q) K.enfeite('Notebooks', q[0], q[1], 4.4); }
       K.enfeite('Globe', X(s.i1) + 2, Z(s.j1) - 2);
     } else if (s.tipo == 'deposito') {
       for (let k = 0; k < Math.min(3, parede.length); k++) { const w = parede.pop(); K.armarios(w.x - Math.abs(w.n[1]) * 4, w.z - Math.abs(w.n[0]) * 4, w.x + Math.abs(w.n[1]) * 4, w.z + Math.abs(w.n[0]) * 4, w.n); }
@@ -386,6 +408,7 @@
     const ehCorr = (i, j) => c[j]?.[i] == 1;
     const POST = ['SchoolRulesPoster', 'SchoolAttention', 'BootsPoster', 'WD_NoSqueePoster', 'PhonePoster', 'ScissorsPoster', 'recyclefood', 'what', 'comic00', 'comic01'];
     let vaivem = 0;
+    const comArmario = new Set();
     const copia = c.map((l) => l.slice()); // para conferir que os corredores continuam ligados sem as vai-e-vem
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
       if (!ehCorr(i, j)) continue;
@@ -408,7 +431,7 @@
         const x = cx(i) + di * 5, z = cz(j) - dj * 5, n = [-di, dj], r = Math.random();
         // praças: máquinas, plantas e cartazes, sem armários
         if (naPraca) { if (r < 0.2) K.maquina(Math.random() < 0.5 ? 'BSODAMachine' : 'ZestyMachine', x + n[0] * 1.2, z + n[1] * 1.2, n); else if (r < 0.5) K.enfeite('Plant', x + n[0] * 1.5, z + n[1] * 1.5); else if (r < 0.75) K.naParede(POST[rndInt(0, POST.length - 1)], x, z, n); continue; }
-        if (r < 0.22) K.armarios(x - Math.abs(n[1]) * 4, z - Math.abs(n[0]) * 4, x + Math.abs(n[1]) * 4, z + Math.abs(n[0]) * 4, n);
+        if (r < 0.12 && !comArmario.has(i + ',' + j) && !comArmario.has((i - di) + ',' + (j - dj)) && (comArmario.add(i + ',' + j), true)) K.armarios(x - Math.abs(n[1]) * 4, z - Math.abs(n[0]) * 4, x + Math.abs(n[1]) * 4, z + Math.abs(n[0]) * 4, n);
         else if (r < 0.32) K.naParede(POST[rndInt(0, POST.length - 1)], x, z, n);
         else if (r < 0.40 && c[j + dj]?.[i + di] === 0) K.naParede('Window', x, z, n);
         else if (r < 0.43) K.enfeite('Plant', x + n[0] * 1.5, z + n[1] * 1.5);

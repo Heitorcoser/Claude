@@ -276,15 +276,17 @@
     });
     const pt = npcSprite('Playtime');
     N.playtime = Object.assign(Agente('Playtime', pt.ex[0], pt.ex[2], 15), {
-      spr: pt.m, oy: pt.oy, viu: false, cool: 0, jogaCool: 0, avisou: false, triste: 0,
+      spr: pt.m, oy: pt.oy, viu: false, cool: 0, jogaCool: 0, avisou: false, triste: 0, voz: 0, fala: null, tAviso: 0,
       ativa() { this.ativo = true; this.spr.visible = true; this.vagar(); },
-      vagar() { const r = ronda(false); this.vai(r[0], r[1]); this.vel = 15; this.avisou = false; if (Math.random() < 0.5) M.som('Characters/Playtime/PT_' + (Math.random() < 0.5 ? 'Laugh' : 'WannaPlay'), { de: this }); this.cool = 1; },
-      tique(dt) { this.cool -= dt; this.jogaCool -= dt; this.triste -= dt; },
+      // fala no máximo de 8 em 8 segundos e nunca por cima de outra fala dela
+      diz(n, pausa = 8) { if (this.voz > 0 || (this.fala && !this.fala.fim)) return; this.fala = M.som('Characters/Playtime/PT_' + n, { de: this }); this.voz = pausa; },
+      vagar() { const r = ronda(false); this.vai(r[0], r[1]); this.vel = 15; if (Math.random() < 0.3) this.diz(Math.random() < 0.5 ? 'Laugh' : 'WannaPlay', 12); this.cool = 2; },
+      tique(dt) { this.cool -= dt; this.jogaCool -= dt; this.triste -= dt; this.voz -= dt; this.tAviso -= dt; },
       fixo(dt) {
         if (G.p.corda) return;
         if (ve(this) && this.jogaCool <= 0 && dist(this, G.p) < 120) {
           this.viu = true; this.vai(G.p.x, G.p.z); this.vel = 20; this.cool = 0.2;
-          if (!this.avisou) { this.avisou = true; M.som('Characters/Playtime/PT_LetsPlay', { de: this }); }
+          if (this.tAviso <= 0) { this.tAviso = 15; this.voz = 0; this.diz('LetsPlay'); }
         } else if (this.viu && this.cool <= 0) { this.viu = false; this.vagar(); }
         else if (this.parado() && this.cool <= 0) this.vagar();
         this.anda(dt);
@@ -342,7 +344,7 @@
       tique(dt) { this.cool -= dt; this.solta -= dt; },
       fixo(dt) {
         if (this.louco > 0) { this.louco -= dt; this.dir += Math.PI * dt; this.vx = this.vz = 0; return; }
-        if (ve(this)) {
+        if (ve(this) && !G.p.corda) {
           if (!this.viu) M.som('Characters/1stPrize/1PR_' + (Math.random() < 0.5 ? 'ISeeYou' : 'AmComing'), { de: this });
           this.viu = true; this.vai(G.p.x, G.p.z); this.cool = 0.5; this.vAtual = Math.min(40, this.vAtual + 12 * dt); // acelera devagar
         } else {
@@ -693,7 +695,7 @@
     // a Playtime recua 10 unidades para longe do jogador, como no jogo
     const d = Math.hypot(pt.x - p.x, pt.z - p.z) || 1, o = { x: pt.x + (pt.x - p.x) / d * 8, z: pt.z + (pt.z - p.z) / d * 8 };
     mundo.resolve(o, 1); pt.x = o.x; pt.z = o.z; pt.cam = []; pt.jogaCool = 15;
-    Object.assign(corda, { pulos: 0, espera: 1, pos: 0, bateu: true, comecou: false });
+    Object.assign(corda, { pulos: 0, espera: 3, pos: 0, bateu: true, comecou: false, conta: 3.8 });
     $('corda').hidden = false; $('bPulo').hidden = false; $('pulos').textContent = '0/5';
     M.som('Characters/Playtime/PT_ReadyGo', { de: pt });
   }
@@ -702,6 +704,9 @@
   function tiqueCorda(dt) {
     const p = G.p, pt = G.npcs.playtime;
     p.vy -= 10 * dt; p.pulo = Math.max(0, p.pulo + p.vy * dt); if (p.pulo <= 0) { p.pulo = 0; if (ent.teclas.Space) p.vy = 5; }
+    // contagem antes da primeira volta da corda
+    if (corda.conta > 0) { corda.conta -= dt; const n = Math.ceil(corda.conta - 0.8); $('cordaConta').textContent = corda.conta > 0.8 ? (n >= 3 ? 'Prepare-se... ' : '') + n : 'PULE!'; }
+    else $('cordaConta').textContent = '';
     if (corda.espera > 0) corda.espera -= dt;
     else if (!corda.comecou) { corda.comecou = true; corda.pos = 1; corda.bateu = false; }
     if (corda.pos > 0) corda.pos -= dt;
@@ -716,6 +721,8 @@
   }
 
   /* ---------- jogador ---------- */
+  // o jogador é uma criança: olhos a 3,6 do chão (o teto fica a 10) e corpo de raio 1,5
+  const ALTURA = 3.6, RAIO = 1.5;
   function movimenta(dt) {
     const p = G.p, k = ent.teclas;
     let f = ent.mz, s = ent.mx;
@@ -740,10 +747,10 @@
     const ox = p.x, oz = p.z;
     // anda em passos curtos: um empurrão forte (1st Prize, Gotta Sweep) não pula a parede
     const np = Math.max(1, Math.ceil(Math.hypot(mx, mz) / 0.5));
-    for (let k = 0; k < np; k++) { p.x += mx / np; p.z += mz / np; mundo.resolve(p, 2); }
+    for (let k = 0; k < np; k++) { p.x += mx / np; p.z += mz / np; mundo.resolve(p, RAIO); }
     for (const n of Object.values(G.npcs)) if (n.solido && n.ativo) {
-      const d = dist(p, n), r = n.solido + 2;
-      if (d < r && d > 0.01) { const px = p.x, pz = p.z; p.x = n.x + (p.x - n.x) * r / d; p.z = n.z + (p.z - n.z) * r / d; if (!mundo.ve(px, pz, p.x, p.z, true)) { p.x = px; p.z = pz; } mundo.resolve(p, 2); }
+      const d = dist(p, n), r = n.solido + RAIO;
+      if (d < r && d > 0.01) { const px = p.x, pz = p.z; p.x = n.x + (p.x - n.x) * r / d; p.z = n.z + (p.z - n.z) * r / d; if (!mundo.ve(px, pz, p.x, p.z, true)) { p.x = px; p.z = pz; } mundo.resolve(p, RAIO); }
     }
     const andou = Math.hypot(p.x - ox, p.z - oz) / dt;
     // energia
@@ -862,7 +869,7 @@
   }
   function desenha() {
     const p = G.p;
-    camera.position.set(p.x, 5 + p.pulo, p.z);
+    camera.position.set(p.x, ALTURA + p.pulo, p.z);
     // um desvio mínimo evita um defeito de desenho quando a câmera fica exatamente alinhada às paredes
     camera.rotation.set(0, p.yaw + 0.0001, 0, 'YXZ');
     for (const n of Object.values(G.npcs)) { if (n.spr) { n.spr.position.set(n.x, n.oy, n.z); if (n.anima && n.spr.visible) n.anima(); } }
