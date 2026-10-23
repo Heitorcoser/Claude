@@ -43,7 +43,11 @@ public class MainActivity extends Activity {
     @Override
     public void onWindowFocusChanged(boolean foco) {
         super.onWindowFocusChanged(foco);
-        if (foco) telaCheia();
+        if (foco) {
+            telaCheia();
+            // voltou para o app: prende o mouse de novo (se estava jogando com mouse)
+            web.evaluateJavascript("window.Jogo && Jogo.recaptura && Jogo.recaptura()", null);
+        }
     }
 
     @Override

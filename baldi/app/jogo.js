@@ -521,11 +521,29 @@
   function capturaMouse() { if (nativo()) window.Android.capturaMouse(true); else canvas.requestPointerLock?.(); }
   function soltaMouse() { if (document.pointerLockElement) document.exitPointerLock(); if (nativo()) window.Android.capturaMouse(false); }
   J.soltaMouse = soltaMouse;
+  // com o mouse preso, o caderno usa um cursor desenhado (o mouse continua preso para o jogo)
+  const cur = { x: 0, y: 0 };
+  function cursorConta(dx, dy) {
+    const el = $('cursorMat');
+    cur.x = Math.max(0, Math.min(innerWidth - 4, cur.x + dx)); cur.y = Math.max(0, Math.min(innerHeight - 4, cur.y + dy));
+    el.hidden = false; el.style.transform = `translate(${cur.x}px,${cur.y}px)`;
+  }
+  function cliqueConta() {
+    const el = document.elementFromPoint(cur.x + 2, cur.y + 2), b = el && el.closest('button');
+    if (b) b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+  }
+  // de volta ao jogo (ex.: o app voltou para a frente): prende o mouse de novo
+  J.recaptura = () => { if (usaTeclado && G && !G.fim && !G.pausado && !mouseCapturado()) capturaMouse(); };
+  let acabouDePrender = false;
+  addEventListener('pointerdown', (e) => {
+    if (e.pointerType != 'mouse' || !G || G.fim || G.pausado || mouseCapturado()) return;
+    capturaMouse(); acabouDePrender = true; setTimeout(() => (acabouDePrender = false), 400);
+  });
   // movimento e botões vindos da captura nativa do Android (dx, dy, botão: 1 esquerdo, 2 direito; roda)
   J.mouseCap = (dx, dy, b, roda) => {
     if (!usaTeclado) modoTeclado(true);
     if (!G || G.fim || G.pausado) return;
-    if (G.aprendendo) { soltaMouse(); return; }
+    if (G.aprendendo) { cursorConta(dx, dy); if (b == 1) cliqueConta(); return; }
     ent.olha += dx * 0.003;
     if (b == 1) interage(); else if (b == 2) usaItem();
     if (roda) { G.sel = (G.sel + (roda > 0 ? 1 : 2)) % 3; atualizaHud(); }
@@ -542,9 +560,13 @@
     if (G.aprendendo) teclaConta(e.key);
   });
   addEventListener('keyup', (e) => (ent.teclas[e.code] = false));
-  canvas.addEventListener('click', () => { if (G && !G.fim && !G.pausado && !G.aprendendo) { if (!mouseCapturado() && (usaTeclado || matchMedia('(pointer:fine)').matches)) capturaMouse(); else interage(); } });
+  canvas.addEventListener('click', () => {
+    if (!G || G.fim || G.pausado || acabouDePrender) return;
+    if (G.aprendendo) { if (mouseCapturado()) cliqueConta(); return; }
+    if (!mouseCapturado() && (usaTeclado || matchMedia('(pointer:fine)').matches)) capturaMouse(); else interage();
+  });
   canvas.addEventListener('contextmenu', (e) => { e.preventDefault(); usaItem(); });
-  addEventListener('mousemove', (e) => { if (document.pointerLockElement === canvas) ent.olha += e.movementX * 0.003; });
+  addEventListener('mousemove', (e) => { if (document.pointerLockElement !== canvas) return; if (G && G.aprendendo) cursorConta(e.movementX, e.movementY); else ent.olha += e.movementX * 0.003; });
   addEventListener('wheel', (e) => { if (G) { G.sel = (G.sel + (e.deltaY > 0 ? 1 : 2)) % 3; atualizaHud(); } });
 
   /* ---------- interagir e itens ---------- */
@@ -643,7 +665,7 @@
   }
   const conta = { prob: 0, erros: 0, fila: [], tocando: null, fimT: 0, impossivel: false, sol: 0, txt: '' };
   function abreConta() {
-    soltaMouse(); // o mouse volta a aparecer para o teclado numérico
+    cur.x = innerWidth / 2; cur.y = innerHeight * 0.6; $('cursorMat').hidden = !mouseCapturado(); // cursor desenhado para o teclado numérico
     G.aprendendo = true; conta.prob = 0; conta.erros = 0; conta.fila = []; conta.fimT = 0;
     $('mat').hidden = false; [0, 1, 2].forEach((i) => ($('r' + i).style.visibility = 'hidden'));
     $('baldiCara').style.visibility = G.spoop ? 'hidden' : '';
@@ -726,7 +748,7 @@
   }
   const FROWN = 'Bald_Frown0000.png', firstFrown = () => FROWN;
   function fechaConta() {
-    G.aprendendo = false; $('mat').hidden = true;
+    G.aprendendo = false; $('mat').hidden = true; $('cursorMat').hidden = true;
     J.ganchos.fimConta.forEach((f) => f(G, 3 - conta.erros)); // acertos deste caderno (pontos do Beta)
     if (G.p.est < 100) G.p.est = 100;
     if (!G.spoop) { M.para(G.sons.aprende); G.sons.musica = M.som('Music/mus_School', { loop: true, vol: 0.6 }); }
@@ -875,7 +897,7 @@
     if (!G || G.fim || G.aprendendo) return;
     G.pausado = on; $('pausa').hidden = !on;
     clearInterval(G.cabecaT); if (on) { let k = 0; G.cabecaT = setInterval(() => ($('cabecaPausa').src = 'assets/Texture2D/HudTextures/PauseHead/Nod' + String(k++ % 48).padStart(4, '0') + '.png'), 40); }
-    if (on) soltaMouse();
+    if (on) soltaMouse(); else if (usaTeclado) capturaMouse();
     M.audio()[on ? 'suspend' : 'resume']();
   }
   $('continua').onclick = () => pausa(false);

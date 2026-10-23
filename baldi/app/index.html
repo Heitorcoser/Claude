@@ -136,6 +136,7 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
 #pontos img{width:28px;height:28px}
 #pompT{position:absolute;left:50%;top:max(48px,calc(env(safe-area-inset-top) + 48px));transform:translateX(-50%);font:700 20px Comic,sans-serif;color:#fff;text-shadow:var(--sombra);display:flex;align-items:center;gap:6px;background:rgba(160,0,60,.55);padding:2px 10px;border-radius:10px}
 #pompT img{width:34px;height:34px}
+#cursorMat{position:fixed;left:0;top:0;width:34px;height:34px;z-index:50;pointer-events:none}
 #chicleteTela{position:fixed;inset:0;z-index:3;pointer-events:none;background:url(assets/beta/plus/chiclete_tela.png) center/cover no-repeat;opacity:.8}
 #lojaPainel{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:rgba(255,255,255,.92);color:#000;font:700 18px Comic,sans-serif;padding:6px 14px;border-radius:10px;text-align:center;max-width:80vw;pointer-events:none}
 
@@ -146,6 +147,7 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
 <body>
 <canvas id="c"></canvas>
 <div id="chicleteTela" hidden></div>
+<img id="cursorMat" src="assets/Texture2D/HudTextures/MobileSprites/CursorSprite2D.png" alt="" hidden>
 
 <div id="hud" hidden>
   <div id="cadernos">0/7 Cadernos</div>

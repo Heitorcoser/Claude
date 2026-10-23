@@ -437,7 +437,7 @@
       }
       poe('mesaProf', f.x + f.n[0] * 4 + (f.n[1] ? 6 : 0), f.z + f.n[1] * 4 + (f.n[0] ? 6 : 0), f.n[0] ? 0 : Math.PI / 2);
       cartaz(rndInt(0, 7)); cartaz(rndInt(0, 7));
-      if (Math.random() < 0.6) { const w = parede.pop(); if (w) K.naParede('Window', w.x, w.z, w.n); }
+      if (Math.random() < 0.6) { const w = parede.pop(); if (w) K.naParede('JanelaFora', w.x, w.z, w.n); }
       const c0 = cantos[0]; if (c0) K.enfeite('Plant', X(c0[0]) + 3, Z(c0[1]) + 3);
     } else if (s.tipo == 'professores') {
       const m = s.cel.find(([i, j]) => livre(i, j));
@@ -570,7 +570,7 @@
         if (naPraca) { if (r < 0.2) K.maquina(Math.random() < 0.5 ? 'BSODAMachine' : 'ZestyMachine', x + n[0] * 1.2, z + n[1] * 1.2, n); else if (r < 0.5) K.enfeite('Plant', x + n[0] * 1.5, z + n[1] * 1.5); else if (r < 0.75) K.naParede(POST[rndInt(0, POST.length - 1)], x, z, n); continue; }
         if (r < 0.12 && !comArmario.has(i + ',' + j) && !comArmario.has((i - di) + ',' + (j - dj)) && (comArmario.add(i + ',' + j), true)) K.armarios(x - Math.abs(n[1]) * 4, z - Math.abs(n[0]) * 4, x + Math.abs(n[1]) * 4, z + Math.abs(n[0]) * 4, n);
         else if (r < 0.32) K.naParede(POST[rndInt(0, POST.length - 1)], x, z, n);
-        else if (r < 0.40 && (i + di <= 0 || j + dj <= 0 || i + di >= W - 1 || j + dj >= H - 1)) K.naParede('Window', x, z, n);
+        else if (r < 0.40 && (i + di <= 0 || j + dj <= 0 || i + di >= W - 1 || j + dj >= H - 1)) K.naParede('JanelaFora', x, z, n);
         else if (r < 0.43) K.enfeite('Plant', x + n[0] * 1.5, z + n[1] * 1.5);
       }
     }

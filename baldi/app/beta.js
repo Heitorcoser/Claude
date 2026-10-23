@@ -45,6 +45,7 @@
     // material pelo nome; portas novas (PrincipalDoor_0, DoctorDoor_0, SuppliesDoor_0) são criadas a partir da porta comum
     const mi = (n) => {
       let k = E.mats.findIndex((m) => m.n === n);
+      if (k < 0 && n === 'JanelaFora') { E.mats.push({ n, tex: 'beta/janela_fora.png', rep: [1, 1], off: [0, 0], cor: [0.96, 0.96, 0.96, 1] }); k = E.mats.length - 1; } // janela na parede: com a vista de fora (céu, cerca e grama)
       if (k < 0 && /Door_0$/.test(n)) { const base = E.mats.find((m) => m.n === 'Door_0'); E.mats.push(Object.assign({}, base, { n, tex: 'Texture2D/SchoolHouse/DoorTextures/' + n + '.png' })); k = E.mats.length - 1; }
       return k;
     };
@@ -114,7 +115,7 @@
     const S = [0, 1], N = [0, -1], L = [-1, 0], O = [1, 0]; // para onde a peça olha (+z, -z, -x, +x)
     // Sala 1 (x 130-180, z -240 a -290): quadro ao norte, carteiras viradas para ele
     naParede('Math', 155, -240, N);
-    naParede('Window', 130, -265, O); naParede('SchoolRulesPoster', 180, -265, L);
+    naParede('JanelaFora', 130, -265, O); naParede('SchoolRulesPoster', 180, -265, L);
     movel('mesaProf', 170, -246, Math.PI / 2); enfeite('Globe', 172, -246, 4.6, 0.35);
     for (const x of [137, 147, 163, 173]) for (const z of [-260, -270, -280]) {
       movel('carteira', x, z, Math.PI); movel('cadeira', x, z - 3, Math.PI);
@@ -123,7 +124,7 @@
     enfeite('Plant', 133, -243); enfeite('Plant', 177, -287);
     // Sala 2 (x 130-180, z -300 a -350): espelho da sala 1, quadro ao sul
     naParede('world', 155, -350, S);
-    naParede('Window', 130, -325, O); naParede('ScissorsPoster', 180, -325, L);
+    naParede('JanelaFora', 130, -325, O); naParede('ScissorsPoster', 180, -325, L);
     movel('mesaProf', 170, -344, Math.PI / 2); enfeite('papers', 168, -344, 4.4, 0.8);
     for (const x of [137, 147, 163, 173]) for (const z of [-310, -320, -330]) {
       movel('carteira', x, z, 0); movel('cadeira', x, z + 3, 0);
@@ -147,7 +148,7 @@
       movel('mesaLonga', 290, z, 0);
       for (const x of [283, 290, 297]) { movel('cadeira', x, z + (z > -295 ? -3.5 : 3.5), z > -295 ? Math.PI : 0); if (Math.random() < 0.7) enfeite(['pencils', 'papers', 'Notebooks'][M.rndInt(0, 2)], x, z, 4.4); }
     }
-    naParede(99, 310, -295, L); naParede('what', 285, -260, N); naParede('Window', 310, -270, L); naParede('Window', 310, -320, L);
+    naParede(99, 310, -295, L); naParede('what', 285, -260, N); naParede('JanelaFora', 310, -270, L); naParede('JanelaFora', 310, -320, L);
     enfeite('Globe', 305, -264); enfeite('Globe', 305, -326); enfeite('Plant', 264, -327);
     // Corredores: armários, plantas e cartazes
     armarios(160, -290, 178, -290, N); armarios(222, -290, 240, -290, N); armarios(160, -300, 178, -300, S); armarios(190, -300, 206, -300, S);

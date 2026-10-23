@@ -1,6 +1,6 @@
 {
-  "versao": "1.14",
-  "novidades": "Modo História com opções; no Beta: loja do Johnny e pontos, porta de uma direção, Beans, Chalkles e Mrs. Pomp; teclado e mouse; atualização automática.",
+  "versao": "1.15",
+  "novidades": "O mouse fica preso também no caderno (com um cursor na tela) e volta a prender com um clique; janelas com a vista de fora.",
   "apk": "BaldiModded.apk",
   "tester": "BaldiNullTester.apk"
 }
