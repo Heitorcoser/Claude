@@ -23,11 +23,24 @@ const World = {
     this.triggers = M.triggers(this);
     if (G.pos) { this.player.x = G.pos.x; this.player.y = G.pos.y; }
     M.setup && M.setup(this);
+    this.unstick();
     if (this.instr.follow) { this.instr.x = this.player.x - 20; this.instr.y = this.player.y; }
     const enc = M.encounter;
     this.nextEnc = enc ? (this.encCount() === 0 ? enc.first : enc.min + Math.random() * enc.rand) : 1e9;
     this.renderMap();
     this.updateCam(true);
+  },
+
+  // Se o jogador nasceu dentro de algo sólido (save antigo, parede), procura o lugar livre mais perto.
+  unstick() {
+    const p = this.player;
+    if (!this.blocked(p.x, p.y)) return;
+    for (let r = 2; r <= 64; r += 2) {
+      for (let a = 0; a < 16; a++) {
+        const x = p.x + Math.round(Math.cos(a * Math.PI / 8) * r), y = p.y + Math.round(Math.sin(a * Math.PI / 8) * r);
+        if (!this.blocked(x, y)) { p.x = x; p.y = y; return; }
+      }
+    }
   },
 
   encCount() { return this.M.encounter ? (G[this.M.encounter.counter] || 0) : 0; },

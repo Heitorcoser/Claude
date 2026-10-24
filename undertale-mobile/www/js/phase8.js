@@ -665,7 +665,7 @@ const P8 = {
 
   async useStar() {
     const W = World;
-    G.hp = G.maxhp; Sfx.save(); W.saveHere();
+    G.hp = G.maxhp; Sfx.save(); W.saveHere(0);
     await W.say(['* (O calor do vulcão te enche de DETERMINAÇÃO.)', '* HP recuperado. Jogo salvo.']);
   },
 };
