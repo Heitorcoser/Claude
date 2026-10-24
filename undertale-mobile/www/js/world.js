@@ -163,8 +163,10 @@ const World = {
       if (Math.abs(fx - e.x) < e.w / 2 + 6 && fy > e.y - e.h - 12 && fy < e.y + 8) { Sfx.move(); e.talk(); return; }
     }
     const I = this.instr;
-    if (I.visible && Math.abs(fx - I.x) < 16 && fy > I.y - 22 && fy < I.y + 10 && this.M.talkInstr) { this.M.talkInstr(this); return; }
     const tx = Math.floor(fx / TS), ty = Math.floor(fy / TS);
+    // Porta/parede na frente tem prioridade sobre o seguidor (ele costuma ficar colado em você).
+    const tileFirst = I.follow && this.solidTile(tx, ty);
+    if (!tileFirst && I.visible && Math.abs(fx - I.x) < 16 && fy > I.y - 22 && fy < I.y + 10 && this.M.talkInstr) { this.M.talkInstr(this); return; }
     this.M.interactTile && this.M.interactTile(this, this.tile(tx, ty), tx, ty);
   },
 
