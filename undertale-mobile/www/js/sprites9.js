@@ -124,11 +124,104 @@ const PENA = [
 ];
 const PENA_PAL = { W: '#ffffff', R: '#e0303a', F: '#a8d8ff', O: '#ffb02a' };
 
+
+// Kai e Luna de costas e de lado (para andarem atrás do jogador virando junto)
+const KAI_UP = [
+  '..k.kk.kk.k...',
+  '.kHkHHkHHkHk..',
+  '.kHHHHHHHHHHk.',
+  'kHHHHHHHHHHHHk',
+  'kHHHHHHHHHHHHk',
+  '.kHHHHHHHHHHk.',
+  '.kHHHHHHHHHHk.',
+  '.kSHHHHHHHHSk.',
+  '..kSHHHHHHSk..',
+  '...kkSSSSkk...',
+  '..kRRRRRRRRk..',
+  '.kRRRRRRRRRRk.',
+  'kRkRRRRRRRRkRk',
+  'kRkRRRRRRRRkRk',
+  'kSkRRRRRRRRkSk',
+  'kkkRRRRRRRRkkk',
+];
+const KAI_SIDE = [
+  '...k.kk.kk....',
+  '..kHkHHkHHk...',
+  '.kHHHHHHHHHk..',
+  'kHHHHHHHHHHHk.',
+  '.kHHHHHSSSSSk.',
+  '.kHHHHSSSSSSk.',
+  '.kHHHSSSSkSSk.',
+  '.kHHHSSSSkSSk.',
+  '..kHSSSSSSSk..',
+  '...kkSSSkkk...',
+  '...kRRWWRRk...',
+  '...kRRWWRRk...',
+  '...kRRkWRRk...',
+  '...kRRkWRRk...',
+  '...kRkSkRRk...',
+  '...kkkkkkkk...',
+];
+const LUNA_UP = [
+  '....kkkkkk....',
+  '...kHHHHHHk...',
+  '..kHHhHHHHHk..',
+  '.kHHHHHHHHHHk.',
+  '.kHHHHHHHHHHk.',
+  'kHHHHHHHHHHHHk',
+  'kHHHHHhHHHHHHk',
+  'kHHHHHHHHHHHHk',
+  'kHHHHHHHHHHHHk',
+  'kHHHHHHHHHHHHk',
+  'kHkHHHHHHHHkHk',
+  '.kVHHHHHHHHVk.',
+  'kVkVHHHHHHVkVk',
+  'kVkVVVVVVVVkVk',
+  'kSkVVVVVVVVkSk',
+  'kkkVVVVVVVVkkk',
+];
+const LUNA_SIDE = [
+  '....kkkkkk....',
+  '...kHHHHHHk...',
+  '..kHHhHHHHHk..',
+  '.kHHHHHHHHHHk.',
+  '.kHHHHHSSSSSk.',
+  'kHHHHHSSSSSSk.',
+  'kHHHHSSSSkSSk.',
+  'kHHHHSSSSkSSk.',
+  'kHHHHSSSSSpk..',
+  'kHHHkkSSSSk...',
+  'kHHkVVVVVVk...',
+  '.kkkVWWWVVk...',
+  '...kVVkVVVk...',
+  '...kVVkVVVk...',
+  '...kVkSkVVk...',
+  '...kkkkkkkk...',
+];
+const DRESS = {
+  stand: ['..kVVVVVVVVk..', '.kVVVVVVVVVVk.', '..kkkSkkSkkk..', '...kDk..kDk...', '...kkk..kkk...'],
+  w1: ['..kVVVVVVVVk..', '.kVVVVVVVVVVk.', '..kkkSkkSkkk..', '...kDk..kkk...', '...kkk........'],
+  w2: ['..kVVVVVVVVk..', '.kVVVVVVVVVVk.', '..kkkSkkSkkk..', '...kkk..kDk...', '........kkk...'],
+  side: ['...kVVVVVVk...', '..kVVVVVVVVk..', '...kkSkkSkk...', '....kDk.kDk...', '....kkk.kkk...'],
+  sideW: ['...kVVVVVVk...', '..kVVVVVVVVk..', '..kkSkkkkSkk..', '..kDk....kDk..', '..kkk....kkk..'],
+};
+function buildPartySets() {
+  const mk = (torso, legs, pal, flip) => legs.map(l => spriteFromRows(torso.concat(l), flip, pal));
+  const front = [LEGS_STAND, LEGS_W1, LEGS_STAND, LEGS_W2], side = [SLEGS_STAND, SLEGS_W, SLEGS_STAND, SLEGS_W];
+  const dFront = [DRESS.stand, DRESS.w1, DRESS.stand, DRESS.w2], dSide = [DRESS.side, DRESS.sideW, DRESS.side, DRESS.sideW];
+  SPR.partySet = {
+    kai: { down: mk(KAI.slice(0, 16), front, KAI_PAL), up: mk(KAI_UP, front, KAI_PAL), right: mk(KAI_SIDE, side, KAI_PAL), left: mk(KAI_SIDE, side, KAI_PAL, true) },
+    luna: { down: mk(LUNA.slice(0, 16), dFront, LUNA_PAL), up: mk(LUNA_UP, dFront, LUNA_PAL), right: mk(LUNA_SIDE, dSide, LUNA_PAL), left: mk(LUNA_SIDE, dSide, LUNA_PAL, true) },
+  };
+  SPR.party.kaiL = SPR.partySet.kai.left[0]; SPR.party.lunaL = SPR.partySet.luna.left[0];
+}
+
 function buildSprites9() {
   SPR.party = {
     kai: spriteFromRows(KAI, false, KAI_PAL), kaiL: spriteFromRows(KAI, true, KAI_PAL),
     luna: spriteFromRows(LUNA, false, LUNA_PAL), lunaL: spriteFromRows(LUNA, true, LUNA_PAL),
   };
+  buildPartySets();
   SPR.carmim = spriteFromRows(CARMIM, false, CARMIM_PAL);
   SPR.kaua = spriteFromRows(KAUA, false, KAUA_PAL);
   SPR.pena = spriteFromRows(PENA, false, PENA_PAL);

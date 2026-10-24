@@ -278,8 +278,8 @@ const World = {
       const lag = 16 * (i + 1), tr = this.trail;
       const f = tr.length > lag ? tr[tr.length - 1 - lag] : { x: p.x - 16 * (i + 1), y: p.y, dir: p.dir };
       list.push({ y: f.y - 0.1, d: () => {
-        const img = SPR.party[k + (f.dir === 'left' ? 'L' : '')];
-        drawSpr(img, sx(f.x - 7), sy(f.y - 21) + (p.moving ? -(Math.floor(this.t * 8 + i) % 2) * 2 : 0), 2);
+        const set = SPR.partySet[k], img = set[set[f.dir] ? f.dir : 'down'][p.moving ? Math.floor(p.anim + i) % 4 : 0];
+        drawSpr(img, sx(f.x - 7), sy(f.y - 21), 2);
       } });
     });
     list.push({ y: p.y, d: () => {
