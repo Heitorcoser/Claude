@@ -444,6 +444,15 @@ class Battle {
     // grupo (Kai e Luna, a partir da Fase 12)
     this.party = opts.solo ? [] : (opts.party || G.party || []);
     this.pcd = { kai: 0, luna: 0, combo: 0 }; this.partyFx = null;
+    // multiplayer: cada amigo tem uma alma; quanto mais jogadores, mais forte o inimigo
+    this.coop = null; this.diffMul = 1;
+    if (!opts.solo && Coop.active) {
+      const n = Coop.count();
+      this.coop = Coop.players.map(p => ({ p, x: 320, y: 316, inv: 0, moved: false }));
+      this.e.hp = this.e.hpNow = Math.round(this.e.hp * (1 + 0.6 * (n - 1)));
+      this.e.atkNow += n - 1;
+      this.diffMul = 1 + 0.3 * (n - 1);
+    }
     if (this.robot && def.group) this.robotBat = 100;
     this.flavorTyper = new Typer(def.intro, 'narr', 520, 32);
     Sfx.playMusic(def.music || 'battle');
@@ -867,6 +876,7 @@ class Battle {
     this.state = 'enemyTurn';
     this.boxTarget = { x: 320 - 105, y: 236, w: 210, h: 160 };
     this.soul.x = 320; this.soul.y = 316; this.soul.inv = 0;
+    if (this.coop) this.coop.forEach((c, i) => { c.x = 320 + (i % 2 ? -1 : 1) * (28 + 28 * (i >> 1)); c.y = 316 + (i >> 1) * 20; c.inv = 0; });
     this.bullets = [];
     this.pattern = PATTERNS[pattern];
     this.pt = 0; this.spawnT = 0; this.patternName = pattern;
@@ -888,13 +898,14 @@ class Battle {
     const s = this.soul;
     this.moveSoul(dt);
     if (s.inv > 0) s.inv -= dt;
+    if (this.coop) this.moveCoop(dt);
 
     if (this.bubble && this.pt === 0 && this.bubble.life > 0.9) { // deixa a fala aparecer
       if ((Input.isPressed('a') || Input.tap) && this.bubble.life < (this.e.boss ? 2.6 : 1.3)) this.bubble.life = 0.9;
       return;
     }
     this.pt += dt;
-    if (this.pt < this.turnLen - 0.6) this.pattern.update(this, dt);
+    if (this.pt < this.turnLen - 0.6) this.pattern.update(this, dt * this.diffMul);
     for (const b of this.bullets) {
       b.t = (b.t || 0) + dt;
       if (b.home) {
@@ -928,6 +939,11 @@ class Battle {
         this.hurt(b.dmg ?? this.e.atkNow);
         if (b.pop) b.dead = true;
       }
+      if (this.coop) for (const c of this.coop) {
+        if (c.inv > 0 || b.dead || this.state !== 'enemyTurn' || !this.hitSoul(b, c)) continue;
+        this.hurt(b.dmg ?? this.e.atkNow, c);
+        if (b.pop) b.dead = true;
+      }
       if (b.y > 520 || b.y < -60 || b.x < -120 || b.x > 760 || (b.life && b.t > b.life)) b.dead = true;
     }
     this.bullets = this.bullets.filter(b => !b.dead);
@@ -954,11 +970,31 @@ class Battle {
     this.soulMoved = Math.hypot(s.x - ox, s.y - oy) > 0.3;
   }
 
-  hurt(dmg) {
+  // almas dos amigos (multiplayer)
+  moveCoop(dt) {
+    const bx = this.box, sp = this.soulSpeed || 150;
+    for (const c of this.coop) {
+      if (c.inv > 0) c.inv -= dt;
+      const v = Coop.vec(c.p), ox = c.x, oy = c.y;
+      c.x = Math.max(bx.x + 13, Math.min(bx.x + bx.w - 13, c.x + v.x * sp * dt));
+      c.y = Math.max(bx.y + 12, Math.min(bx.y + bx.h - 12, c.y + v.y * sp * dt));
+      c.moved = Math.hypot(c.x - ox, c.y - oy) > 0.3;
+    }
+  }
+  hitSoul(b, c) {
+    let h = b.hitFn ? b.hitFn(b, c) : b.w ? (Math.abs(b.x - c.x) < b.w / 2 + 4 && Math.abs(b.y - c.y) < b.h / 2 + 4) : Math.hypot(b.x - c.x, b.y - c.y) < b.r + 5;
+    if (b.warn && b.t < b.warn) h = false;
+    if (h && b.color === 'blue' && !c.moved) h = false;
+    if (h && b.color === 'orange' && c.moved) h = false;
+    return h;
+  }
+
+  hurt(dmg, who) {
     dmg = Math.max(1, dmg - playerDef());
     if (this.opts.tutorial) G.hp = Math.max(1, G.hp - dmg);
     else G.hp = Math.max(0, G.hp - dmg);
-    this.soul.inv = 1.2; Sfx.hurt();
+    if (who) who.inv = 1.0; else this.soul.inv = 1.2;
+    Sfx.hurt();
     this.hurtFlash = 0.15;
     if (G.hp <= 0) this.end('dead');
   }
@@ -1081,6 +1117,7 @@ class Battle {
       text(bt.label, bt.x + 76, BTN_Y + 7, 32, c, 'center');
     });
 
+    if (this.coop) text(`CO-OP: ${this.coop.length + 1} JOGADORES — INIMIGO MAIS FORTE`, 320, 216, 20, '#5ff8ff', 'center');
     if (this.hurtFlash > 0) { this.hurtFlash -= 1 / 60; ctx.fillStyle = 'rgba(255,0,0,0.12)'; ctx.fillRect(0, 0, W, H); }
   }
 
@@ -1197,6 +1234,7 @@ class Battle {
       for (const bl of this.bullets) BULLET_DRAW[bl.kind](bl, this.t);
       const s = this.soul;
       if (s.inv <= 0 || Math.floor(s.inv * 12) % 2) drawSpr(SPR.soul, s.x - 8, s.y - 7, 1);
+      if (this.coop) for (const c of this.coop) if (c.inv <= 0 || Math.floor(c.inv * 12) % 2) drawSpr(Coop.sprites(c.p.color).soul, c.x - 8, c.y - 7, 1);
     }
   }
 

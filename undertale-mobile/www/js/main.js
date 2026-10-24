@@ -13,6 +13,7 @@ const Game = {
     const loop = now => {
       const dt = Math.min(1 / 30, (now - last) / 1000); last = now;
       this.update(dt); this.draw();
+      if (Coop.role === 'guest') Coop.guestFrame(); else Coop.endFrame();
       Input.endFrame();
       requestAnimationFrame(loop);
     };
@@ -22,6 +23,7 @@ const Game = {
   update(dt) {
     Timers.update(dt); Fade.update(dt); flushFrameWaiters(dt);
     if (ConfigMenu.isOpen) { ConfigMenu.update(dt); return; }
+    if (CoopUI.isOpen() || this.scene === 'guest') return;
     const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, credits: Credits, cine: this.cine || Cine3 }[this.scene];
     if (this.scene === 'battle') this.battleObj.update(dt);
     else if (S) S.update(dt);
@@ -38,6 +40,7 @@ const Game = {
       this.flashWhite -= 1 / 60;
     }
     if (ConfigMenu.isOpen) ConfigMenu.draw();
+    if (Coop.role === 'host') Coop.drawHud();
     Fade.draw();
   },
 
@@ -143,7 +146,7 @@ const Title = {
   enter() {
     this.t = 0; this.sel = 0;
     this.save = loadGame();
-    this.opts = (this.save ? ['CONTINUAR', 'NOVO JOGO'] : ['NOVO JOGO']).concat(['CONFIGURAÇÕES']);
+    this.opts = (this.save ? ['CONTINUAR', 'NOVO JOGO'] : ['NOVO JOGO']).concat(['MULTIPLAYER', 'CONFIGURAÇÕES']);
     Fade.a = 1; Fade.to(0, 1);
     this.musicStarted = false;
   },
@@ -160,6 +163,7 @@ const Title = {
     const o = this.opts[ch];
     this.sel = ch;
     if (o === 'CONFIGURAÇÕES') { ConfigMenu.open(); return; }
+    if (o === 'MULTIPLAYER') { CoopUI.open(); return; }
     this.t = -99;
     Fade.to(1, 1.5).then(() => { Sfx.stopMusic(); o === 'CONTINUAR' ? Game.continueGame() : Game.newGame(); });
   },

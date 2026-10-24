@@ -119,6 +119,7 @@ const World = {
     if (!p.moving) p.anim = 0;
     this.updateInstr(dt);
     this.M.update && this.M.update(this, dt);
+    if (Coop.active) Coop.updateWorld(this, dt);
     this.updateCam();
   },
 
@@ -186,7 +187,7 @@ const World = {
   // ---------- menu do mundo (botão B) ----------
   menuOpts() {
     const M = this.menu;
-    if (M.level === 'main') return ['ITEM', 'STATUS', 'MISSÃO'].concat(G.flags.phone ? ['CELULAR'] : [], ['CONFIG', 'FECHAR']);
+    if (M.level === 'main') return ['ITEM', 'STATUS', 'MISSÃO'].concat(G.flags.phone ? ['CELULAR'] : [], ['MULTI', 'CONFIG', 'FECHAR']);
     if (M.level === 'items') return G.items.concat(['VOLTAR']);
     return ['VOLTAR'];
   },
@@ -208,6 +209,7 @@ const World = {
       if (o === 'ITEM') this.menu = G.items.length ? { level: 'items', sel: 0 } : this.menu;
       else if (o === 'STATUS') this.menu = { level: 'stat', sel: 0 };
       else if (o === 'CONFIG') { this.menu = null; ConfigMenu.open(); }
+      else if (o === 'MULTI') { this.menu = null; CoopUI.open(); }
       else if (o === 'CELULAR') { this.menu = null; Phone.open(); }
       else if (o === 'MISSÃO') {
         this.menu = null;
@@ -272,6 +274,7 @@ const World = {
       drawSpr(img, sx(I.x - 10), sy(I.y - 34), 2, I.alpha ?? 1);
     } });
     const p = this.player;
+    if (Coop.active) Coop.drawWorld(this, list, sx, sy);
     // grupo (Kai e Luna) seguindo o jogador
     const party = (G.party && !this.M.noParty && !G.flags.partyHidden && !p.hidden) ? G.party : [];
     party.forEach((k, i) => {

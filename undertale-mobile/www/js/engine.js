@@ -28,7 +28,10 @@ const KEYMAP = {
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
   KeyZ: 'a', Enter: 'a', Space: 'a', KeyX: 'b', ShiftLeft: 'b', ShiftRight: 'b', Escape: 'b', KeyC: 'b',
 };
+// PC (mouse e teclado, sem tela de toque): esconde os botões da tela
+if (!('ontouchstart' in window) && window.matchMedia && matchMedia('(pointer: fine)').matches) document.body.classList.add('desktop');
 window.addEventListener('keydown', e => {
+  if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
   const k = KEYMAP[e.code]; if (!k) return;
   e.preventDefault(); Sfx.init(); Input.press(k);
 });
