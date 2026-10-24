@@ -68,7 +68,7 @@ const QUESTS = {
     if (!F.p5alicate && !F.p5map) return { t: 'No barracão: fale com o FERRUGEM (alicate) e a VOVÓ FANTASMA (rotas).', x: 58, y: 13 };
     if (!F.p5alicate) return { t: 'No barracão: fale com o FERRUGEM para pegar o ALICATE.', x: 58, y: 13 };
     if (!F.p5map) return { t: 'No barracão: fale com a VOVÓ FANTASMA para saber as rotas.', x: 55, y: 10 };
-    if (!F.p5cut) return { t: 'FUJA! Fique FORA da luz das lanternas e vá até a cerca no SUL (meio). Aperte A nela para cortar.', x: 80, y: 66 };
+    if (!F.p5cut) return { t: 'FUJA! Fique FORA da luz das lanternas e vá até a cerca ENFERRUJADA no SUL (meio). Aperte A nela.', x: 80, y: 66 };
     if (!F.p5out) return { t: 'Passe pelo buraco na cerca!', x: 80, y: 68 };
     if (!F.p5free) return { t: 'Salve na estrela e fale com o TREINADOR quando estiver pronto.' };
     if (!F.p5boss) return { t: 'Vá até a TORRE DOURADA (canto de cima, à direita) e entre.', x: 98, y: 22 };

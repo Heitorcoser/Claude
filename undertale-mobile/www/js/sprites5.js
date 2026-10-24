@@ -186,6 +186,14 @@ function buildIslandTiles() {
     g.strokeStyle = '#9a9aa8'; g.lineWidth = 1;
     for (let y = 2; y < 16; y += 4) { g.beginPath(); g.moveTo(0, y); g.lineTo(16, y + 2); g.stroke(); }
   });
+  T.fenceWeak = makeTile(g => {
+    g.fillStyle = '#6a6460'; g.fillRect(0, 0, 16, 16);
+    g.fillStyle = '#000'; g.fillRect(6, 0, 4, 16);
+    g.fillStyle = '#8a4a2a'; g.fillRect(7, 0, 2, 16);
+    g.strokeStyle = '#b86a3a'; g.lineWidth = 1;
+    for (let y = 2; y < 16; y += 4) { g.beginPath(); g.moveTo(0, y); g.lineTo(5, y + 1); g.moveTo(11, y + 2); g.lineTo(16, y + 3); g.stroke(); }
+    g.fillStyle = '#ffd23a'; g.fillRect(2, 13, 2, 2); g.fillRect(12, 1, 2, 2);
+  });
   T.fenceCut = makeTile(g => {
     g.fillStyle = '#6a6460'; g.fillRect(0, 0, 16, 16);
     g.fillStyle = '#000'; g.fillRect(0, 0, 3, 16); g.fillRect(13, 0, 3, 16);

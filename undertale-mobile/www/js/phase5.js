@@ -72,6 +72,7 @@ MAPS.ilha = {
     const m = { h: T.hosp[h], f: T.frost[h], c: T.cookie[h], g: T.dirt[h], y: T.gravel[h], b: T.boards[h], m: T.factory[h], E: T.carpet[h],
       H: T.wafer, R: T.icing, w: T.waferWin, D: T.waferDoor, F: T.fence, G: G.flags.p5free ? T.dirt[0] : T.gate, Q: T.fence, o: T.fenceCut,
       B: T.concrete, T: T.tower, Z: T.towerDoor, d: T.door, X: T.sea[0] };
+    if (c === 'Q') return T.fenceWeak;
     if (c === 'L') return MAPS.dragoncity.layer(T.frost[h], T.lolli);
     if (c === '#') return y < 14 ? T.hospWall : T.void;
     return m[c] || T.void;
@@ -190,7 +191,7 @@ MAPS.ilha = {
     const m = this.musicAt(W);
     if (Sfx.current !== m) Sfx.playMusic(m);
     // fome
-    if (F.p5camp && !F.p5out && !F.p5free) {
+    if (F.p5camp && !F.p5out && !F.p5free && !F.p5night2) {
       const rate = 100 / 240 * (p.carry ? 1.8 : 1) * (p.moving ? 1 : 0.5);
       G.hunger = Math.max(0, (G.hunger ?? 70) - rate * dt);
       if (G.hunger <= 0) return P5.faint();
@@ -221,6 +222,11 @@ MAPS.ilha = {
           ctx.beginPath(); ctx.moveTo(sx(tx2x(e.path[0][0])), sy(ty2y(e.path[0][1]) - 8)); ctx.lineTo(sx(tx2x(e.path[1][0])), sy(ty2y(e.path[1][1]) - 8)); ctx.stroke(); ctx.setLineDash([]);
         }
       }
+    }
+    if (F.p5night2 && !F.p5cut) { // cerca fraca brilhando
+      const x = sx(80 * TS), y = sy(67 * TS), k = 0.5 + Math.sin(t * 5) * 0.5;
+      ctx.strokeStyle = `rgba(255,150,60,${0.5 + k * 0.5})`; ctx.lineWidth = 3; ctx.strokeRect(x - 2, y - 2, 36, 36);
+      ctx.fillStyle = `rgba(255,150,60,${0.15 + k * 0.2})`; ctx.fillRect(x, y, 32, 32);
     }
     if (F.p5inCell && !W.locked) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 0, 640, 480); }
     // HUD da fome
@@ -253,7 +259,10 @@ MAPS.ilha = {
     if (c === 'D') return W.say(['* (Uma casa de doce. Na porta: "SOMENTE DOCES".)']);
     if (c === 'G') return W.say(['* (O portão do campo. Trancado por fora. Tem guardas do outro lado.)']);
     if (c === 'Q') return P5.fence();
-    if (c === 'F') return W.say(['* (Uma cerca alta. Do outro lado, o mar de chocolate e a liberdade.)']);
+    if (c === 'F') {
+      if (G.flags.p5night2 && !G.flags.p5cut) return W.say(['* (Esta parte da cerca é forte demais para o alicate.)', '* (A cerca FRACA, enferrujada, fica no lado de BAIXO (SUL) do campo, bem no MEIO. Siga a seta amarela.)']);
+      return W.say(['* (Uma cerca alta. Do outro lado, o mar de chocolate e a liberdade.)']);
+    }
     if (c === 'Z') return G.flags.p5free ? null : W.say(['* (A porta da TORRE DO DIRETOR. Dourada. Trancada.)']);
     if (c === 'X') return W.say(['* (O mar de chocolate. Cheira bem, mas ninguém aqui pode aproveitar.)']);
   },
