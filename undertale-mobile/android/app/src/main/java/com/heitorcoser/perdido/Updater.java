@@ -24,7 +24,7 @@ import java.net.URL;
 // Se houver uma versão maior que a instalada, o jogo pergunta se quer atualizar,
 // baixa o APK e abre o instalador do Android.
 public class Updater {
-    static final String REPO = "heitorcoser/perdido";
+    static final String REPO = "heitorcoser/losters";
     static final String API = "https://api.github.com/repos/" + REPO + "/releases/latest";
 
     private final Activity act;
