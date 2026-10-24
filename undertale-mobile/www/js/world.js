@@ -272,6 +272,16 @@ const World = {
       drawSpr(img, sx(I.x - 10), sy(I.y - 34), 2, I.alpha ?? 1);
     } });
     const p = this.player;
+    // grupo (Kai e Luna) seguindo o jogador
+    const party = (G.party && !this.M.noParty && !G.flags.partyHidden && !p.hidden) ? G.party : [];
+    party.forEach((k, i) => {
+      const lag = 16 * (i + 1), tr = this.trail;
+      const f = tr.length > lag ? tr[tr.length - 1 - lag] : { x: p.x - 16 * (i + 1), y: p.y, dir: p.dir };
+      list.push({ y: f.y - 0.1, d: () => {
+        const img = SPR.party[k + (f.dir === 'left' ? 'L' : '')];
+        drawSpr(img, sx(f.x - 7), sy(f.y - 21) + (p.moving ? -(Math.floor(this.t * 8 + i) % 2) * 2 : 0), 2);
+      } });
+    });
     list.push({ y: p.y, d: () => {
       if (p.hidden) return;
       if (p.lying) { drawSpr(SPR.playerLying, sx(p.x - 10), sy(p.y - 12), 2); return; }
@@ -323,6 +333,7 @@ const World = {
         ent.x += Math.cos(a) * st; ent.y += Math.sin(a) * st; ent.anim = (ent.anim || 0) + dt * 6;
         if (Math.abs(x - ent.x) > 0.5) ent.dir = x < ent.x ? 'left' : 'right';
         if (ent === this.player && Math.abs(y - ent.y) > Math.abs(x - ent.x)) ent.dir = y < ent.y ? 'up' : 'down';
+        if (ent === this.player) { this.trail.push({ x: ent.x, y: ent.y, dir: ent.dir }); if (this.trail.length > 200) this.trail.shift(); }
       }
       ent.x = x; ent.y = y;
     }
@@ -331,16 +342,16 @@ const World = {
 
   say(lines) {
     const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon', T: 'trein', S: 'stranger', P: 'peng', B: 'bit', V: 'volt', R: 'brutao', K: 'teca', Z: 'ze', C: 'kid',
-      M: 'marsh', H: 'choco', Y: 'piru', N: 'macaron', O: 'vovo', U: 'ferrugem', L: 'lia', E: 'tecela', J: 'osso', Q: 'kitsune', W: 'novelo', A: 'draco', X: 'golem', Ç: 'fantl', 2: 'leao' };
+      M: 'marsh', H: 'choco', Y: 'piru', N: 'macaron', O: 'vovo', U: 'ferrugem', L: 'lia', E: 'tecela', J: 'osso', Q: 'kitsune', W: 'novelo', A: 'draco', X: 'golem', Ç: 'fantl', 2: 'leao', 3: 'kai', 4: 'luna', 5: 'carmim', 6: 'kaua', 7: 'pena' };
     return Dialog.show(lines.map(t => {
       if (typeof t !== 'string') return t;
-      const m = /^([IFGDTSPBVRKZCMHYNOULEJQWAXÇ2]):\s*(.*)$/s.exec(t);
+      const m = /^([IFGDTSPBVRKZCMHYNOULEJQWAXÇ2-7]):\s*(.*)$/s.exec(t);
       return m ? { who: WHO[m[1]], t: '* ' + m[2] } : t;
     }), this.player.y - this.cam.y > 150);
   },
   ask(text, choices) {
-    const m = /^([IFGBVMHLOEJQAXS2]):\s*(.*)$/s.exec(text);
-    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo', E: 'tecela', J: 'osso', Q: 'kitsune', A: 'draco', X: 'golem', S: 'stranger', 2: 'leao' }[m[1]] : null;
+    const m = /^([IFGBVMHLOEJQAXS2-7]):\s*(.*)$/s.exec(text);
+    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo', E: 'tecela', J: 'osso', Q: 'kitsune', A: 'draco', X: 'golem', S: 'stranger', 2: 'leao', 3: 'kai', 4: 'luna', 5: 'carmim', 6: 'kaua', 7: 'pena' }[m[1]] : null;
     return Dialog.ask(m ? '* ' + m[2] : text, choices, who);
   },
 

@@ -441,6 +441,9 @@ class Battle {
     this.practiceDone = false; this.magicCd = 0;
     this.dragon = opts.dragon || null; this.dragonCd = 0; this.burn = 0; this.burnDmg = 5; this.frozen = 0; this.haste = 0; this.dragonFx = null;
     this.robot = !!opts.robot; this.robotCd = 0; this.musicFx = null;
+    // grupo (Kai e Luna, a partir da Fase 12)
+    this.party = opts.solo ? [] : (opts.party || G.party || []);
+    this.pcd = { kai: 0, luna: 0, combo: 0 }; this.partyFx = null;
     if (this.robot && def.group) this.robotBat = 100;
     this.flavorTyper = new Typer(def.intro, 'narr', 520, 32);
     Sfx.playMusic(def.music || 'battle');
@@ -478,6 +481,12 @@ class Battle {
     }
     if (this.dragon) list.push({ name: DRAGONS[this.dragon].act, kind: 'dragon', disabled: this.dragonCd > 0 });
     if (this.robot) list.push({ name: 'Bit: Música', kind: 'robot', disabled: this.robotCd > 0 || this.robotBat <= 0 });
+    if (this.party.includes('kai')) list.push({ name: 'Kai: Golpe', kind: 'kai', disabled: this.pcd.kai > 0 });
+    if (this.party.includes('luna')) {
+      list.push({ name: 'Luna: Cura', kind: 'lunaHeal', disabled: this.pcd.luna > 0 });
+      list.push({ name: 'Luna: Acalmar', kind: 'lunaCalm', disabled: this.pcd.luna > 0 });
+    }
+    if (this.party.length >= 2) list.push({ name: 'Kai+Luna: Combo', kind: 'combo', disabled: this.pcd.combo > 0 });
     return list;
   }
 
@@ -623,6 +632,22 @@ class Battle {
     } else if (a.kind === 'dragon') {
       this.dragonCd = 2;
       this.useDragon();
+    } else if (a.kind === 'kai') {
+      this.pcd.kai = 1; this.partyFx = { kind: 'kai', t: 0 }; Sfx.whoosh();
+      this.say(['* KAI corre e acerta um golpe com o taco!'], () => { this.partyFx = { kind: 'kai', t: 0, hit: true }; this.dealDamage(12 + G.lv * 2 + ((Math.random() * 4) | 0), () => { this.partyFx = null; this.afterPlayer(); }, true); });
+    } else if (a.kind === 'lunaHeal') {
+      this.pcd.luna = 2; this.partyFx = { kind: 'heal', t: 0 }; Sfx.heal();
+      const before = G.hp; G.hp = Math.min(G.maxhp, G.hp + 16 + G.lv * 2);
+      this.say(['* LUNA levanta o cajado: CURA!', `* Você recuperou ${G.hp - before} HP.`], () => { this.partyFx = null; this.afterPlayer(); });
+    } else if (a.kind === 'lunaCalm') {
+      this.pcd.luna = 2; this.partyFx = { kind: 'calm', t: 0 }; Sfx.spare();
+      this.e.mercy = Math.min(100, this.e.mercy + 40);
+      const t = ['* LUNA canta uma canção de ninar.', `* ${this.e.name} ficou mais calmo.`];
+      if (this.spareable) t.push(`* ${this.e.name} não quer mais lutar.`);
+      this.say(t, () => { this.partyFx = null; this.afterPlayer(); });
+    } else if (a.kind === 'combo') {
+      this.pcd.combo = 3; this.pcd.kai = 1; this.partyFx = { kind: 'combo', t: 0 }; Sfx.magic();
+      this.say(['* LUNA acende o taco do KAI com magia...', '* ...e KAI acerta um GOLPE ESTRELA!'], () => { this.partyFx = { kind: 'kai', t: 0, hit: true, star: true }; Sfx.hit(); this.dealDamage(26 + G.lv * 3 + ((Math.random() * 6) | 0), () => { this.partyFx = null; this.afterPlayer(); }, true); });
     } else if (a.kind === 'calm') {
       this.e.mercy = Math.min(100, this.e.mercy + 50);
       Sfx.spare();
@@ -809,6 +834,7 @@ class Battle {
     }
     if (this.magicCd > 0) this.magicCd--;
     if (this.dragonCd > 0) this.dragonCd--;
+    for (const k in this.pcd) if (this.pcd[k] > 0) this.pcd[k]--;
     if (this.robotCd > 0) this.robotCd--;
     if (this.robotBat !== undefined) this.robotBat = Math.min(100, this.robotBat + 15);
     this.turn++;
@@ -1003,6 +1029,7 @@ class Battle {
     }
 
     if (this.dragon) this.drawDragon(ex, ey, img, sc);
+    if (this.party.length) this.drawParty(ex, ey, img, sc);
     if (this.robot) this.drawRobot();
 
     // golpe
@@ -1067,6 +1094,30 @@ class Battle {
       ctx.drawImage(img, cx - img.width * sc / 2, ey + (k === 'brutao' ? -10 : 30) + bob, img.width * sc, img.height * sc);
     }
     ctx.globalAlpha = 1;
+  }
+
+  drawParty(ex, ey, img, sc) {
+    const fx = this.partyFx;
+    if (fx) fx.t += 1 / 60;
+    const pos = { kai: [492, 104], luna: [556, 92] };
+    for (const k of this.party) {
+      let [x, y] = pos[k];
+      y += Math.sin(this.t * 2.5 + (k === 'kai' ? 0 : 1.5)) * 3;
+      if (k === 'kai' && fx && fx.kind === 'kai' && fx.hit) { const q = Math.min(1, fx.t / 0.25); x += (ex + img.width * sc / 2 - x - 30) * Math.sin(q * Math.PI); }
+      drawSpr(SPR.party[k + 'L'], x, y, 4);
+      if (k === 'kai') { ctx.fillStyle = '#000'; ctx.fillRect(x - 4, y + 40, 6, 30); ctx.fillStyle = fx && fx.star ? '#ffe680' : '#c8a46a'; ctx.fillRect(x - 3, y + 41, 4, 28); }
+      if (k === 'luna') { ctx.fillStyle = '#000'; ctx.fillRect(x + 54, y + 20, 5, 64); ctx.fillStyle = '#8a5a2a'; ctx.fillRect(x + 55, y + 21, 3, 62); ctx.fillStyle = '#ffe680'; ctx.beginPath(); ctx.arc(x + 56, y + 18, 6, 0, Math.PI * 2); ctx.fill(); }
+    }
+    if (fx && fx.kind === 'heal') {
+      for (let i = 0; i < 12; i++) { const q = (fx.t * 1.2 + i / 12) % 1; ctx.fillStyle = `rgba(120,255,140,${1 - q})`; const x = 290 + (i * 37) % 200, y = 420 - q * 120; ctx.fillRect(x - 1, y - 5, 3, 11); ctx.fillRect(x - 5, y - 1, 11, 3); }
+    }
+    if (fx && fx.kind === 'calm') {
+      for (let i = 0; i < 8; i++) { const q = (fx.t * 0.8 + i / 8) % 1; ctx.fillStyle = `rgba(255,220,255,${1 - q})`; text('♪', 560 - q * 230, 110 + Math.sin(q * 9 + i) * 30, 30, `rgba(255,200,255,${1 - q})`, 'center'); }
+    }
+    if (fx && fx.kind === 'combo' && !fx.hit) {
+      ctx.fillStyle = `rgba(255,230,120,${0.3 + Math.sin(fx.t * 20) * 0.2})`; ctx.beginPath(); ctx.arc(500, 160, 40 + fx.t * 20, 0, Math.PI * 2); ctx.fill();
+    }
+    if (fx && fx.star && fx.hit) drawStar(320, ey + 40, 30 + fx.t * 60, fx.t * 6, '#ffe680');
   }
 
   drawRobot() {

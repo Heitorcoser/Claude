@@ -174,7 +174,30 @@ A rota muda o final das Fases 6 e 7.
 - Na rota **pacifista**, depois do ataque final o botão POUPAR se reconstrói sozinho.
 - Cada derrota deixa os golpes dele um pouco mais fracos (até a metade).
 
-Fase 12: em breve.
+## Fase 12 — A Vila das Espécies
+
+- Você acorda no **hospital**. A **Doutora Pena** cuidou de você depois da batalha.
+- Lá fora, uma vila onde moram aranhas, esqueletos, robôs, pinguins, fantasmas, golens...
+- No leste da vila você conhece **KAI** e **LUNA**, dois humanos que entram no seu **grupo** para o resto da jornada (como no Deltarune):
+  - eles seguem você pelo mapa;
+  - nas batalhas, em AGIR: **Kai: Golpe**, **Luna: Cura**, **Luna: Acalmar** e **Kai+Luna: Combo**.
+
+## Fase 13 — A Praia
+
+- No píer está **CARMIM**, uma humana de olhos vermelhos.
+  - **Genocida**: ela te dá parabéns por ter matado tanta gente.
+  - **Pacifista / Neutra**: batalha contra ela (forte, mas mais fraca que o Encapuzado).
+  - No fim ela diz que vai **coletar 6 almas** e some.
+- O surfista **KAUÃ** te ensina a **surfar**: fique na crista da onda e desvie das gaivotas.
+- Um dia inteiro de diversão na praia, e o Kauã te dá um **Picolé de Coco** e um **Pastel de Praia**.
+
+## Fase 14 — A Casa
+
+- Uma casinha no fim da trilha. O grupo janta, dorme e fica lá por um tempo.
+- No porão, uma **porta gigante** com um coração com asas.
+- Do outro lado, uma **estrada de neve**... e os **créditos do Capítulo 1**.
+
+**CAPÍTULO 2: em breve.**
 
 ## Personagens
 
@@ -218,6 +241,10 @@ Fase 12: em breve.
 |---|---|---|---|
 | ![](arte/mestre.png) | ![](arte/canhao.png) | ![](arte/leao.png) | ![](arte/sombra.png) |
 
+| Kai e Luna | Carmim | Kauã | Doutora Pena |
+|---|---|---|---|
+| ![](arte/kai-luna.png) | ![](arte/carmim.png) | ![](arte/kaua.png) | ![](arte/pena.png) |
+
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
 ## Estrutura
@@ -232,6 +259,7 @@ www/            jogo (HTML5)
   js/sprites6.js  aranhas, esqueletos, kitsune, tiles da caverna e de Neo-Sakura
   js/sprites7.js  golens e fantasmas de lava, Mestre Draco, dragões evoluídos, tiles do vulcão
   js/sprites8.js  Mestre Leão, a Sombra, faca, arena e salão dourado
+  js/sprites9.js  Kai, Luna, Carmim, Kauã, Dra. Pena, hospital, praia, casa e porta gigante
   js/audio.js     efeitos e sequenciador de músicas (WebAudio)
   js/engine.js    controles, configurações, texto, diálogo, save
   js/battle.js    batalha, dragões, chefe e ataques
@@ -248,6 +276,9 @@ www/            jogo (HTML5)
   js/phase9.js    Fase 9: Vale Comum (cidade, padaria, pousada, ponte)
   js/phase10.js   Fase 10: A Arena (treino com o Mestre Leão, Sombra, faca)
   js/phase11.js   Fase 11: A Batalha (salão dourado, luta de verdade)
+  js/phase12.js   Fase 12: hospital, Vila das Espécies, Kai e Luna entram no grupo
+  js/phase13.js   Fase 13: praia, Carmim, surfe com o Kauã
+  js/phase14.js   Fase 14: a casa, a porta gigante, a estrada de neve
   js/quests.js    painel de missões e seta de objetivo de todas as fases
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK

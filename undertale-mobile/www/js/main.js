@@ -22,14 +22,14 @@ const Game = {
   update(dt) {
     Timers.update(dt); Fade.update(dt); flushFrameWaiters(dt);
     if (ConfigMenu.isOpen) { ConfigMenu.update(dt); return; }
-    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, cine: this.cine || Cine3 }[this.scene];
+    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, credits: Credits, cine: this.cine || Cine3 }[this.scene];
     if (this.scene === 'battle') this.battleObj.update(dt);
     else if (S) S.update(dt);
   },
 
   draw() {
     ctx.imageSmoothingEnabled = false;
-    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, cine: this.cine || Cine3 }[this.scene];
+    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, credits: Credits, cine: this.cine || Cine3 }[this.scene];
     if (this.scene === 'battle') this.battleObj.draw();
     else if (S) S.draw();
     if (this.flashT > 0) this.drawFlash();
@@ -69,7 +69,10 @@ const Game = {
     if ((G.map === 'vulcao' && G.flags.p8done) || (G.map === 'cidade' && !G.flags.p9arrived)) { this.goChapter(9); return; }
     if ((G.map === 'cidade' && G.flags.p9done) || (G.map === 'arena' && !G.flags.p10arrived)) { this.goChapter(10); return; }
     if ((G.map === 'arena' && G.flags.p10done) || (G.map === 'salao' && !G.flags.p11arrived)) { this.goChapter(11); return; }
-    if (G.map === 'salao' && G.flags.p11done) { this.goEnd(11); return; }
+    if ((G.map === 'salao' && G.flags.p11done) || (G.map === 'vila' && !G.flags.p12arrived)) { this.goChapter(12); return; }
+    if ((G.map === 'vila' && G.flags.p12done) || (G.map === 'praia' && !G.flags.p13arrived)) { this.goChapter(13); return; }
+    if ((G.map === 'praia' && G.flags.p13done) || (G.map === 'casa' && !G.flags.p14arrived)) { this.goChapter(14); return; }
+    if (G.map === 'casa' && G.flags.p14done) { this.goCredits(); return; }
     this.enterMap(G.map || 'labirinto');
     if (Fade.a > 0 && !(G.map === 'dragoncity' && !G.flags.p2arrived)) Fade.to(0, 1.5);
     Sfx.playMusic(World.M.musicAt ? World.M.musicAt(World) : World.M.music);
@@ -91,6 +94,9 @@ const Game = {
     if (n === 9) { G.map = 'cidade'; G.pos = null; saveGame(null); }
     if (n === 10) { G.map = 'arena'; G.pos = null; saveGame(null); }
     if (n === 11) { G.map = 'salao'; G.pos = null; saveGame(null); }
+    if (n === 12) { G.map = 'vila'; G.pos = null; saveGame(null); }
+    if (n === 13) { G.map = 'praia'; G.pos = null; saveGame(null); }
+    if (n === 14) { G.map = 'casa'; G.pos = null; saveGame(null); }
     this.scene = 'chapter'; Chapter.enter(n);
   },
 
@@ -128,6 +134,7 @@ const Game = {
   },
 
   goEnd(phase) { this.scene = 'end'; End.enter(phase); },
+  goCredits() { this.scene = 'credits'; Credits.enter(); },
 };
 
 // ---------------- TÍTULO ----------------
@@ -164,7 +171,7 @@ const Title = {
     }
     text('PERDIDO', 320, 90, 52, '#fff', 'center', FONT_TITLE);
     text('um fangame de Undertale', 320, 160, 30, '#aaa', 'center');
-    const fase = { dragoncity: 'FASE 2: DRAGONCITY', gelo: 'FASE 3: COLÔNIA DE GELO', futuro: 'FASE 4: CIDADE FUTURISTA', ilha: 'FASE 5: A ILHA DOS DOCES', caverna: 'FASE 6: A CAVERNA', sakura: 'FASE 7: NEO-SAKURA', vulcao: 'FASE 8: VILA VULCÂNICA', cidade: 'FASE 9: O MESTRE', arena: 'FASE 10: A ARENA', salao: 'FASE 11: A BATALHA' }[this.save && this.save.map] || 'FASE 1: O LABIRINTO';
+    const fase = { dragoncity: 'FASE 2: DRAGONCITY', gelo: 'FASE 3: COLÔNIA DE GELO', futuro: 'FASE 4: CIDADE FUTURISTA', ilha: 'FASE 5: A ILHA DOS DOCES', caverna: 'FASE 6: A CAVERNA', sakura: 'FASE 7: NEO-SAKURA', vulcao: 'FASE 8: VILA VULCÂNICA', cidade: 'FASE 9: O MESTRE', arena: 'FASE 10: A ARENA', salao: 'FASE 11: A BATALHA', vila: 'FASE 12: A VILA DAS ESPÉCIES', praia: 'FASE 13: A PRAIA', casa: G.flags && G.flags.ch1done ? 'CAPÍTULO 1 COMPLETO' : 'FASE 14: A CASA' }[this.save && this.save.map] || 'FASE 1: O LABIRINTO';
     text(fase, 320, 196, 30, '#ffe680', 'center');
     drawSpr(SPR.soul, 312, 244 + Math.sin(this.t * 3) * 4, 1);
     this.opts.forEach((o, i) => text(o, 320, 284 + i * 44, 34, i === this.sel ? '#ffff40' : '#fff', 'center'));
@@ -226,7 +233,7 @@ const Chapter = {
         else if (this.n === 4) { Game.cine = Cine4; Game.scene = 'cine'; Cine4.run(); }
         else if (this.n === 5) { Game.cine = Cine5; Game.scene = 'cine'; Cine5.run(); }
         else if (this.n === 6) { Game.cine = Cine6; Game.scene = 'cine'; Cine6.run(); }
-        else Game.enterMap({ 2: 'dragoncity', 7: 'sakura', 8: 'vulcao', 9: 'cidade', 10: 'arena', 11: 'salao' }[this.n] || 'labirinto');
+        else Game.enterMap({ 2: 'dragoncity', 7: 'sakura', 8: 'vulcao', 9: 'cidade', 10: 'arena', 11: 'salao', 12: 'vila', 13: 'praia', 14: 'casa' }[this.n] || 'labirinto');
       });
     }
   },
@@ -235,7 +242,7 @@ const Chapter = {
     const a = Math.min(1, this.t);
     ctx.globalAlpha = a;
     text('FASE ' + this.n, 320, 150, 40, '#fff', 'center', FONT_TITLE);
-    text({ 1: 'O LABIRINTO', 2: 'DRAGONCITY', 3: 'COLÔNIA DE GELO', 4: 'CIDADE FUTURISTA', 5: 'A ILHA DOS DOCES', 6: 'A CAVERNA', 7: 'NEO-SAKURA', 8: 'VILA VULCÂNICA', 9: 'O MESTRE', 10: 'A ARENA', 11: 'A BATALHA' }[this.n], 320, 220, this.n >= 4 ? 26 : 30, { 3: '#9fe4ff', 4: '#ff5ac8', 5: '#f8c8dc', 6: '#b8a0ff', 7: '#ffb8d8', 8: '#ff8a3a', 9: '#5ff8ff', 10: '#ffc84a', 11: '#e8c860' }[this.n] || '#ff9a3a', 'center', FONT_TITLE);
+    text({ 1: 'O LABIRINTO', 2: 'DRAGONCITY', 3: 'COLÔNIA DE GELO', 4: 'CIDADE FUTURISTA', 5: 'A ILHA DOS DOCES', 6: 'A CAVERNA', 7: 'NEO-SAKURA', 8: 'VILA VULCÂNICA', 9: 'O MESTRE', 10: 'A ARENA', 11: 'A BATALHA', 12: 'A VILA DAS ESPÉCIES', 13: 'A PRAIA', 14: 'A CASA' }[this.n], 320, 220, this.n >= 4 ? 26 : 30, { 3: '#9fe4ff', 4: '#ff5ac8', 5: '#f8c8dc', 6: '#b8a0ff', 7: '#ffb8d8', 8: '#ff8a3a', 9: '#5ff8ff', 10: '#ffc84a', 11: '#e8c860', 12: '#7aff9a', 13: '#5ac8ff', 14: '#ffb070' }[this.n] || '#ff9a3a', 'center', FONT_TITLE);
     if (this.n === 6) { drawSpr(SPR.aranha.mae[Math.floor(this.t * 3) % 2], 200, 290, 3); drawSpr(SPR.esqueleto.civil, 380, 280, 3); }
     if (this.n === 7) {
       drawSpr(SPR.kitsune, 290, 280 + Math.sin(this.t * 2) * 5, 3);
@@ -247,6 +254,9 @@ const Chapter = {
       ctx.fillStyle = '#ff8a3a';
       for (let i = 0; i < 30; i++) ctx.fillRect((i * 97 + Math.sin(this.t + i) * 20 + 700) % 640, 480 - (i * 53 + this.t * 50) % 480, 3, 3);
     }
+    if (this.n === 12) { drawSpr(SPR.party.kai, 250, 280, 3); drawSpr(SPR.player.down[0], 298, 280, 3); drawSpr(SPR.party.luna, 346, 280, 3); }
+    if (this.n === 13) { drawSpr(SPR.kaua, 250, 280, 3); drawSpr(SPR.prancha, 300, 270, 3); drawSpr(SPR.carmim, 360, 280, 3, 0.5 + Math.sin(this.t * 2) * 0.3); }
+    if (this.n === 14) { drawSpr(SPR.portaGigante, 288, 260, 1); }
     if (this.n === 10) { drawSpr(SPR.leao, 296, 270, 3); drawSpr(SPR.faca, 360, 300, 3); }
     if (this.n === 11) {
       drawSpr(SPR.player.right[0], 230, 290, 3); drawSpr(SPR.encapuzado, 370, 278, 3);
@@ -440,11 +450,91 @@ const GameOver = {
   },
 };
 
+// ---------------- CRÉDITOS DO CAPÍTULO 1 ----------------
+const Credits = {
+  t: 0,
+  enter() {
+    this.t = 0; this.done = false; Fade.a = 1; Fade.to(0, 0.8); Sfx.playMusic('creditos');
+    const sp = (k) => () => SPR[k];
+    this.items = [
+      { title: 'PERDIDO', size: 56 },
+      { text: 'CAPÍTULO 1', size: 34, c: '#ffe680' },
+      { gap: 60 },
+      { text: 'ELENCO', size: 34, c: '#ff9a3a' },
+      { spr: () => SPR.player.down[0], text: 'VOCÊ — o humano perdido' },
+      { spr: () => SPR.instr.right[0], text: 'INSTRUTOR' },
+      { spr: () => SPR.dragon[G.dragon || 'laranja'].right[0], text: (DRAGONS[G.dragon] || DRAGONS.laranja).name.toUpperCase() },
+      { draw: (x, y) => drawGhost('fire', x - 30, y, 2.2, this.t), text: 'FIREGHOST' },
+      { draw: (x, y) => drawGhost('ice', x - 30, y, 2.2, this.t), text: 'ICEGHOST' },
+      { spr: sp('encapuzado'), text: 'O MESTRE ENCAPUZADO' },
+      { spr: () => SPR.robot.bit.right[0], text: 'BIT' },
+      { spr: sp('marsh'), text: 'MARSHMALLOW e CHOCOLATE' },
+      { spr: sp('lia'), text: 'LIA, FERRUGEM e VOVÓ FANTASMA' },
+      { spr: () => SPR.aranha.mae[0], text: 'TECELÃ, FIO e NOVELO' },
+      { spr: () => SPR.esqueleto.mestre, text: 'MESTRE OSSO' },
+      { spr: sp('kitsune'), text: 'GUARDIÃ KITSUNE' },
+      { spr: sp('draco'), text: 'MESTRE DRACO' },
+      { spr: sp('golemLava'), text: 'BASALTO' },
+      { spr: sp('leao'), text: 'MESTRE LEÃO' },
+      { spr: sp('pena'), text: 'DOUTORA PENA' },
+      { spr: () => SPR.party.kai, text: 'KAI' },
+      { spr: () => SPR.party.luna, text: 'LUNA' },
+      { spr: sp('kaua'), text: 'KAUÃ' },
+      { spr: sp('carmim'), text: 'CARMIM' },
+      { gap: 40 },
+      { text: 'IDEIA E HISTÓRIA', size: 30, c: '#ff9a3a' },
+      { text: 'Heitorcoser' },
+      { text: 'PROGRAMAÇÃO, ARTE E MÚSICA', size: 30, c: '#ff9a3a' },
+      { text: 'Claude' },
+      { text: 'INSPIRADO EM', size: 30, c: '#ff9a3a' },
+      { text: 'Undertale e Deltarune, de Toby Fox' },
+      { gap: 80 },
+      { text: `Rota: ${{ pacifista: 'PACIFISTA', neutra: 'NEUTRA', genocida: 'GENOCIDA' }[route()]}`, c: '#ffe680' },
+      { text: `Poupados: ${G.spares}   Derrotados: ${G.kills}` },
+      { gap: 80 },
+      { text: 'Obrigado por jogar!', size: 40 },
+      { gap: 40 },
+      { text: 'VOCÊ COMPLETOU O CAPÍTULO 1', size: 34, c: '#7aff9a' },
+      { gap: 20 },
+      { text: 'CAPÍTULO 2 EM BREVE...', size: 40, c: '#ff9a3a' },
+    ];
+    let y = 0;
+    for (const it of this.items) { it.y = y; y += it.gap || (it.spr || it.draw ? 110 : (it.size || 30) + 22); }
+    this.total = y;
+  },
+  update(dt) {
+    this.t += dt;
+    const fast = Input.held.a || Input.drag.active;
+    this.scroll = Math.min(this.total - 120, (this.scroll || 0) + dt * (fast ? 160 : 42));
+    if (this.scroll >= this.total - 120 && !this.done && this.t > 3 && (Input.isPressed('a') || Input.tap)) {
+      this.done = true; Sfx.select();
+      Fade.to(1, 1).then(() => { Sfx.stopMusic(); Game.goTitle(); });
+    }
+  },
+  draw() {
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    for (let i = 0; i < 40; i++) ctx.fillRect((i * 97) % 640, ((i * 53 - this.t * 15) % 480 + 480) % 480, 2, 2);
+    const base = 480 - (this.scroll || 0);
+    for (const it of this.items) {
+      const y = base + it.y;
+      if (y < -120 || y > 500) continue;
+      if (it.spr || it.draw) {
+        if (it.draw) it.draw(170, y + 10);
+        else { const img = it.spr(); const sc = Math.min(4, 90 / img.height); drawSpr(img, 170 - img.width * sc / 2, y + 90 - img.height * sc, sc); }
+        text(it.text, 250, y + 40, 30, '#fff');
+      } else if (it.text) text(it.text, 320, y, it.size || 30, it.c || '#fff', 'center');
+      else if (it.title) text(it.title, 320, y, it.size, '#fff', 'center', FONT_TITLE);
+    }
+    if (this.scroll >= this.total - 120 && Math.floor(this.t * 2) % 2) text('toque para voltar ao título', 320, 450, 24, '#777', 'center');
+  },
+};
+
 // ---------------- FIM DA FASE ----------------
 const End = {
   t: 0, phase: 2,
   enter(phase) {
-    this.t = 0; this.phase = phase || 2; this.page = 0; Fade.to(0, 0.8); Sfx.playMusic(this.phase === 5 ? 'memoria' : this.phase === 7 ? 'tristeza' : this.phase === 8 ? 'voo' : this.phase === 9 ? 'encontro' : this.phase === 10 ? 'draco' : 'victory');
+    this.t = 0; this.phase = phase || 2; this.page = 0; Fade.to(0, 0.8); Sfx.playMusic(this.phase === 5 ? 'memoria' : this.phase === 7 ? 'tristeza' : this.phase === 8 ? 'voo' : this.phase === 9 ? 'encontro' : this.phase === 10 ? 'draco' : this.phase === 13 ? 'praia' : this.phase === 12 ? 'vila12' : 'victory');
     if (this.phase === 2) { G.map = 'gelo'; G.pos = null; G.flags.p2done = true; saveGame(null); }
   },
   update(dt) {
@@ -452,7 +542,7 @@ const End = {
     if (this.t > 3 && (Input.isPressed('a') || Input.tap)) {
       Sfx.select(); this.t = -99;
       if (this.phase === 5 && this.page === 0) { this.page = 1; this.t = 0; return; }
-      Fade.to(1, 1).then(() => { Sfx.stopMusic(); this.phase < 11 ? Game.goChapter(this.phase + 1) : Game.goTitle(); });
+      Fade.to(1, 1).then(() => { Sfx.stopMusic(); this.phase < 14 ? Game.goChapter(this.phase + 1) : Game.goTitle(); });
     }
   },
   drawMemory() {
@@ -498,7 +588,10 @@ const End = {
     if (this.phase === 8) { drawSpr(SPR.draco, 380, 120, 3); drawSpr(SPR.golemLava, 450, 112, 3); }
     if (this.phase === 9 || this.phase === 11) drawSpr(SPR.encapuzado, 390, 106, 3, this.phase === 11 && !G.flags.masterSpared ? 0.5 : 1);
     if (this.phase === 10) { drawSpr(SPR.leao, 390, 112, 3); drawSpr(SPR.faca, 300, 190, 2); }
-    const line = this.phase === 11 ? (G.flags.masterSpared ? 'Você poupou o Mestre Encapuzado.' : 'Você venceu o Mestre Encapuzado!')
+    if (this.phase === 12 || this.phase === 13) { drawSpr(SPR.party.kaiL, 390, 120, 3); drawSpr(SPR.party.lunaL, 450, 120, 3); }
+    const line = this.phase === 13 ? 'Carmim quer coletar 6 ALMAS...'
+      : this.phase === 12 ? 'KAI e LUNA entraram no grupo!'
+      : this.phase === 11 ? (G.flags.masterSpared ? 'Você poupou o Mestre Encapuzado.' : 'Você venceu o Mestre Encapuzado!')
       : this.phase === 10 ? 'Você ganhou a FACA DO LEÃO!'
       : this.phase === 9 ? (G.flags.p9part1 ? 'Você venceu a 1ª parte da luta!' : '"Quando estiver preparado..."')
       : this.phase === 8 ? `${DRAGONS[G.dragon] ? DRAGONS[G.dragon].name.toUpperCase() : 'SEU DRAGÃO'} aprendeu a VOAR!`
@@ -508,8 +601,8 @@ const End = {
       : this.phase === 3 ? 'Os irmãos fantasmas estão te esperando...'
       : G.flags.fireFriend ? 'FireGhost virou seu amigo!' : 'O IceGhost sabe que você está aqui...';
     text(line, 320, 344, 30, '#9fe4ff', 'center');
-    text({ 2: 'Próxima: FASE 3 — COLÔNIA DE GELO', 3: 'Próxima: FASE 4 — CIDADE FUTURISTA', 4: 'Próxima: FASE 5 — A ILHA DOS DOCES', 5: 'Próxima: FASE 6 — A CAVERNA', 6: 'Próxima: FASE 7 — NEO-SAKURA', 7: 'Próxima: FASE 8 — VILA VULCÂNICA', 8: 'Próxima: FASE 9 — O MESTRE', 9: 'Próxima: FASE 10 — A ARENA', 10: 'Próxima: FASE 11 — A BATALHA', 11: 'FASE 12 em breve...' }[this.phase], 320, 386, 30, '#ff7f27', 'center');
-    if (this.t > 3 && Math.floor(this.t * 2) % 2) text(this.phase < 11 ? 'toque para continuar' : 'toque para voltar ao título', 320, 434, 26, '#777', 'center');
+    text({ 2: 'Próxima: FASE 3 — COLÔNIA DE GELO', 3: 'Próxima: FASE 4 — CIDADE FUTURISTA', 4: 'Próxima: FASE 5 — A ILHA DOS DOCES', 5: 'Próxima: FASE 6 — A CAVERNA', 6: 'Próxima: FASE 7 — NEO-SAKURA', 7: 'Próxima: FASE 8 — VILA VULCÂNICA', 8: 'Próxima: FASE 9 — O MESTRE', 9: 'Próxima: FASE 10 — A ARENA', 10: 'Próxima: FASE 11 — A BATALHA', 11: 'Próxima: FASE 12 — A VILA DAS ESPÉCIES', 12: 'Próxima: FASE 13 — A PRAIA', 13: 'Próxima: FASE 14 — A CASA' }[this.phase], 320, 386, 30, '#ff7f27', 'center');
+    if (this.t > 3 && Math.floor(this.t * 2) % 2) text(this.phase < 14 ? 'toque para continuar' : 'toque para voltar ao título', 320, 434, 26, '#777', 'center');
   },
 };
 

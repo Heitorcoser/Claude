@@ -326,7 +326,7 @@ function hitRect(p, r) { return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && 
 const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon', trein: 'instr', stranger: 'deep', peng: 'peng',
   bit: 'robot', volt: 'robot2', brutao: 'bully', teca: 'bully', ze: 'bully', kid: 'kid',
   marsh: 'soft', choco: 'narr', piru: 'harsh', macaron: 'posh', vovo: 'old', ferrugem: 'robot2', lia: 'kid',
-  tecela: 'spider', osso: 'bones', kitsune: 'fox', novelo: 'spider', draco: 'old', golem: 'deep', fantl: 'fire', leao: 'dragon' };
+  tecela: 'spider', osso: 'bones', kitsune: 'fox', novelo: 'spider', draco: 'old', golem: 'deep', fantl: 'fire', leao: 'dragon', kai: 'bully', luna: 'soft', carmim: 'posh', kaua: 'peng', pena: 'soft' };
 // Rota do jogo inteiro, de acordo com o que o jogador fez nas lutas.
 function route() {
   if (!G.kills) return 'pacifista';
@@ -381,6 +381,11 @@ const PORTRAITS = {
   kitsune: sprPortrait('kitsune', 18, 15, 5.4, 0, 2),
   draco: sprPortrait('draco', 16, 12, 6, 0, 4),
   leao: sprPortrait('leao', 16, 11, 6, 0, 4),
+  kai: sprPortrait(() => SPR.party.kai, 14, 10, 6.4, 2, 10),
+  luna: sprPortrait(() => SPR.party.luna, 14, 10, 6.4, 2, 10),
+  carmim: (x, y, t) => { sprPortrait('carmim', 14, 10, 6.4, 2, 10)(x, y); if ((t % 4) > 3.7) { ctx.fillStyle = '#ff2a3a'; ctx.fillRect(x + 2 + 5 * 6.4, y + 10 + 6 * 6.4, 6.4, 6.4); ctx.fillRect(x + 2 + 8 * 6.4, y + 10 + 6 * 6.4, 6.4, 6.4); } },
+  kaua: sprPortrait('kaua', 14, 10, 6.4, 2, 10),
+  pena: sprPortrait('pena', 14, 10, 6.4, 2, 10),
   golem: sprPortrait('golemLava', 18, 9, 5, 0, 20),
   fantl: sprPortrait('fantLava', 18, 12, 5, 0, 14),
 };

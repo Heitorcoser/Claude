@@ -374,6 +374,24 @@ const Sfx = (() => {
     encontro: { bpm: 66, lead: 'piano', lead2: 'bell', pad: 'strings', arp: null, bass: 'bassTri', bassPat: 'root', drums: null,
       bars: `Dm: D5 . . . F5 . . . | Bb: D5 . . . . . . . | Gm: G4 . Bb4 . D5 . . . | A: C#5 . . . . . . . |
              Dm: A5 . . . F5 . . . | Bb: F5 . D5 . . . . . | Gm: Bb4 . . . G4 . . . | A: A4 . . . . . . .` },
+    hospital: { bpm: 72, lead: 'bell', lead2: 'piano', pad: 'strings', arp: 'harp', bass: 'bassTri', bassPat: 'root', drums: null, leadVol: 0.8,
+      bars: `F: A5 . . . C6 . . . | C: G5 . . . E5 . . . | Dm: F5 . A5 . D6 . . . | Bb: D6 . C6 . A5 . . . |
+             F: C6 . A5 . F5 . . . | Am: E5 . G5 . C6 . . . | Bb: D6 . . . F5 . . . | C: E5 . . . . . . .` },
+    vila12: { bpm: 112, lead: 'flute', lead2: 'marimba', pad: 'strings', arp: 'pizz', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
+      bars: `G: B5 . D6 . B5 . G5 . | C: E6 . D6 . C6 . E5 . | D: F#5 . A5 . D6 . C6 . | G: B5 . . . G5 . . . |
+             Em: G5 . B5 . E6 . D6 . | C: C6 . E6 . G6 . E6 . | D: D6 . C6 . A5 . F#5 . | G: G5 . . . - - - -` },
+    carmim: { bpm: 96, lead: 'piano', lead2: 'bell', pad: 'organ', arp: 'harp', bass: 'bassSaw', bassPat: 'rootfifth', drums: 'tick',
+      bars: `Am: A5 . E5 . A5 C6 B5 A5 | Dm: F5 . D5 . F5 A5 G5 F5 | E: G#5 . E5 . B5 . G#5 . | Am: A5 . . . E6 . . . |
+             F: C6 . A5 . F5 . A5 C6 | E: B5 . G#5 . E5 . G#5 B5 | Dm: D6 . C6 . A5 . F5 . | E: E5 . G#5 . B5 . E6 .` },
+    praia: { bpm: 124, lead: 'marimba', lead2: 'flute', pad: 'strings', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
+      bars: `C: E5 G5 . C6 . G5 E5 . | Am: A5 . C6 . E6 . C6 . | F: F5 A5 . C6 . A5 F5 . | G: G5 . B5 . D6 . . . |
+             C: C6 . G5 . E5 . G5 . | Am: E6 . D6 . C6 . A5 . | F: A5 . C6 . F6 . E6 . | G: D6 . B5 . G5 . . .` },
+    surf: { bpm: 164, lead: 'square', lead2: 'marimba', pad: 'strings', arp: null, bass: 'bassSaw', bassPat: 'eighths', drums: 'rock',
+      bars: `E: E5 . G#5 B5 E6 . B5 G#5 | A: A5 . C#6 E6 A6 . E6 C#6 | B: B5 . D#6 F#6 B6 . F#6 D#6 | E: E6 . . . B5 . E6 . |
+             C#m: C#6 . E6 . G#6 . E6 . | A: A5 . C#6 . E6 . A6 . | B: F#6 . E6 . D#6 . B5 . | E: E6 . . . - - - -` },
+    creditos: { bpm: 84, lead: 'piano', lead2: 'flute', pad: 'strings', arp: 'harp', bass: 'bassTri', bassPat: 'root', drums: 'soft', leadVol: 0.85,
+      bars: `C: E5 . G5 . C6 . . . | G: D6 . B5 . G5 . . . | Am: C6 . E6 . A5 . . . | F: A5 . C6 . F6 . E6 . |
+             C: G6 . E6 . C6 . . . | G: B5 . D6 . G6 . F6 . | F: E6 . C6 . A5 . F5 . | C: G5 . . . C6 . . .` },
     victory: { bpm: 120, lead: 'brass', lead2: 'bell', pad: 'organ', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
       bars: `C: C5 . E5 . G5 . C6 . | F: A5 . . . F5 . A5 . | G: B5 . D6 . G5 . B5 . | C: C6 . . . . . - -` },
   };

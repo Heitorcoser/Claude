@@ -96,6 +96,30 @@ const QUESTS = {
     return { t: 'Chegue ao TOPO e pegue o CORAÇÃO DO VULCÃO no altar.', x: 35, y: 3 };
   },
 
+  vila(W) {
+    const F = G.flags;
+    if (!F.p12out) return { t: 'Saia do hospital pela porta de baixo.', x: 15, y: 61 };
+    if (!F.p12joined) return { t: 'Encontre os dois HUMANOS no leste da vila.', x: 58, y: 18 };
+    if (!F.p12done) return { t: 'Saia da vila pelo LESTE com Kai e Luna.', x: 66, y: 21 };
+    return null;
+  },
+
+  praia(W) {
+    const F = G.flags;
+    if (!F.p13carmim) return { t: 'Tem alguém no fim do PÍER. Vá até lá.', x: 61, y: 26 };
+    if (!F.p13gift) return { t: 'Fale com o surfista KAUÃ no quiosque.', x: 29, y: 15 };
+    return { t: 'Siga pela trilha do LESTE.', x: 78, y: 17 };
+  },
+
+  casa(W) {
+    const F = G.flags, p = W.player;
+    if (F.p14road) return F.p14done ? null : { t: 'Siga a estrada de neve até o fim.', x: 44, y: 3 };
+    if (!F.p14dinner) return p.y > 15 * TS && p.y < 56 * TS ? { t: 'Entre na casa.', x: 16, y: 37 } : { t: 'Faça a janta na MESA.', x: 21, y: 9 };
+    if (!F.p14slept) return { t: 'Durma numa das CAMAS.', x: 8, y: 10 };
+    if (p.y < 56 * TS) return { t: 'Desça a escada do PORÃO.', x: 25, y: 4 };
+    return { t: 'Abra a PORTA GIGANTE.', x: 17, y: 62 };
+  },
+
   arena(W) {
     const F = G.flags;
     if (!F.p10arrived) return null;

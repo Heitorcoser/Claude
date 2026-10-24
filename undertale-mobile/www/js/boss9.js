@@ -85,7 +85,7 @@ const M9_FLAVOR = {
 
 class MasterBattle extends Battle {
   constructor(key, opts) {
-    super(key, { ...opts, dragon: null, robot: false, withInstr: false });
+    super(key, { ...opts, dragon: null, robot: false, withInstr: false, solo: true });
     boss9Sprites();
     this.kr = 0; this.krT = 0;
     this.broken = false; this.breaking = false; this.brokenAct = false; this.brokenMercy = false; this.mercyBack = false;

@@ -14,7 +14,7 @@ ENEMIES.treino = {
 };
 class TrainBattle extends Battle {
   constructor(key, opts) {
-    super(key, { ...opts, dragon: null, robot: false, withInstr: false });
+    super(key, { ...opts, dragon: null, robot: false, withInstr: false, solo: true });
     boss9Sprites();
     this.rounds = ['mBoneGap', 'mBlueOrange', 'mBlasters'];
     this.ri = 0; this.hits = 0; this.phase = 1;
