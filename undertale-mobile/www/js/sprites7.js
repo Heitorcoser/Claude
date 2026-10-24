@@ -103,14 +103,21 @@ function drawDragonAura(k, x, y, sc, t) {
 }
 
 // Jogador montado no dragão (cutscene do voo e mapa)
-function drawRider(x, y, sc, t, flip) {
-  const set = SPR.dragon[G.dragon || 'laranja'], fr = Math.floor(t * 6) % 2;
+function drawRider(x, y, sc, t, flip, flap = 6) {
+  const set = SPR.dragon[G.dragon || 'laranja'], img = set.right[Math.floor(t * flap) % 2];
   ctx.save();
   if (flip) { ctx.translate(x + 26 * sc, 0); ctx.scale(-1, 1); x = 0; }
   drawDragonAura(G.dragon, x, y, sc, t);
+  ctx.drawImage(img, x, y, 26 * sc, 22 * sc);
+  // jogador sentado nas costas (só a parte de cima aparece)
   const p = SPR.player.right[0];
-  ctx.drawImage(p, 0, 0, p.width, 20, x + 13 * sc, y - 9 * sc, p.width * sc, 20 * sc);
-  ctx.drawImage(set.right[fr], x, y, 26 * sc, 22 * sc);
+  ctx.drawImage(p, 0, 0, p.width, 15, x + 2 * sc, y - 4 * sc, p.width * sc, 15 * sc);
+  // sela
+  ctx.fillStyle = '#000'; ctx.fillRect(x + 4 * sc, y + 9 * sc, 10 * sc, 3 * sc);
+  ctx.fillStyle = '#8a4a2a'; ctx.fillRect(x + 4.5 * sc, y + 9.5 * sc, 9 * sc, 2 * sc);
+  ctx.fillStyle = '#ffd23a'; ctx.fillRect(x + 8 * sc, y + 10 * sc, 2 * sc, 1 * sc);
+  // pescoço e cabeça do dragão ficam na frente do jogador
+  ctx.drawImage(img, 14, 0, 12, 12, x + 14 * sc, y, 12 * sc, 12 * sc);
   ctx.restore();
 }
 

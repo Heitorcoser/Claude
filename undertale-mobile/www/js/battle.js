@@ -132,6 +132,7 @@ const INSULTS = ['LATA VELHA', 'ROBÔ!', 'NERD', 'ENFERRUJADO', 'BIP BOP', 'PARA
 Object.assign(ENEMIES, {
   ze: {
     name: 'Zé Marreta', spr: 'ze', scale: 6, hp: 30, atk: 4, def: 1, xp: 15, gold: 10, voice: 'bully', nonlethal: true, words: INSULTS,
+    defeatText: ["* Zé Marreta fugiu correndo!\n* 'Vou contar pra diretora!'"],
     intro: '* Zé Marreta estala os dedos!',
     check: '* ZÉ MARRETA - ATK 4 DEF 1\n* Valentão de boné. Caiu aqui faz um ano.\n* Fala grosso, mas tem medo de escuro.',
     acts: {
@@ -146,6 +147,7 @@ Object.assign(ENEMIES, {
   },
   teca: {
     name: 'Teca', spr: 'teca', scale: 6, hp: 30, atk: 4, def: 1, xp: 15, gold: 10, voice: 'bully', nonlethal: true, words: INSULTS,
+    defeatText: ["* Teca fugiu correndo!\n* 'Isso não acabou, novato!'"],
     intro: '* Teca cruza os braços e bloqueia o caminho!',
     check: '* TECA - ATK 4 DEF 1\n* Joga borracha melhor que ninguém.\n* Na verdade queria um robô de estimação.',
     acts: {
@@ -188,6 +190,7 @@ Object.assign(ENEMIES, {
   },
   valentoes: {
     name: 'Valentões', spr: 'brutao', scale: 6, hp: 190, atk: 5, def: 2, xp: 70, gold: 40, voice: 'bully',
+    defeatText: ["* Os Valentões fugiram correndo!\n* 'Vamos contar pra diretora!'"],
     boss: true, group: true, nonlethal: true, music: 'valentoes', turnLen: 7, bubbleW: 230, words: INSULTS,
     intro: '* A GANGUE DOS VALENTÕES cerca o Bit!\n* Brutão, Teca e Zé atacam juntos!',
     check: '* VALENTÕES - ATK 5 DEF 2\n* Brutão, Teca e Zé Marreta.\n* Juntos parecem fortes. Separados, só crianças assustadas.',
@@ -212,6 +215,7 @@ const PROPAGANDA = ['ORDEM', 'OBEDEÇA', 'SUPERIOR', 'SILÊNCIO', 'TRABALHE', 'I
 Object.assign(ENEMIES, {
   pirulito: {
     name: 'Capataz Pirulito', spr: 'pirulito', scale: 6, hp: 56, atk: 5, def: 2, xp: 25, gold: 0, voice: 'harsh', nonlethal: true, words: PROPAGANDA,
+    defeatText: ["* O Capataz Pirulito fugiu correndo!\n* 'O Diretor Macaron vai saber disso!'"],
     intro: '* O Capataz Pirulito apita na sua cara!',
     check: '* CAPATAZ PIRULITO - ATK 5 DEF 2\n* Repete as regras sem pensar.\n* Tem mais medo do Diretor do que de qualquer um.',
     acts: {
@@ -226,6 +230,7 @@ Object.assign(ENEMIES, {
   },
   chocolate: {
     name: 'Chocolate', spr: 'choco', scale: 6, hp: 44, atk: 4, def: 2, xp: 20, gold: 0, voice: 'narr', nonlethal: true, words: PROPAGANDA,
+    defeatText: ['* Chocolate abaixa a cabeça e sai andando.', "* '...Talvez eu esteja do lado errado.'"],
     intro: '* Chocolate aponta a lanterna pra você.\n* As mãos dele estão tremendo.',
     check: '* CHOCOLATE - ATK 4 DEF 2\n* Guarda jovem. Entrou no exército porque mandaram.\n* Não dorme direito faz semanas.',
     acts: {
@@ -318,6 +323,7 @@ Object.assign(ENEMIES, {
   },
   kitsune: {
     name: 'Guardiã Kitsune', spr: 'kitsune', scale: 6, hp: 120, atk: 5, def: 3, xp: 60, gold: 0, voice: 'fox', nonlethal: true, boss: true, music: 'sakura',
+    defeatText: ['* A Guardiã Kitsune recua, ofegante.', "* 'Você é forte... mais forte do que eu pensei.'"],
     intro: '* A GUARDIÃ KITSUNE protege o portão de Neo-Sakura!',
     check: '* GUARDIÃ KITSUNE - ATK 5 DEF 3\n* Protege a cidade há 300 anos.\n* Tem medo de que a guerra venha junto com vocês.',
     acts: {
@@ -376,6 +382,7 @@ Object.assign(ENEMIES, {
   },
   anciao: {
     name: 'Dragão Ancião', spr: 'dragaoAnciao', scale: 6, hp: 260, atk: 6, def: 3, xp: 120, gold: 0, voice: 'dragon',
+    defeatText: ['* O Dragão Ancião pousa no chão da arena.', '* Ele solta uma fumacinha satisfeita.'],
     boss: true, nonlethal: true, trainDragon: true, music: 'draco', turnLen: 6.5,
     intro: '* PROVA FINAL: o DRAGÃO ANCIÃO do Mestre Draco!\n* Mostre tudo o que você e seu dragão aprenderam.',
     check: '* DRAGÃO ANCIÃO - ATK 6 DEF 3\n* Tem 500 anos. Já treinou cem dragões.\n* Use seu DRAGÃO para impressioná-lo.',
@@ -719,7 +726,7 @@ class Battle {
       const xp = this.e.xp, gold = this.e.gold;
       G.gold += gold;
       const up = addXp(xp);
-      const t = (this.e.defeatText || [`* ${this.e.name} fugiu correndo!\n* 'Vou contar pra diretora!'`]).concat([`* VOCÊ VENCEU!\n* Você ganhou ${xp} EXP${gold ? ` e ${gold} OURO` : ''}.`]);
+      const t = (this.e.defeatText || [`* ${this.e.name} fugiu correndo!`]).concat([`* VOCÊ VENCEU!\n* Você ganhou ${xp} EXP${gold ? ` e ${gold} OURO` : ''}.`]);
       if (up) { Sfx.levelUp(); t.push('* Seu LV aumentou.'); }
       return this.say(t, () => this.end('defeated'));
     }

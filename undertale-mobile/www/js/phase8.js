@@ -148,12 +148,28 @@ MAPS.vulcao = {
         } },
       // o seu dragão (cutscenes)
       { id: 'meuDragao', x: 0, y: 0, w: 0, h: 0, solid: false, hidden: true, flip: false, rider: false, flash: 0, k: null, zOff: 2,
+        lift: 0, crouch: 0, flap: 6, mount: null, dust: [],
+        // (x, y) = pés do dragão no chão; lift = altura do voo
         draw(sx, sy, t) {
-          if (this.rider) { drawRider(sx(this.x - 26), sy(this.y - 44), 2, t, this.flip); return; }
-          const k = this.k || G.dragon || 'laranja', set = SPR.dragon[k];
-          drawDragonAura(k, sx(this.x - 26), sy(this.y - 44), 2, t);
-          drawSpr(set[this.flip ? 'left' : 'right'][Math.floor(t * 6) % 2], sx(this.x - 26), sy(this.y - 44) + Math.sin(t * 3) * 3, 2);
-          if (this.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${this.flash})`; ctx.beginPath(); ctx.arc(sx(this.x), sy(this.y - 22), 40, 0, Math.PI * 2); ctx.fill(); }
+          const k = this.k || G.dragon || 'laranja', set = SPR.dragon[k], cr = this.crouch;
+          const bob = this.lift > 0 ? Math.sin(t * 5) * 2 : 0;
+          const L = this.x - 13, T = this.y - 22 - this.lift + cr * 3 + bob;
+          // sombra no chão
+          const sh = Math.max(0.15, 1 - this.lift / 120);
+          ctx.fillStyle = `rgba(0,0,0,${0.35 * sh})`; ctx.beginPath(); ctx.ellipse(sx(this.x), sy(this.y), 22 * sh, 6 * sh, 0, 0, Math.PI * 2); ctx.fill();
+          for (const d of this.dust) { ctx.fillStyle = `rgba(200,180,170,${Math.max(0, 0.7 - d.t)})`; ctx.beginPath(); ctx.arc(sx(d.x), sy(d.y), 4 + d.t * 14, 0, Math.PI * 2); ctx.fill(); }
+          if (this.rider) { drawRider(sx(L), sy(T), 2, t, this.flip, this.flap); }
+          else {
+            drawDragonAura(k, sx(L), sy(T), 2, t);
+            const img = set[this.flip ? 'left' : 'right'][Math.floor(t * this.flap) % 2], hh = 22 * (1 - cr * 0.15);
+            ctx.drawImage(img, sx(L), sy(T) + (22 - hh) * 2, 52, hh * 2);
+          }
+          if (this.mount) {
+            const m = this.mount, q = Math.min(1, m.k), ex = L + 2, ey = T - 5;
+            const px = m.x + (ex - m.x) * q, py = m.y + (ey - m.y) * q - Math.sin(q * Math.PI) * 26;
+            drawSpr(SPR.player.right[q < 0.9 ? 1 : 0], sx(px), sy(py), 2);
+          }
+          if (this.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${this.flash})`; ctx.beginPath(); ctx.arc(sx(this.x), sy(T + 11), 40, 0, Math.PI * 2); ctx.fill(); }
         } },
     ];
   },
@@ -385,7 +401,7 @@ const P8 = {
     const W = World, F = G.flags;
     F.p8metDraco = true; W.locked = true;
     const d = this.meuDragao();
-    Object.assign(d, { hidden: false, x: W.player.x - 30, y: W.player.y - 4, flip: false, rider: false, k: null });
+    Object.assign(d, { hidden: false, x: W.player.x - 30, y: W.player.y - 2, flip: false, rider: false, k: null, lift: 0, crouch: 0 });
     Sfx.whoosh();
     await W.say([
       '* (Seu dragão sai das sombras e pousa do seu lado, todo animado com o calor.)',
@@ -544,9 +560,10 @@ const P8 = {
     F.p8heart = true;
     if (!G.dragon) G.dragon = 'laranja';
     const d = this.meuDragao(), p = W.player;
-    Object.assign(d, { hidden: false, x: p.x + 40, y: p.y - 60, flip: true, rider: false, k: null });
+    Object.assign(d, { hidden: false, x: p.x + 40, y: p.y, lift: 70, flip: true, rider: false, k: null, crouch: 0 });
     Sfx.whoosh();
-    await W.walk(d, [[p.x + 32, p.y]], 80);
+    for (let i = 0; i < 50; i++) { await nextFrame(); d.x += (p.x + 30 - d.x) * 0.08; d.lift *= 0.9; }
+    d.lift = 0; d.x = p.x + 30; Sfx.puff(); this.dustBurst(d, 6);
     await W.say(['* (Seu dragão pousa do seu lado. Ele não tira os olhos do cristal.)']);
     for (;;) {
       const r = await W.ask('* (Dar o CORAÇÃO DO VULCÃO para o seu dragão?)', ['Dar o coração', 'Ainda não']);
@@ -587,18 +604,63 @@ const P8 = {
     Sfx.rumble(); W.shake = 2.5;
     for (const [x, y] of [[30, 13], [31, 13], [32, 13], [33, 13], [34, 13]]) { W.setTile(x, y, 'L'); W.redrawTile(x, y); }
     await W.say(['* (A lava sobe! O caminho de volta desmoronou!)', '* (Não tem como descer a pé...)', '* (Seu dragão abaixa as asas e olha pra você.)', '* (Ele aprendeu a voar no treino. Agora ele tem força pra te carregar.)']);
-    const r = await W.ask('* (Montar no dragão?)', ['Montar!']);
-    void r;
-    Sfx.whoosh();
-    p.hidden = true;
-    Object.assign(d, { rider: true, flip: false, x: p.x, y: p.y });
-    Sfx.playMusic('voo');
-    for (let i = 0; i < 90; i++) { await nextFrame(); d.y -= 2 + i * 0.06; d.x += i * 0.05; }
+    await W.ask('* (Montar no dragão?)', ['Montar!']);
+    await this.mountAnim(d);
     G.flags.p8done = true;
     this.quake = 0;
     W.saveHere();
     await Fade.to(1, 1.2);
     Game.cine = Cine8; Game.scene = 'cine'; Cine8.run();
+  },
+
+  // ----- montar no dragão (animação) -----
+  dustBurst(d, n) { for (let i = 0; i < n; i++) d.dust.push({ x: d.x + (Math.random() - 0.5) * 40, y: d.y + (Math.random() - 0.5) * 6, t: Math.random() * 0.2 }); },
+  async frames(n, fn) { for (let i = 0; i < n; i++) { const dt = await nextFrame(); fn(i / n, dt || 1 / 60); const dr = World.ents.find(e => e.id === 'meuDragao'); for (const q of dr.dust) q.t += dt || 1 / 60; dr.dust = dr.dust.filter(q => q.t < 0.8); } },
+  async mountAnim(d) {
+    const W = World, p = W.player;
+    W.focus(p.x + 16, p.y - 30);
+    // o dragão vira de frente pra estrada, do lado do jogador
+    d.flip = false;
+    await this.frames(30, () => { d.x += (p.x + 26 - d.x) * 0.15; });
+    p.dir = 'right';
+    // abaixa o corpo para o jogador subir
+    Sfx.step && Sfx.step();
+    d.flap = 2;
+    await this.frames(24, k => { d.crouch = k; });
+    await W.say(['* (Seu dragão abaixa o pescoço e estende a asa, como uma escadinha.)']);
+    // pulo em arco até as costas
+    Sfx.whoosh();
+    p.hidden = true;
+    d.mount = { x: p.x - 7, y: p.y - 21, k: 0 };
+    await this.frames(42, k => { d.mount.k = k * k * (3 - 2 * k); });
+    d.mount = null; d.rider = true;
+    Sfx.select();
+    await this.frames(10, k => { d.crouch = 1 - k * 0.6; });
+    await this.frames(10, k => { d.crouch = 0.4 * (1 - k); });
+    d.crouch = 0;
+    await W.say(['* (Você se segura bem firme no pescoço dele.)']);
+    // decolagem: bate as asas forte, levanta poeira
+    Sfx.roar(); Sfx.playMusic('voo');
+    d.flap = 14;
+    await this.frames(60, (k, dt) => {
+      d.lift = k * k * 26;
+      if (Math.random() < 0.35) this.dustBurst(d, 1);
+      W.shake = 0.15;
+    });
+    Sfx.wind();
+    // dá uma volta no topo do vulcão e vai embora
+    const cx = d.x, cy = d.y;
+    await this.frames(90, k => {
+      const a = k * Math.PI * 2;
+      d.x = cx + Math.sin(a) * 40; d.y = cy - Math.sin(a * 0.5) * 6;
+      d.flip = Math.cos(a) < 0;
+      d.lift = 26 + k * 20;
+    });
+    d.flip = false; d.flap = 10;
+    Sfx.whoosh();
+    await this.frames(70, k => { d.x += 1 + k * 6; d.lift += 1 + k * 4; });
+    d.dust = [];
+    W.focus(null);
   },
 
   async useStar() {
