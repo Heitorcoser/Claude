@@ -15,6 +15,7 @@ const Input = {
   pressed: new Set(),
   tap: null,          // {x,y} toque na tela do jogo neste quadro
   drag: { dx: 0, dy: 0, active: false },
+  axis: { x: 0, y: 0 },     // analógico (-1..1)
   _touchHeld: {},
   isPressed(k) { return this.pressed.has(k); },
   endFrame() { this.pressed.clear(); this.tap = null; this.drag.dx = 0; this.drag.dy = 0; },
@@ -56,6 +57,7 @@ cv.addEventListener('pointercancel', endDrag);
 
 // Botões na tela (D-pad + A/B). O D-pad permite deslizar o dedo entre direções.
 function setupTouchControls() {
+  setupStick();
   const pad = document.getElementById('dpad');
   let padPointer = null;
   const dirsFromPoint = (x, y) => {
@@ -93,6 +95,64 @@ function setupTouchControls() {
     const rel = () => { Input.release(k); el.classList.remove('on'); };
     el.addEventListener('pointerup', rel); el.addEventListener('pointercancel', rel); el.addEventListener('pointerleave', rel);
   }
+}
+
+// Analógico: a bolinha segue o dedo; direções viram "teclas" para os menus.
+function setupStick() {
+  const base = document.getElementById('stick'), knob = document.getElementById('knob');
+  let id = null;
+  const set = (x, y) => {
+    const r = base.getBoundingClientRect();
+    const R = r.width / 2;
+    let dx = x - (r.left + R), dy = y - (r.top + R);
+    const m = Math.hypot(dx, dy), max = R * 0.62;
+    if (m > max) { dx *= max / m; dy *= max / m; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    let ax = dx / max, ay = dy / max;
+    if (Math.hypot(ax, ay) < 0.18) { ax = 0; ay = 0; }
+    Input.axis.x = ax; Input.axis.y = ay;
+    const th = 0.5;
+    const st = { left: ax < -th, right: ax > th, up: ay < -th, down: ay > th };
+    for (const k in st) { if (st[k]) Input.press(k); else Input.release(k); }
+  };
+  const reset = () => {
+    id = null; knob.style.transform = ''; Input.axis.x = 0; Input.axis.y = 0;
+    for (const k of ['up', 'down', 'left', 'right']) Input.release(k);
+  };
+  base.addEventListener('pointerdown', e => { e.preventDefault(); Sfx.init(); id = e.pointerId; base.setPointerCapture(id); set(e.clientX, e.clientY); });
+  base.addEventListener('pointermove', e => { if (e.pointerId === id) set(e.clientX, e.clientY); });
+  base.addEventListener('pointerup', e => { if (e.pointerId === id) reset(); });
+  base.addEventListener('pointercancel', e => { if (e.pointerId === id) reset(); });
+}
+
+// ---------------- CONFIGURAÇÕES ----------------
+const CFG_KEY = 'perdido_cfg_v1';
+const Config = {
+  control: 'analog', music: true, sfx: true,
+  load() {
+    try { Object.assign(this, JSON.parse(localStorage.getItem(CFG_KEY) || '{}')); } catch (e) { }
+    this.apply();
+  },
+  save() { try { localStorage.setItem(CFG_KEY, JSON.stringify({ control: this.control, music: this.music, sfx: this.sfx })); } catch (e) { } this.apply(); },
+  apply() {
+    document.body.dataset.control = this.control;
+    Sfx.setMusic(this.music); Sfx.setSfx(this.sfx);
+  },
+};
+
+// Vetor de movimento: analógico (contínuo) ou teclas/direcional (8 direções)
+function moveVector() {
+  const a = Input.axis;
+  if (a.x || a.y) {
+    const m = Math.min(1, Math.hypot(a.x, a.y) * 1.15);
+    const l = Math.hypot(a.x, a.y) || 1;
+    return { x: a.x / l * m, y: a.y / l * m };
+  }
+  let x = 0, y = 0;
+  if (Input.held.left) x -= 1; if (Input.held.right) x += 1;
+  if (Input.held.up) y -= 1; if (Input.held.down) y += 1;
+  if (x && y) { x *= 0.7071; y *= 0.7071; }
+  return { x, y };
 }
 
 // ---------------- DESENHO ----------------
@@ -177,33 +237,101 @@ const Dialog = {
     let it = this.queue.shift();
     if (typeof it === 'string') it = { t: it };
     this.cur = it;
-    const portrait = it.who === 'instr';
-    this.typer = new Typer(it.t, it.who === 'instr' ? 'instr' : 'narr', portrait ? 430 : 540, 32);
+    const portrait = !!PORTRAITS[it.who];
+    this.typer = new Typer(it.t, VOICE_OF[it.who] || 'narr', portrait ? 430 : 540, 32);
+    this.sel = 0;
   },
   update(dt) {
     if (!this.typer) return;
     this.blinkT += dt;
     this.typer.update(dt);
+    const ch = this.cur.choices;
+    if (ch && this.typer.done) {
+      if (Input.isPressed('left') || Input.isPressed('up')) { this.sel = (this.sel + ch.length - 1) % ch.length; Sfx.move(); }
+      if (Input.isPressed('right') || Input.isPressed('down')) { this.sel = (this.sel + 1) % ch.length; Sfx.move(); }
+      let pick = Input.isPressed('a') ? this.sel : -1;
+      if (Input.tap) {
+        ch.forEach((c, i) => { const r = this.choiceRect(i); if (hitRect(Input.tap, r)) pick = i; });
+      }
+      if (pick >= 0) { this.sel = pick; this.choice = pick; Sfx.select(); this.next(); }
+      return;
+    }
     if (Input.isPressed('a') || Input.tap) {
       if (this.typer.done) { Sfx.move(); this.next(); } else this.typer.skip();
     } else if (Input.isPressed('b')) this.typer.skip();
+  },
+  ask(text, choices, who) {
+    return this.show([{ t: text, who, choices }], World.player && World.player.y - World.cam.y > 150).then(() => this.choice);
+  },
+  choiceRect(i) {
+    const y = this.top ? 12 : 318, n = this.cur.choices.length;
+    const tx = PORTRAITS[this.cur.who] ? 150 : 40, w = (600 - tx) / n;
+    return { x: tx + i * w, y: y + 100, w: w - 10, h: 40 };
   },
   draw() {
     if (!this.typer) return;
     const y = this.top ? 12 : 318;
     frameBox(16, y, 608, 150, 6);
     let tx = 40;
-    if (this.cur.who === 'instr') {
-      drawInstrPortrait(34, y + 18, this.blinkT);
+    if (PORTRAITS[this.cur.who]) {
+      PORTRAITS[this.cur.who](34, y + 18, this.blinkT);
       tx = 150;
     }
     this.typer.draw(tx, y + 22);
+    if (this.cur.choices && this.typer.done) {
+      this.cur.choices.forEach((c, i) => {
+        const r = this.choiceRect(i);
+        if (i === this.sel) drawSpr(SPR.soul, r.x, r.y + 12, 1);
+        text(c, r.x + 24, r.y + 4, 32, i === this.sel ? '#ffff40' : '#fff');
+      });
+      return;
+    }
     if (this.typer.done && Math.floor(this.blinkT * 3) % 2) {
       ctx.fillStyle = '#fff';
       ctx.fillRect(590, y + 124, 10, 6); ctx.fillRect(592, y + 130, 6, 3);
     }
   },
 };
+
+function hitRect(p, r) { return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h; }
+
+const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon' };
+const PORTRAITS = {
+  instr: (x, y, t) => drawInstrPortrait(x, y, t),
+  fire: (x, y, t) => drawGhost('fire', x + 2, y + 22, 3.2, t),
+  ice: (x, y, t) => drawGhost('ice', x + 2, y + 22, 3.2, t),
+};
+
+// Fantasmas com coroa animada (chamas ou pingentes de gelo)
+function drawGhost(kind, x, y, sc, t, alpha = 1, flip = false) {
+  const img = kind === 'fire' ? SPR.fireghost : SPR.iceghost;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if (flip) { ctx.translate(x + img.width * sc, y); ctx.scale(-1, 1); x = 0; y = 0; }
+  if (kind === 'fire') {
+    const fl = (cx, h, ph) => {
+      const hh = h * (0.85 + 0.15 * Math.sin(t * 12 + ph));
+      const lay = [['#ff4a1a', 1], ['#ffa21a', 0.7], ['#ffe680', 0.4]];
+      for (const [c, k] of lay) {
+        ctx.fillStyle = c; ctx.beginPath();
+        ctx.moveTo(x + (cx - 3 * k) * sc, y + 2 * sc);
+        ctx.quadraticCurveTo(x + (cx - 3 * k) * sc, y + (2 - hh * k * 0.6) * sc, x + (cx + Math.sin(t * 9 + ph)) * sc, y + (2 - hh * k) * sc);
+        ctx.quadraticCurveTo(x + (cx + 3 * k) * sc, y + (2 - hh * k * 0.6) * sc, x + (cx + 3 * k) * sc, y + 2 * sc);
+        ctx.fill();
+      }
+    };
+    fl(9, 7, 0); fl(19, 7, 2); fl(14, 10, 1);
+  } else {
+    const spikes = [[9, 4], [11.5, 6], [14, 8], [16.5, 6], [19, 4]];
+    for (const [cx, h] of spikes) {
+      ctx.fillStyle = '#7fd9ff'; ctx.beginPath();
+      ctx.moveTo(x + (cx - 1.6) * sc, y + 2 * sc); ctx.lineTo(x + cx * sc, y + (2 - h) * sc); ctx.lineTo(x + (cx + 1.6) * sc, y + 2 * sc); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(x + (cx - 0.5) * sc, y + (2 - h * 0.6) * sc, sc * 0.6, h * 0.5 * sc);
+    }
+  }
+  ctx.drawImage(img, x, y, img.width * sc, img.height * sc);
+  ctx.restore();
+}
 
 function drawInstrPortrait(x, y, t) {
   const blink = (t % 3.2) > 3.05;
@@ -250,7 +378,7 @@ function newGameState() {
     name: 'HUMANO', lv: 1, xp: 0, hp: 20, maxhp: 20, gold: 0,
     items: ['Bala de Monstro'],
     flags: {}, kills: 0, spares: 0, encounters: 0,
-    pos: null,
+    pos: null, map: 'labirinto', dragon: null, enc2: 0,
   };
 }
 let G = newGameState();
@@ -263,8 +391,8 @@ function loadGame() {
   try { const s = localStorage.getItem(SAVE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; }
 }
 
-const LV_XP = [0, 10, 30, 70, 120, 200];
-function playerAtk() { return 8 + (G.lv - 1) * 2; }
+const LV_XP = [0, 10, 30, 70, 120, 200, 300, 450];
+function playerAtk() { return 8 + (G.lv - 1) * 2 + (G.dragon === 'preto' ? 3 : 0); }
 function playerDef() { return (G.lv - 1); }
 function addXp(n) {
   G.xp += n;
@@ -277,6 +405,10 @@ const ITEMS = {
   'Bala de Monstro': { heal: 10, text: '* Você comeu a Bala de Monstro.\n* Tem gosto de... alcaçuz.' },
   'Torta de Canela': { heal: 99, text: '* Você comeu a Torta de Canela.\n* Quentinha. Lembra de casa.' },
   'Folha Crocante': { heal: 4, text: '* Você mastigou a Folha Crocante.\n* Crunch. Quase nutritiva.' },
+  'Pão de Escama': { heal: 12, price: 10, text: '* Você comeu o Pão de Escama.\n* Crocante por fora, macio por dentro.' },
+  'Chá Gelado': { heal: 20, price: 18, text: '* Você bebeu o Chá Gelado.\n* Refrescante! Nem parece que tem lava por perto.' },
+  'Pimenta Ardente': { heal: 30, price: 28, text: '* Você comeu a Pimenta Ardente.\n* SUA LÍNGUA ESTÁ PEGANDO FOGO!' },
+  'Biscoito de Dragão': { heal: 15, text: '* Você comeu o Biscoito de Dragão.\n* Tem formato de dragãozinho. Fofo.' },
 };
 function useItem(idx) {
   const name = G.items[idx]; const it = ITEMS[name];

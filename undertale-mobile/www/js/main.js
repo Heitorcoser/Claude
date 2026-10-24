@@ -1,12 +1,13 @@
-// Cenas: título, cutscene inicial, mundo, batalha, fim de jogo e fim da fase.
+// Cenas: título, configurações, cutscene inicial, cartões de fase, batalha, fim de jogo e fim de fase.
 'use strict';
 
 const Game = {
-  scene: 'boot', battleObj: null, flashT: 0,
+  scene: 'boot', battleObj: null, flashT: 0, flashWhite: 0,
 
   start() {
     buildSprites();
     setupTouchControls();
+    Config.load();
     this.goTitle();
     let last = performance.now();
     const loop = now => {
@@ -20,23 +21,23 @@ const Game = {
 
   update(dt) {
     Timers.update(dt); Fade.update(dt); flushFrameWaiters(dt);
-    if (this.scene === 'title') Title.update(dt);
-    else if (this.scene === 'intro') Intro.update(dt);
-    else if (this.scene === 'world') World.update(dt);
-    else if (this.scene === 'battle') this.battleObj.update(dt);
-    else if (this.scene === 'gameover') GameOver.update(dt);
-    else if (this.scene === 'end') End.update(dt);
+    if (ConfigMenu.isOpen) { ConfigMenu.update(dt); return; }
+    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter }[this.scene];
+    if (this.scene === 'battle') this.battleObj.update(dt);
+    else if (S) S.update(dt);
   },
 
   draw() {
     ctx.imageSmoothingEnabled = false;
-    if (this.scene === 'title') Title.draw();
-    else if (this.scene === 'intro') Intro.draw();
-    else if (this.scene === 'world') World.draw();
-    else if (this.scene === 'battle') this.battleObj.draw();
-    else if (this.scene === 'gameover') GameOver.draw();
-    else if (this.scene === 'end') End.draw();
+    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter }[this.scene];
+    if (this.scene === 'battle') this.battleObj.draw();
+    else if (S) S.draw();
     if (this.flashT > 0) this.drawFlash();
+    if (this.flashWhite > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.min(1, this.flashWhite * 2)})`; ctx.fillRect(0, 0, W, H);
+      this.flashWhite -= 1 / 60;
+    }
+    if (ConfigMenu.isOpen) ConfigMenu.draw();
     Fade.draw();
   },
 
@@ -48,21 +49,32 @@ const Game = {
     this.scene = 'intro'; Intro.run();
   },
 
+  enterMap(mapId) {
+    World.init(mapId);
+    this.scene = 'world';
+    if (World.M.onEnter) World.M.onEnter(World);
+  },
+
   continueGame() {
     const s = loadGame();
     G = Object.assign(newGameState(), s);
-    World.init(); this.scene = 'world';
-    Fade.a = 1; Fade.to(0, 1.5);
-    Sfx.playMusic('ruins');
+    if (!G.flags) G.flags = {};
+    this.enterMap(G.map || 'labirinto');
+    if (Fade.a > 0 && !(G.map === 'dragoncity' && !G.flags.p2arrived)) Fade.to(0, 1.5);
+    Sfx.playMusic(World.M.musicAt ? World.M.musicAt(World) : World.M.music);
   },
 
   enterWorldFromIntro() {
-    World.init(); this.scene = 'world';
-    World.scriptWake();
+    World.init('labirinto'); this.scene = 'world';
+    P1.scriptWake();
+  },
+
+  goChapter(n) {
+    if (n === 2) { G.map = 'dragoncity'; G.pos = null; saveGame(null); }
+    this.scene = 'chapter'; Chapter.enter(n);
   },
 
   async startBattle(key, opts, cb) {
-    // transição: tela pisca com a ALMA
     const p = World.player;
     this.flashPos = { x: (p.x - World.cam.x) * 2, y: (p.y - World.cam.y - 10) * 2 };
     Sfx.stopMusic();
@@ -94,7 +106,7 @@ const Game = {
     }
   },
 
-  goEnd() { this.scene = 'end'; End.enter(); },
+  goEnd(phase) { this.scene = 'end'; End.enter(phase); },
 };
 
 // ---------------- TÍTULO ----------------
@@ -102,41 +114,104 @@ const Title = {
   t: 0, sel: 0, opts: [],
   enter() {
     this.t = 0; this.sel = 0;
-    this.opts = loadGame() ? ['CONTINUAR', 'NOVO JOGO'] : ['NOVO JOGO'];
+    this.save = loadGame();
+    this.opts = (this.save ? ['CONTINUAR', 'NOVO JOGO'] : ['NOVO JOGO']).concat(['CONFIGURAÇÕES']);
     Fade.a = 1; Fade.to(0, 1);
     this.musicStarted = false;
   },
   update(dt) {
     this.t += dt;
-    if (!this.musicStarted && (Input.tap || Input.pressed.size)) { this.musicStarted = true; Sfx.playMusic('title'); }
+    if (!this.musicStarted && (Input.tap || Input.pressed.size)) { this.musicStarted = true; Sfx.init(); Sfx.playMusic('title'); }
     if (this.t < 0.6) return;
-    if (Input.isPressed('up') || Input.isPressed('down')) { this.sel = (this.sel + 1) % this.opts.length; Sfx.move(); }
+    if (Input.isPressed('up')) { this.sel = (this.sel + this.opts.length - 1) % this.opts.length; Sfx.move(); }
+    if (Input.isPressed('down')) { this.sel = (this.sel + 1) % this.opts.length; Sfx.move(); }
     let ch = Input.isPressed('a') ? this.sel : -1;
-    if (Input.tap) {
-      this.opts.forEach((o, i) => { if (Math.abs(Input.tap.y - (330 + i * 50)) < 24) ch = i; });
-    }
+    if (Input.tap) this.opts.forEach((o, i) => { if (Math.abs(Input.tap.y - (300 + i * 44)) < 20) ch = i; });
     if (ch < 0) return;
     Sfx.select();
     const o = this.opts[ch];
+    this.sel = ch;
+    if (o === 'CONFIGURAÇÕES') { ConfigMenu.open(); return; }
     this.t = -99;
     Fade.to(1, 1.5).then(() => { Sfx.stopMusic(); o === 'CONTINUAR' ? Game.continueGame() : Game.newGame(); });
   },
   draw() {
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-    // estrelas de fundo
     for (let i = 0; i < 40; i++) {
       const x = (i * 97) % 640, y = (i * 53) % 260, a = 0.3 + 0.3 * Math.sin(this.t * 2 + i);
       ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fillRect(x, y, 2, 2);
     }
-    text('PERDIDO', 320, 110, 52, '#fff', 'center', FONT_TITLE);
-    text('um fangame de Undertale', 320, 182, 30, '#aaa', 'center');
-    text('FASE 1: O LABIRINTO', 320, 222, 30, '#ffe680', 'center');
-    drawSpr(SPR.soul, 312, 270 + Math.sin(this.t * 3) * 4, 1);
-    this.opts.forEach((o, i) => {
-      const on = i === this.sel;
-      text(o, 320, 314 + i * 50, 36, on ? '#ffff40' : '#fff', 'center');
+    text('PERDIDO', 320, 90, 52, '#fff', 'center', FONT_TITLE);
+    text('um fangame de Undertale', 320, 160, 30, '#aaa', 'center');
+    const fase = this.save && this.save.map === 'dragoncity' ? 'FASE 2: DRAGONCITY' : 'FASE 1: O LABIRINTO';
+    text(fase, 320, 196, 30, '#ffe680', 'center');
+    drawSpr(SPR.soul, 312, 244 + Math.sin(this.t * 3) * 4, 1);
+    this.opts.forEach((o, i) => text(o, 320, 284 + i * 44, 34, i === this.sel ? '#ffff40' : '#fff', 'center'));
+    if (Math.floor(this.t * 2) % 2) text('toque para escolher', 320, 440, 26, '#777', 'center');
+  },
+};
+
+// ---------------- CONFIGURAÇÕES ----------------
+const ConfigMenu = {
+  isOpen: false, sel: 0,
+  open() { this.isOpen = true; this.sel = 0; },
+  rows() {
+    return [
+      { label: 'Controle', val: Config.control === 'analog' ? 'ANALÓGICO' : 'DIRECIONAL', toggle: () => { Config.control = Config.control === 'analog' ? 'dpad' : 'analog'; } },
+      { label: 'Música', val: Config.music ? 'LIGADA' : 'DESLIGADA', toggle: () => { Config.music = !Config.music; } },
+      { label: 'Efeitos', val: Config.sfx ? 'LIGADOS' : 'DESLIGADOS', toggle: () => { Config.sfx = !Config.sfx; } },
+      { label: 'VOLTAR', val: '', toggle: null },
+    ];
+  },
+  update() {
+    const R = this.rows();
+    if (Input.isPressed('up')) { this.sel = (this.sel + R.length - 1) % R.length; Sfx.move(); }
+    if (Input.isPressed('down')) { this.sel = (this.sel + 1) % R.length; Sfx.move(); }
+    let ch = (Input.isPressed('a') || Input.isPressed('left') || Input.isPressed('right')) ? this.sel : -1;
+    if (Input.tap) R.forEach((r, i) => { if (Math.abs(Input.tap.y - (150 + i * 64)) < 28) ch = i; });
+    if (Input.isPressed('b')) ch = R.length - 1;
+    if (ch < 0) return;
+    this.sel = ch;
+    const r = R[ch];
+    if (!r.toggle) { Sfx.back(); this.isOpen = false; return; }
+    r.toggle(); Config.save(); Sfx.select();
+  },
+  draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(0, 0, W, H);
+    frameBox(60, 50, 520, 380, 6);
+    text('CONFIGURAÇÕES', 320, 74, 22, '#fff', 'center', FONT_TITLE);
+    this.rows().forEach((r, i) => {
+      const y = 132 + i * 64, on = i === this.sel;
+      if (on) drawSpr(SPR.soul, 96, y + 12, 1);
+      text(r.label, 124, y, 34, on ? '#ffff40' : '#fff');
+      if (r.val) text('< ' + r.val + ' >', 540, y, 34, on ? '#ffff40' : '#aaa', 'right');
     });
-    if (Math.floor(this.t * 2) % 2) text('toque para escolher', 320, 430, 26, '#777', 'center');
+    text('toque numa opção para trocar', 320, 392, 26, '#777', 'center');
+  },
+};
+
+// ---------------- CARTÃO DE FASE ----------------
+const Chapter = {
+  t: 0, n: 1,
+  enter(n) { this.t = 0; this.n = n; this.done = false; Fade.a = 1; Fade.to(0, 1); Sfx.playMusic('title'); },
+  update(dt) {
+    this.t += dt;
+    if (!this.done && (this.t > 4.5 || (this.t > 1.2 && (Input.isPressed('a') || Input.tap)))) {
+      this.done = true;
+      Fade.to(1, 1.2).then(() => { Sfx.stopMusic(); Game.enterMap(this.n === 2 ? 'dragoncity' : 'labirinto'); });
+    }
+  },
+  draw() {
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    const a = Math.min(1, this.t);
+    ctx.globalAlpha = a;
+    text('FASE ' + this.n, 320, 150, 40, '#fff', 'center', FONT_TITLE);
+    text(this.n === 2 ? 'DRAGONCITY' : 'O LABIRINTO', 320, 220, 30, '#ff9a3a', 'center', FONT_TITLE);
+    if (this.n === 2) {
+      const k = ['preto', 'branco', 'laranja'];
+      k.forEach((d, i) => drawSpr(SPR.dragon[d].right[Math.floor(this.t * 3 + i) % 2], 170 + i * 110, 300 + Math.sin(this.t * 2 + i) * 6, 3));
+    }
+    ctx.globalAlpha = 1;
   },
 };
 
@@ -289,9 +364,8 @@ const GameOver = {
   },
   retry() {
     Fade.to(1, 1).then(() => {
-      const s = loadGame();
-      if (s) Game.continueGame();
-      else { G = newGameState(); World.init(); Game.scene = 'world'; World.scriptWake(); }
+      if (loadGame()) Game.continueGame();
+      else { G = newGameState(); Game.enterWorldFromIntro(); }
     });
   },
   draw() {
@@ -309,25 +383,27 @@ const GameOver = {
   },
 };
 
-// ---------------- FIM DA FASE 1 ----------------
+// ---------------- FIM DA FASE ----------------
 const End = {
-  t: 0,
-  enter() { this.t = 0; Fade.to(0, 0.8); Sfx.playMusic('title'); try { saveGame(G.pos); } catch (e) { } },
+  t: 0, phase: 2,
+  enter(phase) { this.t = 0; this.phase = phase || 2; Fade.to(0, 0.8); Sfx.playMusic('victory'); },
   update(dt) {
     this.t += dt;
     if (this.t > 3 && (Input.isPressed('a') || Input.tap)) { Sfx.select(); Fade.to(1, 1).then(() => { Sfx.stopMusic(); Game.goTitle(); }); this.t = -99; }
   },
   draw() {
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-    text('FIM DA FASE 1', 320, 70, 34, '#fff', 'center', FONT_TITLE);
-    drawSpr(SPR.instr.right[0], 270, 120, 3);
-    drawSpr(SPR.player.down[0], 340, 165, 3);
-    const rota = G.kills === 0 ? 'Rota: PACIFISTA (até agora...)' : (G.kills >= 3 && G.spares === 0) ? 'Rota: ...GENOCIDA?' : 'Rota: NEUTRA';
-    text(`LV ${G.lv}   EXP ${G.xp}   OURO ${G.gold}`, 320, 250, 32, '#fff', 'center');
-    text(`Poupados: ${G.spares}    Derrotados: ${G.kills}`, 320, 285, 32, '#fff', 'center');
-    text(rota, 320, 320, 32, '#ffe680', 'center');
-    text('FASE 2 em breve: a primeira BOSS FIGHT!', 320, 372, 30, '#ff7f27', 'center');
-    if (this.t > 3 && Math.floor(this.t * 2) % 2) text('toque para voltar ao título', 320, 430, 26, '#777', 'center');
+    text('FIM DA FASE ' + this.phase, 320, 50, 34, '#fff', 'center', FONT_TITLE);
+    drawSpr(SPR.player.down[0], 300, 140, 3);
+    if (G.dragon) drawSpr(SPR.dragon[G.dragon].right[Math.floor(Math.max(0, this.t) * 4) % 2], 170, 118, 4);
+    if (G.flags.fireFriend) drawGhost('fire', 380, 112, 3, Math.max(0, this.t));
+    const rota = G.kills === 0 ? 'Rota: PACIFISTA (até agora...)' : (G.kills >= 4 && G.spares === 0) ? 'Rota: ...GENOCIDA?' : 'Rota: NEUTRA';
+    text(`LV ${G.lv}   EXP ${G.xp}   OURO ${G.gold}`, 320, 236, 32, '#fff', 'center');
+    text(`Poupados: ${G.spares}    Derrotados: ${G.kills}`, 320, 270, 32, '#fff', 'center');
+    text(rota, 320, 304, 32, '#ffe680', 'center');
+    text(G.flags.fireFriend ? 'FireGhost virou seu amigo!' : 'O IceGhost sabe que você está aqui...', 320, 344, 30, '#9fe4ff', 'center');
+    text('FASE 3 em breve...', 320, 386, 30, '#ff7f27', 'center');
+    if (this.t > 3 && Math.floor(this.t * 2) % 2) text('toque para voltar ao título', 320, 434, 26, '#777', 'center');
   },
 };
 

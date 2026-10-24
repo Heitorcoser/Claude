@@ -4,7 +4,7 @@ Jogo 2D estilo Undertale para Android. Feito em HTML5 Canvas, empacotado em APK 
 
 ## Baixar e instalar
 
-1. Baixe [`apk/Perdido-fase1.apk`](apk/Perdido-fase1.apk) no celular.
+1. Baixe [`apk/Perdido.apk`](apk/Perdido.apk) no celular.
 2. Abra o arquivo e permita "instalar apps desconhecidos".
 3. Jogue na horizontal.
 
@@ -14,10 +14,12 @@ Também dá para jogar no navegador: abra `www/index.html`.
 
 | Ação | Toque | Teclado |
 |---|---|---|
-| Andar / mover menus | Direcional (esquerda) | Setas / WASD |
+| Andar / mover menus | Analógico (ou direcional) | Setas / WASD |
 | Confirmar / falar | **A** ou tocar na tela | Z / Enter |
 | Cancelar / menu | **B** ou "voltar" do Android | X / Esc |
-| Mover a ALMA na batalha | Arrastar o dedo na tela | Setas |
+| Mover a ALMA na batalha | Analógico ou arrastar o dedo | Setas |
+
+Em **CONFIGURAÇÕES** (tela inicial ou menu B) dá para trocar entre **analógico** e **direcional**, e ligar/desligar música e efeitos.
 
 ## Fase 1 — O Labirinto
 
@@ -30,7 +32,22 @@ Também dá para jogar no navegador: abra `www/index.html`.
 - **Estrela de salvamento**, Torta de Canela, item secreto e porta da saída.
 - Final da fase mostra a rota (Pacifista / Neutra / Genocida).
 
-Fase 2 (primeira boss fight): em breve.
+## Fase 2 — DragonCity
+
+- O Instrutor te leva até **DragonCity**, a cidade dos dragões.
+- No **Ninho** você escolhe seu parceiro:
+  - **Dragão Preto** (forte): +3 de ataque e *Investida* devastadora.
+  - **Dragão Branco** (rápido): alma mais veloz e *Ventania*, que encurta o ataque inimigo.
+  - **Dragão Laranja** (fogo): *Sopro de Fogo* que queima o inimigo por 3 turnos.
+- O dragão só aparece nas batalhas (AGIR → Dragão). O Instrutor volta para o labirinto.
+- **Cutscene dos irmãos fantasmas**: você se esconde atrás das caixas e vê o **FireGhost** (piadas péssimas) e o **IceGhost** (caçador de humanos) conversando.
+- Cidade grande: praça com fonte, mercado da Dona Escama (loja), dragões moradores, missão do filhote perdido *Pipoca*.
+- **Bosque das Cinzas** com encontros (Brasinha e Gelinho) e o quebra-cabeça das estátuas para criar a ponte sobre o rio de lava.
+- **Casinha do Rio**: um fantasma chega de fininho, te assusta e começa a **BOSS FIGHT contra o FireGhost** (7 ataques diferentes, inclusive piadas que viram projéteis). Dá para vencer ou poupar rindo das piadas.
+
+Músicas novas com vários instrumentos (sino, piano, flauta, cordas, metais, pizzicato, marimba, baixo, bateria e reverb), uma para cada área.
+
+Fase 3: em breve.
 
 ## Personagens
 
@@ -42,18 +59,29 @@ Fase 2 (primeira boss fight): em breve.
 |---|---|---|
 | ![](arte/musgolho.png) | ![](arte/fantasminha.png) | ![](arte/boneco.png) |
 
+| Dragão Preto | Dragão Branco | Dragão Laranja |
+|---|---|---|
+| ![](arte/dragao-preto.png) | ![](arte/dragao-branco.png) | ![](arte/dragao-laranja.png) |
+
+| FireGhost | IceGhost |
+|---|---|
+| ![](arte/fireghost.png) | ![](arte/iceghost.png) |
+
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
 ## Estrutura
 
 ```
 www/            jogo (HTML5)
-  js/sprites.js   pixel art e tiles
-  js/audio.js     sons e músicas (WebAudio)
-  js/engine.js    entrada, texto, diálogo, save
-  js/battle.js    sistema de batalha e ataques
-  js/world.js     mapa, labirinto e roteiros
-  js/main.js      título, cutscene, game over, final
+  js/sprites.js   pixel art e tiles (fase 1)
+  js/sprites2.js  dragões, fantasmas e tiles de DragonCity
+  js/audio.js     efeitos e sequenciador de músicas (WebAudio)
+  js/engine.js    controles, configurações, texto, diálogo, save
+  js/battle.js    batalha, dragões, chefe e ataques
+  js/world.js     motor do mundo (mapa, movimento, roteiros)
+  js/phase1.js    Fase 1: O Labirinto
+  js/phase2.js    Fase 2: DragonCity
+  js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK
 apk/            APK pronto
 ```

@@ -35,7 +35,7 @@ const PAL = {
   X: '#ff8fb0', // bochecha
 };
 
-function spriteFromRows(rows, flip) {
+function spriteFromRows(rows, flip, pal) {
   const w = Math.max(...rows.map(r => r.length));
   const h = rows.length;
   const cv = document.createElement('canvas');
@@ -46,7 +46,7 @@ function spriteFromRows(rows, flip) {
     for (let x = 0; x < row.length; x++) {
       const ch = row[x];
       if (ch === '.' || ch === ' ') continue;
-      g.fillStyle = PAL[ch] || '#ff00ff';
+      g.fillStyle = (pal && pal[ch]) || PAL[ch] || '#ff00ff';
       g.fillRect(flip ? w - 1 - x : x, y, 1, 1);
     }
   }
@@ -379,6 +379,7 @@ function buildSprites() {
   SPR.pie = spriteFromRows(ICON_PIE);
   SPR.sign = spriteFromRows(ICON_SIGN);
   buildTiles();
+  buildSprites2();
 }
 
 // ---------- TILES (16x16) gerados proceduralmente ----------
