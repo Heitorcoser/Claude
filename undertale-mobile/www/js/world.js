@@ -260,6 +260,7 @@ const World = {
     } });
     const p = this.player;
     list.push({ y: p.y, d: () => {
+      if (p.hidden) return;
       if (p.lying) { drawSpr(SPR.playerLying, sx(p.x - 10), sy(p.y - 12), 2); return; }
       const fr = p.moving ? Math.floor(p.anim) % 4 : 0;
       const pset = (G.flags.p5uniform && !G.flags.p5free) ? SPR.playerGray : SPR.player;
@@ -317,16 +318,16 @@ const World = {
 
   say(lines) {
     const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon', T: 'trein', S: 'stranger', P: 'peng', B: 'bit', V: 'volt', R: 'brutao', K: 'teca', Z: 'ze', C: 'kid',
-      M: 'marsh', H: 'choco', Y: 'piru', N: 'macaron', O: 'vovo', U: 'ferrugem', L: 'lia', E: 'tecela', J: 'osso', Q: 'kitsune', W: 'novelo' };
+      M: 'marsh', H: 'choco', Y: 'piru', N: 'macaron', O: 'vovo', U: 'ferrugem', L: 'lia', E: 'tecela', J: 'osso', Q: 'kitsune', W: 'novelo', A: 'draco', X: 'golem', Ç: 'fantl' };
     return Dialog.show(lines.map(t => {
       if (typeof t !== 'string') return t;
-      const m = /^([IFGDTSPBVRKZCMHYNOULEJQW]):\s*(.*)$/s.exec(t);
+      const m = /^([IFGDTSPBVRKZCMHYNOULEJQWAXÇ]):\s*(.*)$/s.exec(t);
       return m ? { who: WHO[m[1]], t: '* ' + m[2] } : t;
     }), this.player.y - this.cam.y > 150);
   },
   ask(text, choices) {
-    const m = /^([IFGBVMHLOEJQ]):\s*(.*)$/s.exec(text);
-    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo', E: 'tecela', J: 'osso', Q: 'kitsune' }[m[1]] : null;
+    const m = /^([IFGBVMHLOEJQAX]):\s*(.*)$/s.exec(text);
+    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo', E: 'tecela', J: 'osso', Q: 'kitsune', A: 'draco', X: 'golem' }[m[1]] : null;
     return Dialog.ask(m ? '* ' + m[2] : text, choices, who);
   },
 

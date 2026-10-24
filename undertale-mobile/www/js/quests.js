@@ -85,6 +85,17 @@ const QUESTS = {
     return { t: 'Passe pela teia aberta e desça pelo BURACO, no fundo do salão.', x: 59, y: 58 };
   },
 
+  vulcao(W) {
+    const F = G.flags, y = W.player.y / TS;
+    if (!F.p8metDraco) return { t: 'Vá até a ARENA do Mestre Draco, a LESTE da vila.', x: 60, y: 57 };
+    if (!F.p8lesson3) return { t: `Fale com o MESTRE DRACO na arena para a ${!F.p8lesson1 ? 'LIÇÃO 1' : !F.p8lesson2 ? 'LIÇÃO 2' : 'PROVA FINAL'}.`, x: 70, y: 53 };
+    if (F.p8heart) return null;
+    if (y >= 44) return { t: 'Suba o GIGANTE ADORMECIDO: o portão ao NORTE da vila está aberto.', x: 30, y: 43 };
+    if (y >= 28) return { t: 'GÊISERES: espere a fileira da frente explodir e corra logo atrás da onda.', x: 32, y: 27 };
+    if (y >= 13) return { t: 'Atravesse o LAGO pelas pedras. Não fique parado: elas afundam!', x: 33, y: 13 };
+    return { t: 'Chegue ao TOPO e pegue o CORAÇÃO DO VULCÃO no altar.', x: 35, y: 3 };
+  },
+
   sakura(W) {
     const F = G.flags, inside = W.player.y > 50 * TS;
     if (F.p7escape) return F.p7done ? null : { t: 'FUJA! Corra para o METRÔ, no fim da avenida, a LESTE. Cuidado com os escombros!', x: 87, y: 27 };

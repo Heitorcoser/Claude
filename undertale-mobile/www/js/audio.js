@@ -349,6 +349,18 @@ const Sfx = (() => {
     fuga7: { bpm: 176, lead: 'square', pad: 'strings', arp: null, bass: 'bassSaw', bassPat: 'eighths', drums: 'boss',
       bars: `Am: A5 . E5 . A5 . C6 B5 | F: A5 . F5 . C5 . F5 A5 | G: B5 . G5 . D5 . G5 B5 | E: G#5 . E5 . B4 . E5 G#5 |
              Am: C6 . B5 . A5 . E5 . | Dm: D6 . C6 . A5 . F5 . | E: E6 . D6 . B5 . G#5 . | Am: A5 . . . - - - -` },
+    vulcao: { bpm: 104, lead: 'marimba', lead2: 'flute', pad: 'organ', arp: 'pizz', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'tribal',
+      bars: `Dm: D5 . F5 . A5 . G5 F5 | C: E5 . G5 . C6 . A5 G5 | Bb: F5 . D5 . F5 . A5 . | A: C#5 . E5 . A5 . . . |
+             Dm: A5 . G5 F5 E5 . D5 . | Gm: G5 . A5 . Bb5 . A5 G5 | A: E5 . F5 . G5 . E5 . | Dm: D5 . . . A4 . . .` },
+    draco: { bpm: 138, lead: 'brass', lead2: 'square', pad: 'strings', arp: 'harp', bass: 'bassSaw', bassPat: 'eighths', drums: 'rock',
+      bars: `Em: E5 . G5 . B5 . A5 G5 | C: G5 . E5 . C5 . E5 G5 | D: F#5 . A5 . D6 . C6 B5 | B: B5 . . . D#5 . F#5 . |
+             Em: B5 . A5 G5 E5 . G5 . | Am: A5 . C6 . E6 . D6 C6 | B: B5 . A5 . F#5 . D#5 . | Em: E5 . . . E6 . . .` },
+    cume: { bpm: 84, lead: 'brass', lead2: 'flute', pad: 'strings', arp: 'harp', bass: 'bassTri', bassPat: 'root', drums: 'march',
+      bars: `Cm: C5 . . . Eb5 . G5 . | Ab: Ab5 . . . G5 . Eb5 . | Bb: F5 . . . D5 . Bb4 . | G: B4 . D5 . G5 . . . |
+             Cm: G5 . Ab5 . G5 . Eb5 . | Fm: F5 . Ab5 . C6 . . . | G: D6 . C6 . B5 . G5 . | Cm: C6 . . . . . - -` },
+    voo: { bpm: 150, lead: 'brass', lead2: 'flute', pad: 'strings', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
+      bars: `D: D5 . F#5 . A5 . D6 . | G: B5 . A5 . G5 . B5 . | A: C#6 . B5 . A5 . E5 . | D: F#5 . A5 . D6 . . . |
+             Bm: D6 . C#6 . B5 . F#5 . | G: G5 . B5 . D6 . E6 . | A: E6 . D6 . C#6 . A5 . | D: D6 . . . A5 D6 . .` },
     victory: { bpm: 120, lead: 'brass', lead2: 'bell', pad: 'organ', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
       bars: `C: C5 . E5 . G5 . C6 . | F: A5 . . . F5 . A5 . | G: B5 . D6 . G5 . B5 . | C: C6 . . . . . - -` },
   };

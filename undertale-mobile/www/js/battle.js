@@ -345,11 +345,66 @@ Object.assign(ENEMIES, {
   },
 });
 
+Object.assign(ENEMIES, {
+  golemLava: {
+    name: 'Golem de Lava', spr: 'golemLava', scale: 7, hp: 70, atk: 6, def: 3, xp: 40, gold: 18, voice: 'bones',
+    intro: '* Um GOLEM DE LAVA se levanta da rocha!',
+    check: '* GOLEM DE LAVA - ATK 6 DEF 3\n* Pesado e lento. Por dentro, é quentinho.\n* Só quer proteger a montanha.',
+    acts: {
+      'Esfriar com água': { text: ['* Você joga água no Golem.', '* Ele chia: TSSSSS!', '* ...Ele parece aliviado.'], mercy: 45 },
+      'Elogiar as rochas': { text: ['* Você diz que as rochas dele são muito bonitas.', '* As rachaduras brilham de vergonha.'], mercy: 35 },
+      'Dar um abraço': { text: ['* Você abraça o Golem. AI! QUENTE!', '* (-3 HP) Mas ele ficou muito feliz.'], mercy: 50, hurt: 3 },
+    },
+    flavor: ['* O chão treme a cada passo.', '* Cheiro de enxofre.', '* O Golem range como uma pedra velha.'],
+    talk: ['GRRRMMM.', 'MONTANHA... DORME.', 'NÃO... ACORDE... ELA.', '...QUENTE.'],
+    spareTalk: 'GRRM... AMIGO.',
+    patterns: ['magmaRocks', 'lavaPillars'],
+  },
+  fantLava: {
+    name: 'Fantasma de Lava', spr: 'fantLava', scale: 6, hp: 45, atk: 5, def: 2, xp: 30, gold: 14, voice: 'fire',
+    intro: '* Um FANTASMA DE LAVA borbulha na sua frente!',
+    check: '* FANTASMA DE LAVA - ATK 5 DEF 2\n* Primo distante do FireGhost.\n* Também conta piadas. Piores.',
+    acts: {
+      'Rir da piada': { text: ['* Ele conta: "Por que o vulcão foi ao médico? Tava com ERUPÇÃO!"', '* Você ri. Ele borbulha de alegria.'], mercy: 50 },
+      'Falar do FireGhost': { text: ['* Você conta que conheceu o FireGhost.', '* "O PRIMÃO?! Ele ainda conta a do sorvete?"'], mercy: 40 },
+      'Soprar': { text: ['* Você sopra o Fantasma.', '* Ele esfria um pouquinho e fica tímido.'], mercy: 25 },
+    },
+    flavor: ['* Bolhas de lava estouram no ar.', '* O Fantasma derrete e se refaz.', '* Está ficando quente aqui.'],
+    talk: ['Blub blub!', 'Quer ouvir uma piada?', 'Tô FERVENDO de rir!', 'Hehe... magma.'],
+    spareTalk: 'Blub! Você é legal!',
+    patterns: ['embers', 'lavaBalls'],
+  },
+  anciao: {
+    name: 'Dragão Ancião', spr: 'dragaoAnciao', scale: 6, hp: 260, atk: 6, def: 3, xp: 120, gold: 0, voice: 'dragon',
+    boss: true, nonlethal: true, trainDragon: true, music: 'draco', turnLen: 6.5,
+    intro: '* PROVA FINAL: o DRAGÃO ANCIÃO do Mestre Draco!\n* Mostre tudo o que você e seu dragão aprenderam.',
+    check: '* DRAGÃO ANCIÃO - ATK 6 DEF 3\n* Tem 500 anos. Já treinou cem dragões.\n* Use seu DRAGÃO para impressioná-lo.',
+    acts: {
+      'Mostrar respeito': { text: ['* Você se curva diante do Ancião.', '* Ele solta uma fumacinha pelo nariz. Aprovação.'], mercy: 25 },
+      'Rugir junto': { text: ['* Você e seu dragão rugem ao mesmo tempo: ROOOAR!', '* O Ancião sorri com os dentes todos.'], mercy: 25 },
+      'Voar em círculos': { text: ['* Seu dragão voa em círculos em volta do Ancião.', '* "Asas fortes. Mas ainda falta coragem."'], mercy: 20 },
+    },
+    flavor: ['* O Ancião observa cada movimento.', '* O chão da arena está pegando fogo.', '* Mestre Draco grita instruções lá de fora.'],
+    talk: ['Mostre suas asas.', 'Mais forte!', 'Um dragão protege. Não destrói.', 'Hm. Nada mal.'],
+    spareTalk: 'Você está pronto.',
+    patterns: ['embers', 'magmaRocks', 'wingGust', 'lavaBalls'],
+    finale: ['lavaPillars', 'wingGust', 'lavaPillars'],
+  },
+});
+
 const DRAGONS = {
   preto: { name: 'Dragão Preto', act: 'Dragão: Investida', desc: 'FORTE. +3 de ATAQUE e golpes devastadores.' },
   branco: { name: 'Dragão Branco', act: 'Dragão: Ventania', desc: 'RÁPIDO. Sua ALMA fica mais veloz e ele encurta os ataques.' },
   laranja: { name: 'Dragão Laranja', act: 'Dragão: Sopro', desc: 'SOLTA FOGO. Queima o inimigo por vários turnos.' },
+  // formas evoluídas (Fase 8, com o Coração do Vulcão)
+  lava: { name: 'Dragão de Lava', act: 'Dragão: Magma', base: 'laranja', desc: 'MAGMA. Muito mais dano e queima por mais tempo.' },
+  neve: { name: 'Dragão de Neve', act: 'Dragão: Congelar', base: 'branco', desc: 'MUITO RÁPIDO. Congela o inimigo por 1 ataque.' },
+  trevas: { name: 'Dragão das Trevas', act: 'Dragão: Trevas', base: 'preto', desc: 'TREVAS. Um golpe com dano altíssimo.' },
 };
+const DRAGON_EVO = { laranja: 'lava', branco: 'neve', preto: 'trevas' };
+const isFireDragon = k => k === 'laranja' || k === 'lava';
+// Bônus de dano do treino com o Mestre Draco (Fase 8)
+const dragonBonus = () => (G.dragonLv || 0) * 4;
 
 const BTN = [
   { label: 'LUTAR', x: 22, icon: 'fight' },
@@ -374,7 +429,7 @@ class Battle {
     this.t = 0; this.turn = 0; this.dmgPop = null; this.particles = [];
     this.bubble = null; this.instrCast = null; this.instrHealUsed = false;
     this.practiceDone = false; this.magicCd = 0;
-    this.dragon = opts.dragon || null; this.dragonCd = 0; this.burn = 0; this.haste = 0; this.dragonFx = null;
+    this.dragon = opts.dragon || null; this.dragonCd = 0; this.burn = 0; this.burnDmg = 5; this.frozen = 0; this.haste = 0; this.dragonFx = null;
     this.robot = !!opts.robot; this.robotCd = 0; this.musicFx = null;
     if (this.robot && def.group) this.robotBat = 100;
     this.flavorTyper = new Typer(def.intro, 'narr', 520, 32);
@@ -467,7 +522,7 @@ class Battle {
     if (this.burnPending) {
       this.burnPending = false;
       Sfx.fire();
-      this.dealDamage(5, () => this.say([`* ${this.e.name} está queimando! (-5)`], () => this.toMenu()), true);
+      this.dealDamage(this.burnDmg, () => this.say([`* ${this.e.name} está queimando! (-${this.burnDmg})`], () => this.toMenu()), true);
       return;
     }
     // ajuda do Instrutor quando o HP está baixo
@@ -504,7 +559,9 @@ class Battle {
     if (Input.isPressed('up') && s - cols >= 0) this.sel -= cols;
     if (s !== this.sel) Sfx.move();
     if (Input.tap) {
-      for (let i = 0; i < n; i++) {
+      const per = cols * 3, pg = Math.floor(this.sel / per), pages = Math.ceil(n / per);
+      if (pages > 1 && hit(Input.tap, 520, 366, 90, 26)) { this.sel = Math.min(n - 1, ((pg + 1) % pages) * per); Sfx.move(); return -1; }
+      for (let i = pg * per; i < Math.min(n, pg * per + per); i++) {
         const r = this.optRect(i, cols);
         if (hit(Input.tap, r.x, r.y, r.w, r.h)) { this.sel = i; return i; }
       }
@@ -515,8 +572,9 @@ class Battle {
     return -1;
   }
   optRect(i, cols = 2) {
-    const cw = cols === 1 ? 520 : 270;
-    return { x: 60 + (i % cols) * cw, y: 268 + Math.floor(i / cols) * 36, w: cw - 10, h: 34 };
+    // 3 linhas por página: o resto vai para as páginas seguintes
+    const cw = cols === 1 ? 520 : 270, k = i % (cols * 3);
+    return { x: 60 + (k % cols) * cw, y: 268 + Math.floor(k / cols) * 36, w: cw - 10, h: 34 };
   }
 
   st_actMenu() {
@@ -533,6 +591,7 @@ class Battle {
       if (act.atkUp) this.e.atkNow += act.atkUp;
       if (act.atkDown) this.e.atkNow = Math.max(2, this.e.atkNow - act.atkDown);
       if (act.defDown) this.e.def = Math.max(0, this.e.def - act.defDown);
+      if (act.hurt) { G.hp = Math.max(1, G.hp - act.hurt); Sfx.hurt(); }
       const t = (typeof act.text === 'function' ? act.text(this) : act.text).slice();
       if (this.spareable) t.push(`* ${this.e.name} não quer mais lutar.`);
       this.say(t, () => this.afterPlayer());
@@ -629,7 +688,7 @@ class Battle {
 
   dealDamage(dmg, then, quiet) {
     this.state = 'damage';
-    if (!quiet && this.dragon === 'laranja' && this.bar) dmg += 2;
+    if (!quiet && isFireDragon(this.dragon) && this.bar) dmg += this.dragon === 'lava' ? 4 : 2;
     this.e.hpNow = Math.max(0, this.e.hpNow - dmg);
     this.e.shake = 0.5; Sfx.hit();
     this.dmgPop = { v: dmg, t: 0 };
@@ -688,25 +747,45 @@ class Battle {
   }
 
   useDragon() {
-    const k = this.dragon;
+    const k = this.dragon, bonus = dragonBonus();
+    if (this.e.trainDragon) this.e.mercy = Math.min(100, this.e.mercy + 30);
     this.dragonFx = { kind: k, t: 0 };
+    const done = () => { this.dragonFx = null; this.afterPlayer(); };
     if (k === 'preto') {
       Sfx.roar();
       this.say(['* O DRAGÃO PRETO avança com toda a força!'], () => {
         this.dragonFx = { kind: k, t: 0, hit: true }; Sfx.hit();
-        this.dealDamage(14 + G.lv * 2 + ((Math.random() * 5) | 0), () => { this.dragonFx = null; this.afterPlayer(); });
+        this.dealDamage(14 + G.lv * 2 + bonus + ((Math.random() * 5) | 0), done);
+      });
+    } else if (k === 'trevas') {
+      Sfx.roar(); Sfx.boo();
+      this.say(['* O DRAGÃO DAS TREVAS some nas sombras...', '* ...e ataca de TODOS os lados ao mesmo tempo!'], () => {
+        this.dragonFx = { kind: k, t: 0, hit: true }; Sfx.hit();
+        this.dealDamage(32 + G.lv * 3 + bonus + ((Math.random() * 8) | 0), done);
       });
     } else if (k === 'branco') {
       Sfx.wind();
       this.haste = 1;
       this.say(['* O DRAGÃO BRANCO bate as asas: VENTANIA!', '* Você ficou super rápido! O próximo ataque vai ser mais curto.'], () => {
-        this.dealDamage(6 + G.lv, () => { this.dragonFx = null; this.afterPlayer(); });
+        this.dealDamage(6 + G.lv + bonus, done);
+      });
+    } else if (k === 'neve') {
+      Sfx.wind(); Sfx.freeze();
+      this.frozen = 1;
+      this.say(['* O DRAGÃO DE NEVE sopra uma NEVASCA!', `* ${this.e.name} ficou CONGELADO! Não vai conseguir atacar.`], () => {
+        this.dealDamage(10 + G.lv + bonus, done);
+      });
+    } else if (k === 'lava') {
+      Sfx.fire(); Sfx.roar();
+      this.burn = 5; this.burnDmg = 9;
+      this.say(['* O DRAGÃO DE LAVA cospe um rio de MAGMA!', `* ${this.e.name} está queimando MUITO!`], () => {
+        this.dealDamage(18 + G.lv * 2 + bonus, done);
       });
     } else {
       Sfx.fire();
-      this.burn = 3;
+      this.burn = 3; this.burnDmg = 5;
       this.say(['* O DRAGÃO LARANJA solta um SOPRO DE FOGO!', `* ${this.e.name} começou a queimar!`], () => {
-        this.dealDamage(10 + G.lv * 2, () => { this.dragonFx = null; this.afterPlayer(); });
+        this.dealDamage(10 + G.lv * 2 + bonus, done);
       });
     }
   }
@@ -736,6 +815,12 @@ class Battle {
       this.say([this.opts.tutorial ? { who: 'instr', t: 'O Boneco não ataca. Termine: LUTE ou POUPE.' } : '* Nada acontece.'], () => this.toMenu());
       return;
     }
+    if (this.frozen > 0 && !this.e.endless) {
+      this.frozen--;
+      Sfx.freeze();
+      this.say([`* ${this.e.name} está CONGELADO!`, '* Não consegue atacar neste turno.'], () => this.toMenu());
+      return;
+    }
     const list = (this.e.finale && this.e.hpNow < this.e.hp * 0.35) ? this.e.finale : this.e.patterns;
     const p = list[this.turn % list.length];
     this.startEnemyTurn(p);
@@ -751,7 +836,7 @@ class Battle {
     this.pt = 0; this.spawnT = 0; this.patternName = pattern;
     this.turnLen = pattern === 'stars' ? 6 : (this.e.turnLen || 5.5);
     if (this.haste) { this.turnLen *= 0.55; }
-    this.soulSpeed = 150 * (this.dragon === 'branco' ? 1.25 : 1) * (this.haste ? 1.5 : 1);
+    this.soulSpeed = 150 * (this.dragon === 'neve' ? 1.5 : this.dragon === 'branco' ? 1.25 : 1) * (this.haste ? 1.5 : 1);
     this.haste = 0;
     let talk = null;
     if (pattern !== 'stars') {
@@ -869,7 +954,13 @@ class Battle {
         ctx.drawImage(img, ex, ey, img.width * sc, img.height * sc);
         ctx.globalAlpha = 1;
       }
-      if (this.burn > 0) for (let i = 0; i < 3; i++) drawFlame(ex + img.width * sc * (0.25 + i * 0.25), ey + img.height * sc * 0.9, 14, this.t * 10 + i);
+      if (this.burn > 0) for (let i = 0; i < 3; i++) drawFlame(ex + img.width * sc * (0.25 + i * 0.25), ey + img.height * sc * 0.9, this.burnDmg > 5 ? 20 : 14, this.t * 10 + i);
+      if (this.frozen > 0) {
+        const fw = Math.min(260, img.width * sc + 20), fh = Math.min(190, img.height * sc + 20), fx = 320 - fw / 2, fy = ey - 10;
+        ctx.fillStyle = 'rgba(160,220,255,0.35)'; ctx.fillRect(fx, fy, fw, fh);
+        ctx.strokeStyle = '#d8f4ff'; ctx.lineWidth = 3; ctx.strokeRect(fx, fy, fw, fh);
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(fx + 10, fy + 8, 6, fh * 0.5); ctx.fillRect(fx + 22, fy + 8, 3, fh * 0.3);
+      }
     }
     for (const p of this.particles) {
       ctx.globalAlpha = Math.max(0, Math.min(1, p.life)); ctx.fillStyle = p.c;
@@ -972,28 +1063,39 @@ class Battle {
   }
 
   drawDragon(ex, ey, img, sc) {
-    const set = SPR.dragon[this.dragon];
+    const k = this.dragon, set = SPR.dragon[k];
     let x = this.opts.withInstr ? 84 : 40, y = (this.opts.withInstr ? 52 : 66) + Math.sin(this.t * 3) * 6;
     const fx = this.dragonFx;
     if (fx) fx.t += 1 / 60;
-    if (fx && fx.kind === 'preto' && fx.hit) { const k = Math.min(1, fx.t / 0.25); x += (ex - 140) * Math.sin(k * Math.PI); }
+    if (fx && (fx.kind === 'preto' || fx.kind === 'trevas') && fx.hit) { const q = Math.min(1, fx.t / 0.25); x += (ex - 140) * Math.sin(q * Math.PI); }
     const fr = Math.floor(this.t * 6) % 2;
+    drawDragonAura(k, x, y, 5, this.t);
     drawSpr(set.right[fr], x, y, 5);
-    if (this.dragon === 'laranja') drawFlame(x + 10, y + 70, 12, this.t * 10);
-    if (fx && fx.kind === 'laranja') {
-      for (let i = 0; i < 14; i++) {
-        const k = ((fx.t * 2 + i / 14) % 1);
-        drawFlame(x + 120 + (ex + img.width * sc / 2 - x - 120) * k, y + 30 + Math.sin(i * 7) * 14 * k + (ey + 60 - y - 30) * k, 16 * (1 - k * 0.4), this.t * 10 + i);
+    if (isFireDragon(k)) drawFlame(x + 10, y + 70, k === 'lava' ? 18 : 12, this.t * 10);
+    if (fx && isFireDragon(fx.kind)) {
+      const n = fx.kind === 'lava' ? 22 : 14;
+      for (let i = 0; i < n; i++) {
+        const q = ((fx.t * 2 + i / n) % 1);
+        const px = x + 120 + (ex + img.width * sc / 2 - x - 120) * q, py = y + 30 + Math.sin(i * 7) * 14 * q + (ey + 60 - y - 30) * q;
+        if (fx.kind === 'lava') { ctx.fillStyle = i % 2 ? '#ff3a0a' : '#ffb21a'; ctx.beginPath(); ctx.arc(px, py, 10 * (1 - q * 0.3), 0, Math.PI * 2); ctx.fill(); }
+        drawFlame(px, py, 16 * (1 - q * 0.4), this.t * 10 + i);
       }
     }
-    if (fx && fx.kind === 'branco') {
+    if (fx && (fx.kind === 'branco' || fx.kind === 'neve')) {
       ctx.strokeStyle = 'rgba(220,240,255,0.8)'; ctx.lineWidth = 3;
       for (let i = 0; i < 6; i++) {
-        const k = (fx.t * 1.5 + i / 6) % 1, yy = 40 + i * 28;
-        ctx.beginPath(); ctx.moveTo(120 + k * 380, yy); ctx.lineTo(180 + k * 380, yy + Math.sin(i) * 6); ctx.stroke();
+        const q = (fx.t * 1.5 + i / 6) % 1, yy = 40 + i * 28;
+        ctx.beginPath(); ctx.moveTo(120 + q * 380, yy); ctx.lineTo(180 + q * 380, yy + Math.sin(i) * 6); ctx.stroke();
       }
+      if (fx.kind === 'neve') { ctx.fillStyle = '#fff'; for (let i = 0; i < 30; i++) ctx.fillRect(140 + ((i * 53 + fx.t * 300) % 360), 20 + (i * 37) % 180, 3, 3); }
+    }
+    if (fx && fx.kind === 'trevas') {
+      ctx.fillStyle = `rgba(30,0,50,${Math.min(0.6, fx.t)})`; ctx.fillRect(0, 0, W, 230);
+      ctx.strokeStyle = '#b05aff'; ctx.lineWidth = 4;
+      for (let i = 0; i < 5; i++) { const a = i * 1.26 + fx.t * 4; ctx.beginPath(); ctx.moveTo(320 + Math.cos(a) * 160, 120 + Math.sin(a) * 100); ctx.lineTo(320 + Math.cos(a) * 20, 120 + Math.sin(a) * 15); ctx.stroke(); }
     }
   }
+
 
   drawBoxContent() {
     const st = this.state;
@@ -1025,11 +1127,14 @@ class Battle {
   }
 
   drawList(items, cols = 2) {
+    const per = cols * 3, pg = Math.floor(this.sel / per), pages = Math.ceil(items.length / per);
     items.forEach((it, i) => {
+      if (Math.floor(i / per) !== pg) return;
       const r = this.optRect(i, cols);
       if (i === this.sel) drawSpr(SPR.soul, r.x - 4, r.y + 9, 1);
       text('* ' + it.t, r.x + 20, r.y, 32, it.c || '#fff');
     });
+    if (pages > 1) text(`${pg + 1}/${pages} >>`, 600, 370, 20, '#ffe680', 'right');
   }
 
   drawTarget() {
@@ -1228,6 +1333,58 @@ const PATTERNS = {
           if (Math.abs(y - gap) < 24) continue;
           B.bullets.push({ kind: 'soldier', x: left ? bx.x - 12 : bx.x + bx.w + 12, y, vx: left ? 95 : -95, vy: 0, w: 14, h: 18 });
         }
+      }
+    },
+  },
+  magmaRocks: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.42;
+        const bx = B.box;
+        B.bullets.push({ kind: 'magmaRock', x: bx.x + 12 + Math.random() * (bx.w - 24), y: bx.y - 10, vx: (Math.random() - 0.5) * 40, vy: 20, g: 260, r: 8, life: 3 });
+      }
+    },
+  },
+  lavaPillars: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.85;
+        const bx = B.box, x = Math.random() < 0.5 ? B.soul.x : bx.x + 16 + Math.random() * (bx.w - 32);
+        B.bullets.push({ kind: 'lavaPillar', x, y: bx.y + bx.h / 2, vx: 0, vy: 0, w: 22, h: bx.h, warn: 0.7, life: 1.3 });
+      }
+    },
+  },
+  embers: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.18;
+        const bx = B.box;
+        B.bullets.push({ kind: 'ember', x: bx.x + 6 + Math.random() * (bx.w - 12), y: bx.y + bx.h + 6, vx: 0, vy: -(80 + Math.random() * 60), r: 4, sway: 50, ph: Math.random() * 6, life: 4 });
+      }
+    },
+  },
+  lavaBalls: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.65;
+        const bx = B.box, left = Math.random() < 0.5;
+        B.bullets.push({ kind: 'magmaRock', x: left ? bx.x + 6 : bx.x + bx.w - 6, y: bx.y + bx.h - 6, vx: (left ? 1 : -1) * (50 + Math.random() * 80), vy: -230 - Math.random() * 60, g: 300, r: 8, life: 3 });
+      }
+    },
+  },
+  wingGust: {
+    update(B, dt) {
+      const left = (B.pState.dir ??= Math.random() < 0.5 ? -1 : 1);
+      const bx = B.box;
+      B.soul.x = Math.max(bx.x + 8, Math.min(bx.x + bx.w - 8, B.soul.x + left * 55 * dt));
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.38;
+        B.bullets.push({ kind: 'ember', x: left > 0 ? bx.x + bx.w + 8 : bx.x - 8, y: bx.y + 10 + Math.random() * (bx.h - 20), vx: -left * 150, vy: 0, r: 5, ph: 0, life: 3 });
       }
     },
   },
@@ -1481,6 +1638,24 @@ const PATTERNS = {
 };
 
 const BULLET_DRAW = {
+  magmaRock(b, t) {
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(b.x, b.y, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4a3a36'; ctx.beginPath(); ctx.arc(b.x, b.y, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ff7a1a'; ctx.fillRect(b.x - 4, b.y - 1, 5, 2); ctx.fillRect(b.x + 1, b.y + 2, 3, 2); ctx.fillRect(b.x - 1, b.y - 5, 2, 3);
+  },
+  lavaPillar(b, t) {
+    const active = b.t >= b.warn;
+    if (!active) { ctx.fillStyle = `rgba(255,90,20,${0.25 + Math.sin(t * 30) * 0.1})`; ctx.fillRect(b.x - b.w / 2, b.y + b.h / 2 - 12, b.w, 12); return; }
+    const k = Math.min(1, (b.t - b.warn) / 0.12), h = b.h * k;
+    ctx.fillStyle = '#ff3a0a'; ctx.fillRect(b.x - b.w / 2, b.y + b.h / 2 - h, b.w, h);
+    ctx.fillStyle = '#ffb21a'; ctx.fillRect(b.x - b.w / 4, b.y + b.h / 2 - h, b.w / 2, h);
+    ctx.fillStyle = '#ffe680'; ctx.fillRect(b.x - 2, b.y + b.h / 2 - h, 4, h);
+  },
+  ember(b, t) {
+    ctx.fillStyle = 'rgba(255,120,20,0.4)'; ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = Math.floor(t * 12 + b.ph * 3) % 2 ? '#ffb21a' : '#ff5a1a'; ctx.fillRect(b.x - 3, b.y - 3, 6, 6);
+    ctx.fillStyle = '#ffe680'; ctx.fillRect(b.x - 1, b.y - 1, 2, 2);
+  },
   web(b) {
     ctx.strokeStyle = 'rgba(240,240,255,0.9)'; ctx.lineWidth = 2;
     const hw = b.w / 2, hh = b.h / 2;

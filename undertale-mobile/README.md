@@ -128,7 +128,23 @@ A rota muda o final das Fases 6 e 7.
 - Você se culpa por ter conhecido os fantasmas. Se eles são seus amigos, terminam a amizade e vão embora; se só estão vivos, vão para longe; se não existem mais, não sobra ninguém para culpar.
 - A cidade é destruída pedaço por pedaço: **fuja até o metrô** antes do tempo acabar, desviando dos escombros.
 
-Fase 8: em breve.
+## Fase 8 — A Vila Vulcânica
+
+- O trem de Neo-Sakura chega à **Vila Brasa**, onde moram **golens de lava** e **fantasmas de lava**. Todo mundo da cidade veio junto.
+- A vila fica aos pés do **Gigante Adormecido**, um vulcão gigante que está descansando.
+- O **Mestre Draco**, treinador de dragões, treina o seu dragão em 3 lições:
+  1. **Pontaria**: aperte A quando a agulha estiver na faixa verde.
+  2. **Voo**: monte no dragão e passe pelos buracos das rochas.
+  3. **Prova final**: batalha contra o **Dragão Ancião** (impressione e poupe).
+  - Cada lição aumenta o dano do ataque do dragão (+4).
+- Subida do vulcão: **campo de gêiseres** (explodem em ondas), **lago de lava** com pedras que afundam e trilha até o topo.
+- No topo está o **Coração do Vulcão**, que faz o dragão evoluir:
+  - Laranja → **Dragão de Lava**: muito mais dano, e a queima dura mais e machuca mais.
+  - Branco → **Dragão de Neve**: muito mais rápido e **congela** o inimigo por 1 ataque.
+  - Preto → **Dragão das Trevas**: um golpe com dano altíssimo.
+- O Gigante acorda, o caminho desmorona e o dragão, que aprendeu a voar, te leva embora voando.
+
+Fase 9: em breve.
 
 ## Personagens
 
@@ -164,6 +180,10 @@ Fase 8: em breve.
 |---|---|---|
 | ![](arte/aranhas.png) | ![](arte/esqueletos.png) | ![](arte/kitsune.png) |
 
+| Mestre Draco | Golem e Fantasma de Lava | Dragões evoluídos (Lava, Neve, Trevas) |
+|---|---|---|
+| ![](arte/draco.png) | ![](arte/vulcanicos.png) | ![](arte/dragoes-evoluidos.png) |
+
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
 ## Estrutura
@@ -176,6 +196,7 @@ www/            jogo (HTML5)
   js/sprites4.js  robôs, crianças, valentões, drones, tiles neon
   js/sprites5.js  doces, prisioneiros, uniforme, tiles da ilha e do campo
   js/sprites6.js  aranhas, esqueletos, kitsune, tiles da caverna e de Neo-Sakura
+  js/sprites7.js  golens e fantasmas de lava, Mestre Draco, dragões evoluídos, tiles do vulcão
   js/audio.js     efeitos e sequenciador de músicas (WebAudio)
   js/engine.js    controles, configurações, texto, diálogo, save
   js/battle.js    batalha, dragões, chefe e ataques
@@ -187,6 +208,7 @@ www/            jogo (HTML5)
   js/phase5.js    Fase 5: Ilha dos Doces (campo, fome, fuga, libertação)
   js/phase6.js    Fase 6: A Caverna (aranhas, esqueletos, guerra, irmãos fantasmas)
   js/phase7.js    Fase 7: Neo-Sakura (refugiados, escola, festival, guerra, fuga)
+  js/phase8.js    Fase 8: Vila Vulcânica (treino do dragão, vulcão, evolução, voo)
   js/quests.js    painel de missões e seta de objetivo de todas as fases
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK
