@@ -19,7 +19,9 @@ Também dá para jogar no navegador: abra `www/index.html`.
 | Cancelar / menu | **B** ou "voltar" do Android | X / Esc |
 | Mover a ALMA na batalha | Analógico ou arrastar o dedo | Setas |
 
-Em **CONFIGURAÇÕES** (tela inicial ou menu B) dá para trocar entre **analógico** e **direcional**, e ligar/desligar música e efeitos.
+Em **CONFIGURAÇÕES** (tela inicial ou menu B) dá para trocar entre **analógico** e **direcional**, e ligar/desligar música, efeitos e o painel de missões.
+
+**Missões**: o objetivo atual aparece no canto da tela, com uma **seta amarela** apontando para onde ir. Também dá para ver em **menu B → MISSÃO**.
 
 ## Fase 1 — O Labirinto
 
@@ -144,6 +146,7 @@ www/            jogo (HTML5)
   js/phase3.js    Fase 3: Colônia de Gelo (puzzles, armadilhas, celular)
   js/phase4.js    Fase 4: Cidade Futurista (Bit, cinema, escola, valentões)
   js/phase5.js    Fase 5: Ilha dos Doces (campo, fome, fuga, libertação)
+  js/quests.js    painel de missões e seta de objetivo de todas as fases
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK
 apk/            APK pronto

@@ -234,8 +234,8 @@ MAPS.ilha = {
       if (hu < 25 && Math.floor(t * 2) % 2) text('com muita fome...', 200, 40, 20, '#ff9a9a');
     }
     if (P5.roll) {
-      ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(440, 10, 190, 50);
-      text(`CHAMADA: ${Math.ceil(P5.roll.t)}s`, 535, 20, 28, P5.roll.t < 8 ? '#ff5a5a' : '#ffe680', 'center');
+      ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(10, 76, 190, 44);
+      text(`CHAMADA: ${Math.ceil(P5.roll.t)}s`, 105, 82, 28, P5.roll.t < 8 ? '#ff5a5a' : '#ffe680', 'center');
     }
     if (P5.mini) P5.drawMini();
   },

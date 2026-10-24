@@ -173,7 +173,7 @@ const World = {
   // ---------- menu do mundo (botão B) ----------
   menuOpts() {
     const M = this.menu;
-    if (M.level === 'main') return G.flags.phone ? ['ITEM', 'STATUS', 'CELULAR', 'CONFIG', 'FECHAR'] : ['ITEM', 'STATUS', 'CONFIG', 'FECHAR'];
+    if (M.level === 'main') return ['ITEM', 'STATUS', 'MISSÃO'].concat(G.flags.phone ? ['CELULAR'] : [], ['CONFIG', 'FECHAR']);
     if (M.level === 'items') return G.items.concat(['VOLTAR']);
     return ['VOLTAR'];
   },
@@ -196,6 +196,11 @@ const World = {
       else if (o === 'STATUS') this.menu = { level: 'stat', sel: 0 };
       else if (o === 'CONFIG') { this.menu = null; ConfigMenu.open(); }
       else if (o === 'CELULAR') { this.menu = null; Phone.open(); }
+      else if (o === 'MISSÃO') {
+        this.menu = null;
+        const q = QuestHUD.get(this);
+        Dialog.show([q ? '* MISSÃO ATUAL:\n* ' + q.t : '* (Nenhuma missão agora. Explore e converse com todo mundo!)']);
+      }
       else this.menu = null;
     } else if (M.level === 'items') {
       if (o === 'VOLTAR') this.menu = { level: 'main', sel: 0 };
@@ -270,6 +275,7 @@ const World = {
     grd.addColorStop(0, 'rgba(0,0,0,0)'); grd.addColorStop(1, 'rgba(0,0,0,0.55)');
     ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
 
+    if (!this.locked && !Dialog.open && !this.menu && !this.player.lying) QuestHUD.draw(this, sx, sy);
     if (this.menu) this.drawMenu();
     Dialog.draw();
   },

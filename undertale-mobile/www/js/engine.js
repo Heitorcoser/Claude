@@ -128,12 +128,12 @@ function setupStick() {
 // ---------------- CONFIGURAÇÕES ----------------
 const CFG_KEY = 'perdido_cfg_v1';
 const Config = {
-  control: 'analog', music: true, sfx: true,
+  control: 'analog', music: true, sfx: true, quest: true,
   load() {
     try { Object.assign(this, JSON.parse(localStorage.getItem(CFG_KEY) || '{}')); } catch (e) { }
     this.apply();
   },
-  save() { try { localStorage.setItem(CFG_KEY, JSON.stringify({ control: this.control, music: this.music, sfx: this.sfx })); } catch (e) { } this.apply(); },
+  save() { try { localStorage.setItem(CFG_KEY, JSON.stringify({ control: this.control, music: this.music, sfx: this.sfx, quest: this.quest })); } catch (e) { } this.apply(); },
   apply() {
     document.body.dataset.control = this.control;
     Sfx.setMusic(this.music); Sfx.setSfx(this.sfx);

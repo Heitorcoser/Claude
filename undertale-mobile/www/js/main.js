@@ -167,6 +167,7 @@ const ConfigMenu = {
       { label: 'Controle', val: Config.control === 'analog' ? 'ANALÓGICO' : 'DIRECIONAL', toggle: () => { Config.control = Config.control === 'analog' ? 'dpad' : 'analog'; } },
       { label: 'Música', val: Config.music ? 'LIGADA' : 'DESLIGADA', toggle: () => { Config.music = !Config.music; } },
       { label: 'Efeitos', val: Config.sfx ? 'LIGADOS' : 'DESLIGADOS', toggle: () => { Config.sfx = !Config.sfx; } },
+      { label: 'Missões', val: Config.quest ? 'LIGADO' : 'DESLIGADO', toggle: () => { Config.quest = !Config.quest; } },
       { label: 'VOLTAR', val: '', toggle: null },
     ];
   },
@@ -175,7 +176,7 @@ const ConfigMenu = {
     if (Input.isPressed('up')) { this.sel = (this.sel + R.length - 1) % R.length; Sfx.move(); }
     if (Input.isPressed('down')) { this.sel = (this.sel + 1) % R.length; Sfx.move(); }
     let ch = (Input.isPressed('a') || Input.isPressed('left') || Input.isPressed('right')) ? this.sel : -1;
-    if (Input.tap) R.forEach((r, i) => { if (Math.abs(Input.tap.y - (150 + i * 64)) < 28) ch = i; });
+    if (Input.tap) R.forEach((r, i) => { if (Math.abs(Input.tap.y - (138 + i * 56)) < 26) ch = i; });
     if (Input.isPressed('b')) ch = R.length - 1;
     if (ch < 0) return;
     this.sel = ch;
@@ -188,7 +189,7 @@ const ConfigMenu = {
     frameBox(60, 50, 520, 380, 6);
     text('CONFIGURAÇÕES', 320, 74, 22, '#fff', 'center', FONT_TITLE);
     this.rows().forEach((r, i) => {
-      const y = 132 + i * 64, on = i === this.sel;
+      const y = 120 + i * 56, on = i === this.sel;
       if (on) drawSpr(SPR.soul, 96, y + 12, 1);
       text(r.label, 124, y, 34, on ? '#ffff40' : '#fff');
       if (r.val) text('< ' + r.val + ' >', 540, y, 34, on ? '#ffff40' : '#aaa', 'right');
