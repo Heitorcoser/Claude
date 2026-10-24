@@ -242,6 +242,11 @@ const World = {
     const I = this.instr;
     if (I.visible) list.push({ y: I.y, d: () => {
       const fr = I.moving ? Math.floor(I.anim) % 2 : 0;
+      if (I.kind === 'robot') {
+        const set = SPR.robot.bit, img = I.sad ? set.sad : set[I.dir === 'left' ? 'left' : 'right'][I.moving ? Math.floor(I.anim * 2) % 2 : 0];
+        drawSpr(img, sx(I.x - 8), sy(I.y - 22) + (I.moving ? 0 : Math.round(Math.sin(this.t * 4))), 2, I.alpha ?? 1);
+        return;
+      }
       const blink = !I.moving && (this.t % 3.4) > 3.25;
       const img = blink ? (I.dir === 'left' ? SPR.instr.blinkL : SPR.instr.blinkR) : SPR.instr[I.dir === 'left' ? 'left' : 'right'][fr];
       drawSpr(img, sx(I.x - 10), sy(I.y - 34), 2, I.alpha ?? 1);
@@ -301,16 +306,16 @@ const World = {
   },
 
   say(lines) {
-    const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon', T: 'trein', S: 'stranger', P: 'peng' };
+    const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon', T: 'trein', S: 'stranger', P: 'peng', B: 'bit', V: 'volt', R: 'brutao', K: 'teca', Z: 'ze', C: 'kid' };
     return Dialog.show(lines.map(t => {
       if (typeof t !== 'string') return t;
-      const m = /^([IFGDTSP]):\s*(.*)$/s.exec(t);
+      const m = /^([IFGDTSPBVRKZC]):\s*(.*)$/s.exec(t);
       return m ? { who: WHO[m[1]], t: '* ' + m[2] } : t;
     }), this.player.y - this.cam.y > 150);
   },
   ask(text, choices) {
-    const m = /^([IFG]):\s*(.*)$/s.exec(text);
-    const who = m ? { I: 'instr', F: 'fire', G: 'ice' }[m[1]] : null;
+    const m = /^([IFGBV]):\s*(.*)$/s.exec(text);
+    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt' }[m[1]] : null;
     return Dialog.ask(m ? '* ' + m[2] : text, choices, who);
   },
 

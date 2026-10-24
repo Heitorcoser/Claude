@@ -295,7 +295,17 @@ const Dialog = {
 
 function hitRect(p, r) { return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h; }
 
-const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon', trein: 'instr', stranger: 'deep', peng: 'peng' };
+const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon', trein: 'instr', stranger: 'deep', peng: 'peng',
+  bit: 'robot', volt: 'robot2', brutao: 'bully', teca: 'bully', ze: 'bully', kid: 'kid' };
+function robotPortrait(pal) {
+  return (x, y, t) => {
+    const set = SPR.robot[pal], img = (t % 3) > 2.85 ? set.sad : set.right[0];
+    ctx.drawImage(img, 0, 0, 16, 14, x + 6, y, 16 * 5.6, 14 * 5.6);
+  };
+}
+function kidPortrait(k) {
+  return (x, y) => { const img = SPR.kid[k]; ctx.drawImage(img, 0, 0, img.width, 12, x + 10, y + 6, img.width * 6, 12 * 6); };
+}
 const PORTRAITS = {
   instr: (x, y, t) => drawInstrPortrait(x, y, t),
   fire: (x, y, t) => drawGhost('fire', x + 2, y + 22, 3.2, t),
@@ -311,6 +321,12 @@ const PORTRAITS = {
     if ((t % 2.6) > 2.45) { ctx.fillStyle = '#26305a'; ctx.fillRect(x + 30, y + 26, 50, 10); }
   },
   peng: (x, y, t) => { ctx.drawImage(SPR.pinguimNpc, 0, 0, 20, 16, x + 4, y + 4, 20 * 4.4, 16 * 4.4); },
+  bit: (x, y, t) => robotPortrait('bit')(x, y, t),
+  volt: (x, y, t) => robotPortrait('volt')(x, y, t),
+  brutao: (x, y) => kidPortrait('brutao')(x, y),
+  teca: (x, y) => kidPortrait('teca')(x, y),
+  ze: (x, y) => kidPortrait('ze')(x, y),
+  kid: (x, y) => kidPortrait('k1')(x, y),
 };
 
 // Fantasmas com coroa animada (chamas ou pingentes de gelo)

@@ -128,6 +128,86 @@ Object.assign(ENEMIES, {
   },
 });
 
+const INSULTS = ['LATA VELHA', 'ROBÔ!', 'NERD', 'ENFERRUJADO', 'BIP BOP', 'PARAFUSO', 'TORRADEIRA'];
+Object.assign(ENEMIES, {
+  ze: {
+    name: 'Zé Marreta', spr: 'ze', scale: 6, hp: 30, atk: 4, def: 1, xp: 15, gold: 10, voice: 'bully', nonlethal: true, words: INSULTS,
+    intro: '* Zé Marreta estala os dedos!',
+    check: '* ZÉ MARRETA - ATK 4 DEF 1\n* Valentão de boné. Caiu aqui faz um ano.\n* Fala grosso, mas tem medo de escuro.',
+    acts: {
+      'Defender Bit': { text: ['* Você fica na frente do Bit.', '* Zé hesita. Não esperava isso.'], mercy: 40 },
+      'Elogiar boné': { text: ['* Você elogia o boné do Zé.', '* Ele ajeita o boné, todo orgulhoso.'], mercy: 50 },
+      'Mostrar língua': { text: ['* Você mostra a língua.', '* Zé ficou BRAVO!'], mercy: -30, atkUp: 1 },
+    },
+    flavor: ['* Zé Marreta estala os dedos de novo.', '* Cheira a lanche roubado.', '* Zé olha pros amigos esperando aprovação.'],
+    talk: ['Sai da frente!', 'Lata velha!', 'Vou te amassar!', 'Hehehe!'],
+    spareTalk: 'Tá... foi mal aí.',
+    patterns: ['paperBalls', 'insults'],
+  },
+  teca: {
+    name: 'Teca', spr: 'teca', scale: 6, hp: 30, atk: 4, def: 1, xp: 15, gold: 10, voice: 'bully', nonlethal: true, words: INSULTS,
+    intro: '* Teca cruza os braços e bloqueia o caminho!',
+    check: '* TECA - ATK 4 DEF 1\n* Joga borracha melhor que ninguém.\n* Na verdade queria um robô de estimação.',
+    acts: {
+      'Defender Bit': { text: ['* Você fica na frente do Bit.', '* Teca revira os olhos... mas para.'], mercy: 40 },
+      'Perguntar': { text: ['* Você pergunta por que ela implica com o Bit.', "* Teca: 'Sei lá... todo mundo implica.'", '* Ela parece pensar nisso.'], mercy: 50 },
+      'Puxar chiquinha': { text: ['* Você puxa a maria-chiquinha dela.', '* PÉSSIMA ideia. Ela ficou furiosa!'], mercy: -30, atkUp: 1 },
+    },
+    flavor: ['* Teca gira uma borracha no dedo.', '* Teca finge que não está olhando pro Bit.', '* Cheiro de apontador.'],
+    talk: ['Robô nerd!', 'Toma borracha!', 'Que foi?!', 'Hunf.'],
+    spareTalk: 'Hunf... tá bom.',
+    patterns: ['erasers', 'rulers'],
+  },
+  drone: {
+    name: 'Dronezinho', spr: 'drone', scale: 6, hp: 30, atk: 4, def: 2, xp: 16, gold: 12, voice: 'robot',
+    intro: '* Dronezinho zumbe na sua cara!',
+    check: '* DRONEZINHO - ATK 4 DEF 2\n* Câmera de segurança voadora.\n* Coleciona fotos de todo mundo.',
+    acts: {
+      'Fazer pose': { text: ['* Você faz uma pose incrível.', '* Dronezinho tira uma foto! FLASH! Ele amou.'], mercy: 60 },
+      'Acenar': { text: ['* Você acena pra câmera.', '* Dronezinho acena de volta com a hélice.'], mercy: 45 },
+      'Tapar câmera': { text: ['* Você tapa a câmera dele.', '* BZZT! Dronezinho ficou irritado!'], mercy: -30, atkUp: 1 },
+    },
+    flavor: ['* Dronezinho zumbe.', '* Uma luz vermelha pisca: GRAVANDO.', '* Dronezinho dá zoom no seu nariz.'],
+    talk: ['BZZZ.', 'Sorria!', 'Registrando...', 'Clique!'],
+    spareTalk: 'Foto salva! :)',
+    patterns: ['lasers', 'dustballs'],
+  },
+  aspirabo: {
+    name: 'Aspirabô', spr: 'aspirabo', scale: 6, hp: 34, atk: 4, def: 2, xp: 18, gold: 12, voice: 'robot',
+    intro: '* Aspirabô quer aspirar VOCÊ!',
+    check: '* ASPIRABÔ - ATK 4 DEF 2\n* Robô aspirador obcecado por limpeza.\n* Acha que tudo é sujeira.',
+    acts: {
+      'Jogar migalhas': { text: ['* Você espalha migalhas no chão.', '* Aspirabô fica FELIZ aspirando tudo!'], mercy: 60 },
+      'Elogiar limpeza': { text: ['* Você diz que a rua está brilhando.', '* Aspirabô vibra de orgulho.'], mercy: 50 },
+      'Pisar na sujeira': { text: ['* Você pisa num chiclete e espalha.', '* Aspirabô entrou em MODO TURBO!'], mercy: -30, atkUp: 1 },
+    },
+    flavor: ['* Aspirabô faz VRRRRRR.', '* Tem um meio sanduíche preso nele.', '* Aspirabô bate na sua canela. De novo.'],
+    talk: ['VRRRR!', 'Sujeira detectada.', 'Limpar! Limpar!', 'Bip... poeira.'],
+    spareTalk: 'Tudo limpinho!',
+    patterns: ['dustballs', 'erasers'],
+  },
+  valentoes: {
+    name: 'Valentões', spr: 'brutao', scale: 6, hp: 190, atk: 5, def: 2, xp: 70, gold: 40, voice: 'bully',
+    boss: true, group: true, nonlethal: true, music: 'valentoes', turnLen: 7, bubbleW: 230, words: INSULTS,
+    intro: '* A GANGUE DOS VALENTÕES cerca o Bit!\n* Brutão, Teca e Zé atacam juntos!',
+    check: '* VALENTÕES - ATK 5 DEF 2\n* Brutão, Teca e Zé Marreta.\n* Juntos parecem fortes. Separados, só crianças assustadas.',
+    acts: {
+      'Defender Bit': { text: ['* Você fica na frente do Bit.', '* Os valentões hesitam por um segundo.'], mercy: 20 },
+      'Conversar': { text: B => B.e.mercy < 34
+          ? ['* Você conversa com o Zé.', "* Zé: '...Ninguém nunca perguntou o que eu acho.'"]
+          : B.e.mercy < 67 ? ['* Você conversa com a Teca.', "* Teca: 'A gente implica porque... ele é diferente. Sei lá.'"]
+          : ['* Você conversa com o Brutão.', "* Brutão: '...Eu também caí aqui sozinho. Fiquei com medo de tudo.'"], mercy: 25 },
+      'Mostrar amizade': { text: ['* Você e o Bit fazem um TOCA AQUI!', '* Os valentões ficam sem graça...'], mercy: 30 },
+      'Zoar': { text: ['* Você zoa os valentões.', '* Péssima ideia. Eles ficaram FURIOSOS!'], mercy: -25, atkUp: 1 },
+    },
+    flavor: ['* Os valentões cercam o Bit.', '* Brutão estala o pescoço.', '* Teca e Zé cochicham.', '* Cheiro de recreio e confusão.'],
+    talk: ['BRUTÃO: Pega ele!', 'TECA: Lata velha!', 'ZÉ: Hehehe, toma!', 'BRUTÃO: Ninguém gosta de robô!', 'TECA: Volta pro ferro-velho!', 'ZÉ: Mochilada!'],
+    spareTalk: 'BRUTÃO: ...Desculpa, Bit.',
+    patterns: ['paperBalls', 'protect', 'erasers', 'insults', 'backpacks', 'protect', 'rulers'],
+    finale: ['protect', 'backpacks', 'insults', 'protect', 'rulers'],
+  },
+});
+
 const DRAGONS = {
   preto: { name: 'Dragão Preto', act: 'Dragão: Investida', desc: 'FORTE. +3 de ATAQUE e golpes devastadores.' },
   branco: { name: 'Dragão Branco', act: 'Dragão: Ventania', desc: 'RÁPIDO. Sua ALMA fica mais veloz e ele encurta os ataques.' },
@@ -158,6 +238,8 @@ class Battle {
     this.bubble = null; this.instrCast = null; this.instrHealUsed = false;
     this.practiceDone = false; this.magicCd = 0;
     this.dragon = opts.dragon || null; this.dragonCd = 0; this.burn = 0; this.haste = 0; this.dragonFx = null;
+    this.robot = !!opts.robot; this.robotCd = 0; this.musicFx = null;
+    if (this.robot && def.group) this.robotBat = 100;
     this.flavorTyper = new Typer(def.intro, 'narr', 520, 32);
     Sfx.playMusic(def.music || 'battle');
     this.introT = 0;
@@ -190,6 +272,7 @@ class Battle {
       list.push({ name: 'Instr: Acalmar', kind: 'calm' });
     }
     if (this.dragon) list.push({ name: DRAGONS[this.dragon].act, kind: 'dragon', disabled: this.dragonCd > 0 });
+    if (this.robot) list.push({ name: 'Bit: Música', kind: 'robot', disabled: this.robotCd > 0 || this.robotBat <= 0 });
     return list;
   }
 
@@ -308,7 +391,7 @@ class Battle {
       const act = this.e.acts[a.name];
       this.e.mercy = Math.max(0, Math.min(100, this.e.mercy + act.mercy));
       if (act.atkUp) this.e.atkNow += act.atkUp;
-      const t = act.text.slice();
+      const t = (typeof act.text === 'function' ? act.text(this) : act.text).slice();
       if (this.spareable) t.push(`* ${this.e.name} não quer mais lutar.`);
       this.say(t, () => this.afterPlayer());
     } else if (a.kind === 'magic') {
@@ -320,6 +403,12 @@ class Battle {
         this.instrCast = null;
         this.dealDamage(dmg, () => this.afterPlayer());
       });
+    } else if (a.kind === 'robot') {
+      this.robotCd = 2;
+      const before = G.hp;
+      G.hp = Math.min(G.maxhp, G.hp + 6 + 4 * G.lv);
+      Sfx.robotSong(); this.musicFx = { t: 0 };
+      this.say(['* BIT toca uma música animada!', `* A melodia te enche de energia! (+${G.hp - before} HP)`], () => { this.musicFx = null; this.afterPlayer(); });
     } else if (a.kind === 'dragon') {
       this.dragonCd = 2;
       this.useDragon();
@@ -414,14 +503,24 @@ class Battle {
 
   doKill() {
     this.state = 'dying';
+    this.dyingT = 0;
+    if (this.e.nonlethal) { Sfx.whoosh(); this.fleeing = true; return; }
     Sfx.dust();
     this.makeDust();
     this.e.alpha = 0;
-    this.dyingT = 0;
   }
   st_dying(dt) {
     this.dyingT += dt;
+    if (this.fleeing) this.e.alpha = Math.max(0, 1 - this.dyingT);
     if (this.dyingT < 1.3) return;
+    if (this.e.nonlethal) {
+      const xp = this.e.xp, gold = this.e.gold;
+      G.gold += gold;
+      const up = addXp(xp);
+      const t = [`* ${this.e.name} fugiu correndo!\n* 'Vou contar pra diretora!'`, `* VOCÊ VENCEU!\n* Você ganhou ${xp} EXP e ${gold} OURO.`];
+      if (up) { Sfx.levelUp(); t.push('* Seu LV aumentou.'); }
+      return this.say(t, () => this.end('defeated'));
+    }
     G.kills++;
     const xp = this.e.xp, gold = this.e.gold;
     G.gold += gold;
@@ -472,6 +571,8 @@ class Battle {
   afterPlayer() {
     if (this.magicCd > 0) this.magicCd--;
     if (this.dragonCd > 0) this.dragonCd--;
+    if (this.robotCd > 0) this.robotCd--;
+    if (this.robotBat !== undefined) this.robotBat = Math.min(100, this.robotBat + 15);
     this.turn++;
     if (this.opts.tutorial && !this.practiceDone) {
       this.practiceDone = true;
@@ -543,7 +644,19 @@ class Battle {
       if (b.g) b.vy += b.g * dt;
       b.x += b.vx * dt; b.y += b.vy * dt;
       if (b.sway) b.x += Math.sin(b.t * 5 + b.ph) * b.sway * dt;
-      const hitIt = b.w ? (Math.abs(b.x - s.x) < b.w / 2 + 4 && Math.abs(b.y - s.y) < b.h / 2 + 4) : Math.hypot(b.x - s.x, b.y - s.y) < b.r + 5;
+      if (b.bounce) {
+        const bx = this.box;
+        if ((b.x < bx.x + 12 && b.vx < 0) || (b.x > bx.x + bx.w - 12 && b.vx > 0)) b.vx *= -1;
+        if ((b.y < bx.y + 10 && b.vy < 0) || (b.y > bx.y + bx.h - 10 && b.vy > 0)) b.vy *= -1;
+      }
+      let hitIt = b.w ? (Math.abs(b.x - s.x) < b.w / 2 + 4 && Math.abs(b.y - s.y) < b.h / 2 + 4) : Math.hypot(b.x - s.x, b.y - s.y) < b.r + 5;
+      if (b.warn && b.t < b.warn) hitIt = false;
+      if (b.shield && hitIt) { b.dead = true; Sfx.toggle(); this.particles.push({ x: b.x, y: b.y, vx: 0, vy: -30, life: 0.4, c: '#5ff8ff' }); continue; }
+      if (b.toRobot && Math.hypot(b.x - b.tx, b.y - b.ty) < 14) {
+        b.dead = true; Sfx.hurt(); this.robotHitT = 0.3;
+        this.robotBat = Math.max(0, this.robotBat - 12);
+        continue;
+      }
       if (s.inv <= 0 && hitIt) {
         this.hurt(b.dmg ?? this.e.atkNow);
         if (b.pop) b.dead = true;
@@ -596,8 +709,10 @@ class Battle {
     if (this.e.shake > 0) ex += Math.sin(this.e.shake * 60) * 10 * this.e.shake;
     if (this.e.spr === 'fireghost' || this.e.spr === 'brasinha') ey += Math.sin(this.t * 2.4) * 5;
     if (this.e.spr === 'gelinho') ex += Math.sin(this.t * 1.5) * 8;
+    if (this.fleeing) ex += this.dyingT * 300;
     if (this.e.alpha > 0) {
-      if (this.e.spr === 'fireghost') drawGhost('fire', ex, ey, sc, this.t, this.e.alpha);
+      if (this.e.group) this.drawGroup(ey);
+      else if (this.e.spr === 'fireghost') drawGhost('fire', ex, ey, sc, this.t, this.e.alpha);
       else {
         ctx.globalAlpha = this.e.alpha * (this.e.spr === 'fantasminha' ? 0.9 : 1);
         ctx.drawImage(img, ex, ey, img.width * sc, img.height * sc);
@@ -623,6 +738,7 @@ class Battle {
     }
 
     if (this.dragon) this.drawDragon(ex, ey, img, sc);
+    if (this.robot) this.drawRobot();
 
     // golpe
     if (this.slash && this.slash.t !== undefined) {
@@ -676,6 +792,34 @@ class Battle {
     if (this.hurtFlash > 0) { this.hurtFlash -= 1 / 60; ctx.fillStyle = 'rgba(255,0,0,0.12)'; ctx.fillRect(0, 0, W, H); }
   }
 
+  drawGroup(ey) {
+    const m = this.e.mercy, a = this.e.alpha;
+    const mem = [['ze', 228, m >= 34], ['teca', 438, m >= 67], ['brutao', 330, m >= 100]];
+    for (const [k, cx, gave] of mem) {
+      const img = SPR[k], sc = k === 'brutao' ? 7 : 5;
+      const bob = gave ? 24 : Math.sin(this.t * 4 + cx) * 3;
+      ctx.globalAlpha = a * (gave ? 0.35 : 1);
+      ctx.drawImage(img, cx - img.width * sc / 2, ey + (k === 'brutao' ? -10 : 30) + bob, img.width * sc, img.height * sc);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  drawRobot() {
+    const set = SPR.robot.bit, x = 548, y = 84 + Math.sin(this.t * 4) * 3;
+    const sad = this.robotBat !== undefined && (this.robotBat <= 0 || this.robotHitT > 0);
+    if (this.robotHitT > 0) this.robotHitT -= 1 / 60;
+    drawSpr(sad ? set.sad : set.left[Math.floor(this.t * 4) % 2], x + (this.robotHitT > 0 ? Math.sin(this.t * 80) * 4 : 0), y, 4);
+    if (this.musicFx) {
+      this.musicFx.t += 1 / 60;
+      for (let i = 0; i < 6; i++) {
+        const k = (this.musicFx.t * 0.8 + i / 6) % 1;
+        const nx = x + 10 - k * 220 + Math.sin(k * 12 + i) * 20, ny = y + 20 + k * 300;
+        ctx.fillStyle = ['#5ff8ff', '#ffe680', '#ff5ac8'][i % 3];
+        ctx.fillRect(nx, ny, 8, 6); ctx.fillRect(nx + 6, ny - 14, 2, 14); ctx.fillRect(nx + 6, ny - 14, 6, 3);
+      }
+    }
+  }
+
   drawDragon(ex, ey, img, sc) {
     const set = SPR.dragon[this.dragon];
     let x = 40, y = 66 + Math.sin(this.t * 3) * 6;
@@ -719,6 +863,10 @@ class Battle {
     } else if (st === 'fightBar' || (st === 'damage' && this.bar)) {
       this.drawTarget();
     } else if (st === 'enemyTurn') {
+      if (this.patternName === 'protect') {
+        const bx = this.box;
+        drawSpr(SPR.robot.bit.right[Math.floor(this.t * 4) % 2], bx.x + bx.w / 2 - 12, bx.y + bx.h - 40, 1.5);
+      }
       for (const bl of this.bullets) BULLET_DRAW[bl.kind](bl, this.t);
       const s = this.soul;
       if (s.inv <= 0 || Math.floor(s.inv * 12) % 2) drawSpr(SPR.soul, s.x - 8, s.y - 7, 1);
@@ -761,6 +909,11 @@ class Battle {
     ctx.fillStyle = '#c00000'; ctx.fillRect(286, y + 4, w, 20);
     ctx.fillStyle = '#ffff00'; ctx.fillRect(286, y + 4, w * Math.max(0, G.hp) / G.maxhp, 20);
     text(`${Math.max(0, G.hp)} / ${G.maxhp}`, 300 + w, y, 30);
+    if (this.robotBat !== undefined) {
+      text('BIT', 520, y, 24, '#5ff8ff');
+      ctx.fillStyle = '#333'; ctx.fillRect(556, y + 6, 60, 16);
+      ctx.fillStyle = this.robotBat > 30 ? '#7fff9f' : '#ff5a5a'; ctx.fillRect(556, y + 6, 60 * this.robotBat / 100, 16);
+    }
   }
 }
 
@@ -844,6 +997,83 @@ const PATTERNS = {
       }
     },
   },
+  insults: { update(B, dt) { PATTERNS.jokeWords.update(B, dt); } },
+  paperBalls: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.32;
+        const bx = B.box, left = Math.random() < 0.5;
+        B.bullets.push({ kind: 'paper', x: left ? bx.x + 4 : bx.x + bx.w - 4, y: bx.y + 10 + Math.random() * 30, vx: (left ? 1 : -1) * (60 + Math.random() * 90), vy: -40, g: 200, r: 6, life: 3 });
+      }
+    },
+  },
+  erasers: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = B.pState.n ? 1.6 : 0.1;
+        B.pState.n = (B.pState.n || 0) + 1;
+        const bx = B.box;
+        B.bullets.push({ kind: 'eraser', x: bx.x + 20 + Math.random() * (bx.w - 40), y: bx.y + 16, vx: (Math.random() < 0.5 ? -1 : 1) * (90 + Math.random() * 40), vy: 80 + Math.random() * 40, w: 16, h: 10, bounce: true, life: 6 });
+      }
+    },
+  },
+  backpacks: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 1.1;
+        const bx = B.box, left = (B.pState.n = (B.pState.n || 0) + 1) % 2;
+        B.bullets.push({ kind: 'backpack', x: left ? bx.x - 20 : bx.x + bx.w + 20, y: B.soul.y, vx: left ? 125 : -125, vy: 0, w: 30, h: 30 });
+      }
+    },
+  },
+  protect: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.55;
+        const bx = B.box, tx = bx.x + bx.w / 2, ty = bx.y + bx.h - 24;
+        const x = bx.x + 10 + Math.random() * (bx.w - 20), y = bx.y - 6;
+        const a = Math.atan2(ty - y, tx - x);
+        B.bullets.push({ kind: 'spit', x, y, vx: Math.cos(a) * 95, vy: Math.sin(a) * 95, r: 6, shield: true, toRobot: true, tx, ty });
+      }
+    },
+  },
+  rulers: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.9;
+        const bx = B.box, top = (B.pState.n = (B.pState.n || 0) + 1) % 2, h = bx.h * 0.58, left = Math.random() < 0.5;
+        B.bullets.push({ kind: 'ruler', x: left ? bx.x - 10 : bx.x + bx.w + 10, y: top ? bx.y + h / 2 : bx.y + bx.h - h / 2, vx: left ? 130 : -130, vy: 0, w: 8, h });
+      }
+    },
+  },
+  lasers: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 1.0;
+        const bx = B.box, horiz = Math.random() < 0.6;
+        if (horiz) B.bullets.push({ kind: 'laser', x: bx.x + bx.w / 2, y: B.soul.y, vx: 0, vy: 0, w: bx.w, h: 8, warn: 0.6, life: 1.0 });
+        else B.bullets.push({ kind: 'laser', x: B.soul.x, y: bx.y + bx.h / 2, vx: 0, vy: 0, w: 8, h: bx.h, warn: 0.6, life: 1.0 });
+      }
+    },
+  },
+  dustballs: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.75;
+        const bx = B.box, side = (Math.random() * 4) | 0;
+        const x = side === 0 ? bx.x + 10 : side === 1 ? bx.x + bx.w - 10 : bx.x + Math.random() * bx.w;
+        const y = side === 2 ? bx.y + 10 : side === 3 ? bx.y + bx.h - 10 : bx.y + Math.random() * bx.h;
+        B.bullets.push({ kind: 'dust', x, y, vx: 0, vy: 0, r: 6, home: 1.4, pop: true, life: 3.5 });
+      }
+    },
+  },
   slide: {
     update(B, dt) {
       B.spawnT -= dt;
@@ -920,7 +1150,7 @@ const PATTERNS = {
       if (B.spawnT <= 0) {
         B.spawnT = 0.75;
         const bx = B.box, left = Math.random() < 0.5;
-        const words = ['HA', 'HAHA', 'KKKK', 'PIADA', 'HUEHUE', 'RIA!', 'BUU', 'HIHI'];
+        const words = B.e.words || ['HA', 'HAHA', 'KKKK', 'PIADA', 'HUEHUE', 'RIA!', 'BUU', 'HIHI'];
         const t = words[(Math.random() * words.length) | 0];
         ctx.font = `28px ${FONT}`;
         const w = ctx.measureText(t).width;
@@ -989,6 +1219,40 @@ const PATTERNS = {
 };
 
 const BULLET_DRAW = {
+  paper(b, t) {
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f4f4f0'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#9aa'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(b.x - 4, b.y - 1); ctx.lineTo(b.x + 3, b.y + 2); ctx.stroke();
+  },
+  eraser(b) {
+    ctx.fillStyle = '#000'; ctx.fillRect(b.x - 9, b.y - 6, 18, 12);
+    ctx.fillStyle = '#ff8ab0'; ctx.fillRect(b.x - 8, b.y - 5, 10, 10); ctx.fillStyle = '#5a8ad8'; ctx.fillRect(b.x + 2, b.y - 5, 6, 10);
+  },
+  backpack(b) {
+    ctx.fillStyle = '#000'; ctx.fillRect(b.x - 16, b.y - 16, 32, 32);
+    ctx.fillStyle = '#d8443a'; ctx.fillRect(b.x - 14, b.y - 14, 28, 28);
+    ctx.fillStyle = '#9a2a20'; ctx.fillRect(b.x - 10, b.y, 20, 10); ctx.fillStyle = '#ffd23a'; ctx.fillRect(b.x - 2, b.y + 2, 4, 3);
+  },
+  spit(b) {
+    ctx.fillStyle = '#9adf8a'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d8ffd0'; ctx.fillRect(b.x - 2, b.y - 3, 2, 2);
+  },
+  ruler(b) {
+    ctx.fillStyle = '#000'; ctx.fillRect(b.x - 5, b.y - b.h / 2, 10, b.h);
+    ctx.fillStyle = '#ffd23a'; ctx.fillRect(b.x - 4, b.y - b.h / 2 + 1, 8, b.h - 2);
+    ctx.fillStyle = '#000'; for (let y = 4; y < b.h; y += 6) ctx.fillRect(b.x - 4, b.y - b.h / 2 + y, 3, 1);
+  },
+  laser(b) {
+    const active = b.t >= b.warn;
+    ctx.fillStyle = active ? '#ff3b3b' : 'rgba(255,59,59,0.35)';
+    if (active) ctx.fillRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
+    else { for (let i = -b.w / 2; i < b.w / 2; i += 10) if (b.w > b.h) ctx.fillRect(b.x + i, b.y - 1, 6, 2); for (let i = -b.h / 2; i < b.h / 2; i += 10) if (b.h > b.w) ctx.fillRect(b.x - 1, b.y + i, 2, 6); }
+    if (active) { ctx.fillStyle = '#fff'; if (b.w > b.h) ctx.fillRect(b.x - b.w / 2, b.y - 1, b.w, 2); else ctx.fillRect(b.x - 1, b.y - b.h / 2, 2, b.h); }
+  },
+  dust(b, t) {
+    ctx.fillStyle = '#8a8a9a'; for (let i = 0; i < 4; i++) { const a = t * 6 + i * 1.6; ctx.beginPath(); ctx.arc(b.x + Math.cos(a) * 3, b.y + Math.sin(a) * 3, 4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#c8c8d4'; ctx.fillRect(b.x - 1, b.y - 1, 2, 2);
+  },
   peng(b) {
     const img = SPR.pinguim; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.left ? Math.PI / 2 : -Math.PI / 2);
     ctx.drawImage(img, -12, -12, 24, 24); ctx.restore();

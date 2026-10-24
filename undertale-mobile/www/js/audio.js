@@ -67,6 +67,10 @@ const Sfx = (() => {
     dragon: () => tone(110 + Math.random() * 40, 0.06, 'square', 0.08),
     deep: () => tone(70 + Math.random() * 10, 0.09, 'sawtooth', 0.12),
     peng: () => tone(900 + Math.random() * 300, 0.04, 'square', 0.05),
+    robot: () => tone([660, 880, 990, 1320][(Math.random() * 4) | 0], 0.04, 'square', 0.06),
+    robot2: () => tone([520, 780][(Math.random() * 2) | 0], 0.05, 'triangle', 0.12),
+    bully: () => tone(160 + Math.random() * 40, 0.05, 'square', 0.08),
+    kid: () => tone(600 + Math.random() * 200, 0.04, 'triangle', 0.1),
   };
 
   // ---------- INSTRUMENTOS ----------
@@ -272,6 +276,23 @@ const Sfx = (() => {
     nevasca: { bpm: 132, lead: 'flute', lead2: 'bell', pad: 'strings', arp: 'harp', bass: 'bassSaw', bassPat: 'rootfifth', drums: 'pop',
       bars: `Dm: D5 . F5 . A5 . . G5 | Bb: F5 . D5 . . . Bb4 . | F: C5 . F5 . A5 . C6 . | C: G5 . . . E5 . . . |
              Dm: D6 . C6 . A5 . F5 . | Bb: D5 . F5 . Bb5 . D6 . | C: E6 . D6 . C6 . G5 . | A: A5 . . . C#6 . E6 .` },
+    futuro: { bpm: 112, lead: 'square', lead2: 'bell', pad: 'organ', arp: 'marimba', bass: 'bassSaw', bassPat: 'eighths', drums: 'pop',
+      bars: `Am: E5 . A5 . C6 . B5 A5 | F: C6 . . . A5 . F5 . | C: G5 . E5 . G5 . C6 . | G: B5 . . . D6 . - - |
+             Am: A5 . C6 . E6 . D6 C6 | F: A5 . F5 . C6 . A5 . | Dm: F5 . A5 . D6 . C6 A5 | E: G#5 . . . B5 . E5 .` },
+    bit: { bpm: 126, lead: 'bell', lead2: 'pizz', pad: null, arp: 'marimba', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'tick',
+      bars: `C: C6 . E6 . G6 . E6 . | F: F6 . A5 . C6 . A5 . | G: G5 . B5 . D6 . B5 . | C: C6 . . . G5 . - - |
+             Am: A5 . C6 . E6 . C6 . | Dm: D6 . F6 . A5 . F6 . | G7: G5 . B5 . D6 . F6 . | C: E6 . C6 . - - - -` },
+    escola: { bpm: 132, lead: 'flute', lead2: 'bell', pad: 'strings', arp: 'harp', bass: 'bassPluck', bassPat: 'walk', drums: 'pop',
+      bars: `G: B4 . D5 . G5 . A5 B5 | C: C6 . B5 . A5 . G5 . | D: F#5 . A5 . D6 . C6 . | G: B5 . . . G5 . - - |
+             Em: G5 . B5 . E6 . D6 . | C: E6 . C6 . A5 . G5 . | A7: A5 . C#6 . E6 . G5 . | D: F#5 . . . D5 . - -` },
+    cinema: { bpm: 76, lead: 'brass', lead2: 'bell', pad: 'strings', arp: 'harp', bass: 'bassTri', bassPat: 'root', drums: 'tribal',
+      bars: `C: G4 . C5 . E5 . . . | Am: E5 . A5 . C6 . . . | F: C6 . A5 . F5 . A5 . | G: B5 . . . D6 . . . |
+             C: E6 . . . C6 . G5 . | Am: A5 . . . E5 . C5 . | F: F5 . A5 . G5 . F5 . | G: G5 . . . . . - -` },
+    valentoes: { bpm: 172, lead: 'square', lead2: 'brass', pad: 'strings', arp: null, bass: 'bassSaw', bassPat: 'eighths', drums: 'boss',
+      bars: `Em: E5 E5 G5 E5 B5 . A5 G5 | C: G5 . E5 . C5 . E5 G5 | D: F#5 F#5 A5 F#5 D6 . C6 A5 | B: D#6 . B5 . F#5 . B5 D#6 |
+             Em: E6 . D6 E6 B5 . G5 B5 | C: C6 . B5 C6 G5 . E5 G5 | Am: A5 . B5 C6 E6 . D6 C6 | B7: B5 . A5 . F#5 . D#5 F#5 |
+             C: G5 . . . C6 . G5 . | G: B5 . . . D6 . B5 . | Am: C6 . B5 . A5 . E5 . | Em: G5 . . . B5 . . . |
+             C: E6 . D6 . C6 . G5 . | D: F#6 . E6 . D6 . A5 . | Am: C6 . D6 . E6 . F#6 . | B: D#6 . . . F#6 . . .` },
     victory: { bpm: 120, lead: 'brass', lead2: 'bell', pad: 'organ', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
       bars: `C: C5 . E5 . G5 . C6 . | F: A5 . . . F5 . A5 . | G: B5 . D6 . G5 . B5 . | C: C6 . . . . . - -` },
   };
@@ -382,6 +403,9 @@ const Sfx = (() => {
     toggle() { tone(760, 0.06, 'triangle', 0.12); },
     buzz() { tone(110, 0.25, 'sawtooth', 0.14); },
     push() { noise(0.2, 0.15, -600); },
+    robotSong() { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => setTimeout(() => { tone(f, 0.16, 'square', 0.08); tone(f / 2, 0.16, 'triangle', 0.1); }, i * 110)); },
+    schoolBell() { [0, 1, 2, 3, 4, 5, 6, 7].forEach(i => setTimeout(() => tone(1400, 0.06, 'square', 0.12), i * 70)); },
+    beep() { tone(1320, 0.05, 'square', 0.08); setTimeout(() => tone(990, 0.05, 'square', 0.08), 70); },
     icicle() { tone(2400, 0.3, 'sine', 0.08, -1800); setTimeout(() => noise(0.25, 0.25, 2500), 280); },
     stopMusic() {
       if (!song) return;

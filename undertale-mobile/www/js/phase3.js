@@ -346,9 +346,15 @@ MAPS.gelo = {
 const Phone = {
   async open() {
     const W = World;
-    const r = await W.ask('* (CELULAR) Para quem ligar?', ['Treinador', '???', 'Sair']);
-    if (r === 0) return P3.callTrainer();
-    if (r === 1) {
+    const opts = ['Treinador'].concat(G.flags.bitContact ? ['Bit'] : [], ['???', 'Sair']);
+    const o = opts[await W.ask('* (CELULAR) Para quem ligar?', opts)];
+    if (o === 'Treinador') return P3.callTrainer();
+    if (o === 'Bit') {
+      Sfx.ring(); await wait(0.4); Sfx.robotSong();
+      return W.say(['B: BIP BOP! Alô?! É você?!', 'B: Os valentões agora sentam comigo no recreio. Dá pra acreditar?',
+        'B: Toma uma musiquinha pra viagem! ♪', '* (A música do Bit te deixa animado.)']);
+    }
+    if (o === '???') {
       Sfx.ring();
       await W.say(['* (Chamando...)', '* (...)', '* (Alguém atende. Só se ouve o vento.)', 'S: ...Ainda não é hora.', '* (Desligou.)']);
     }
@@ -547,6 +553,15 @@ const P3 = {
     Sfx.ring();
     await wait(0.5);
     let tip;
+    if (World.mapId === 'futuro') {
+      if (!F.p4met) tip = ['T: Uma cidade cheia de robôs! Vai lá, explore. Alguém vai aparecer.'];
+      else if ((F.p4tour || 0) < 4) tip = ['T: Um robô amigo te mostrando a cidade? Que fofo! Siga a setinha amarela dele.'];
+      else if (!F.p4day2) tip = ['T: Já é noite aí? Vá dormir na casa do Bit. A porta azul da praça.'];
+      else if (!F.p4bully) tip = ['T: Escola! A avenida leva até lá. Fique perto do Bit.'];
+      else if (!F.p4class) tip = ['T: Entre na escola e ajude o Bit na aula. Ele sabe matemática, mas sentimentos humanos... nem tanto.'];
+      else tip = ['T: Valentões? No meu tempo era só pedir pra parar.', 'T: Converse com eles, defenda o Bit... ou mostre que vocês são amigos.'];
+      return W.say(['T: Alô! Treinador falando!'].concat(tip, ['T: Boa sorte!']));
+    }
     if (!F.p3g1) tip = ['T: As placas com X? Pise em cada uma UMA vez só.', 'T: Se pisar de novo, ela volta a ser X. Se bagunçar, use a alavanca.', 'T: Dica: na cruz do meio, entre por um lado e saia pelo outro... sem voltar.'];
     else if (!F.p3lake) tip = ['T: Lago de gelo! No gelo você só para quando bate em alguma coisa.', 'T: Comece pela parte de BAIXO da margem e escorregue pra direita.', 'T: Se errar, volte pra margem e tente de novo. É chato, eu sei.'];
     else if (x < 132 && !F.p3field) tip = ['T: Estalactites? Olhe as SOMBRAS no chão e saia de baixo delas!'];

@@ -22,14 +22,14 @@ const Game = {
   update(dt) {
     Timers.update(dt); Fade.update(dt); flushFrameWaiters(dt);
     if (ConfigMenu.isOpen) { ConfigMenu.update(dt); return; }
-    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, cine: Cine3 }[this.scene];
+    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, cine: this.cine || Cine3 }[this.scene];
     if (this.scene === 'battle') this.battleObj.update(dt);
     else if (S) S.update(dt);
   },
 
   draw() {
     ctx.imageSmoothingEnabled = false;
-    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, cine: Cine3 }[this.scene];
+    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, cine: this.cine || Cine3 }[this.scene];
     if (this.scene === 'battle') this.battleObj.draw();
     else if (S) S.draw();
     if (this.flashT > 0) this.drawFlash();
@@ -60,6 +60,8 @@ const Game = {
     G = Object.assign(newGameState(), s);
     if (!G.flags) G.flags = {};
     if (G.map === 'dragoncity' && G.flags.bossDone) { this.goChapter(3); return; }
+    if ((G.map === 'gelo' && G.flags.p3done) || (G.map === 'futuro' && !G.flags.p4arrived)) { this.goChapter(4); return; }
+    if (G.map === 'gelo' && !G.flags.p3arrived) { this.goChapter(3); return; }
     this.enterMap(G.map || 'labirinto');
     if (Fade.a > 0 && !(G.map === 'dragoncity' && !G.flags.p2arrived)) Fade.to(0, 1.5);
     Sfx.playMusic(World.M.musicAt ? World.M.musicAt(World) : World.M.music);
@@ -73,6 +75,7 @@ const Game = {
   goChapter(n) {
     if (n === 2) { G.map = 'dragoncity'; G.pos = null; saveGame(null); }
     if (n === 3) { G.map = 'gelo'; G.pos = null; saveGame(null); }
+    if (n === 4) { G.map = 'futuro'; G.pos = null; saveGame(null); }
     this.scene = 'chapter'; Chapter.enter(n);
   },
 
@@ -145,7 +148,7 @@ const Title = {
     }
     text('PERDIDO', 320, 90, 52, '#fff', 'center', FONT_TITLE);
     text('um fangame de Undertale', 320, 160, 30, '#aaa', 'center');
-    const fase = { dragoncity: 'FASE 2: DRAGONCITY', gelo: 'FASE 3: COLÔNIA DE GELO' }[this.save && this.save.map] || 'FASE 1: O LABIRINTO';
+    const fase = { dragoncity: 'FASE 2: DRAGONCITY', gelo: 'FASE 3: COLÔNIA DE GELO', futuro: 'FASE 4: CIDADE FUTURISTA' }[this.save && this.save.map] || 'FASE 1: O LABIRINTO';
     text(fase, 320, 196, 30, '#ffe680', 'center');
     drawSpr(SPR.soul, 312, 244 + Math.sin(this.t * 3) * 4, 1);
     this.opts.forEach((o, i) => text(o, 320, 284 + i * 44, 34, i === this.sel ? '#ffff40' : '#fff', 'center'));
@@ -202,7 +205,8 @@ const Chapter = {
       this.done = true;
       Fade.to(1, 1.2).then(() => {
         Sfx.stopMusic();
-        if (this.n === 3) { Game.scene = 'cine'; Cine3.run(); }
+        if (this.n === 3) { Game.cine = Cine3; Game.scene = 'cine'; Cine3.run(); }
+        else if (this.n === 4) { Game.cine = Cine4; Game.scene = 'cine'; Cine4.run(); }
         else Game.enterMap(this.n === 2 ? 'dragoncity' : 'labirinto');
       });
     }
@@ -212,7 +216,8 @@ const Chapter = {
     const a = Math.min(1, this.t);
     ctx.globalAlpha = a;
     text('FASE ' + this.n, 320, 150, 40, '#fff', 'center', FONT_TITLE);
-    text({ 1: 'O LABIRINTO', 2: 'DRAGONCITY', 3: 'COLÔNIA DE GELO' }[this.n], 320, 220, 30, this.n === 3 ? '#9fe4ff' : '#ff9a3a', 'center', FONT_TITLE);
+    text({ 1: 'O LABIRINTO', 2: 'DRAGONCITY', 3: 'COLÔNIA DE GELO', 4: 'CIDADE FUTURISTA' }[this.n], 320, 220, this.n === 4 ? 26 : 30, { 3: '#9fe4ff', 4: '#ff5ac8' }[this.n] || '#ff9a3a', 'center', FONT_TITLE);
+    if (this.n === 4) { P4.drawSkyline(this.t, 0.5); drawSpr(SPR.robot.bit.right[Math.floor(this.t * 4) % 2], 296, 290 + Math.sin(this.t * 3) * 4, 3); }
     if (this.n === 3) {
       drawGhost('ice', 278, 280 + Math.sin(this.t * 2) * 6, 3, this.t);
       ctx.fillStyle = '#fff';
@@ -405,7 +410,7 @@ const End = {
     this.t += dt;
     if (this.t > 3 && (Input.isPressed('a') || Input.tap)) {
       Sfx.select(); this.t = -99;
-      Fade.to(1, 1).then(() => { Sfx.stopMusic(); this.phase === 2 ? Game.goChapter(3) : Game.goTitle(); });
+      Fade.to(1, 1).then(() => { Sfx.stopMusic(); this.phase === 2 ? Game.goChapter(3) : this.phase === 3 ? Game.goChapter(4) : Game.goTitle(); });
     }
   },
   draw() {
@@ -416,15 +421,17 @@ const End = {
     if (G.dragon) drawSpr(SPR.dragon[G.dragon].right[Math.floor(T * 4) % 2], 170, 118, 4);
     if (this.phase === 2 && G.flags.fireFriend) drawGhost('fire', 380, 112, 3, T);
     if (this.phase === 3) { drawGhost('ice', 380, 100, 3, T); drawGhost('fire', 470, 120, 2, T, G.flags.fireFriend ? 1 : 0.5); }
+    if (this.phase === 4) drawSpr(SPR.robot.bit.left[Math.floor(T * 4) % 2], 380, 130, 3);
     const rota = G.kills === 0 ? 'Rota: PACIFISTA (até agora...)' : (G.kills >= 4 && G.spares === 0) ? 'Rota: ...GENOCIDA?' : 'Rota: NEUTRA';
     text(`LV ${G.lv}   EXP ${G.xp}   OURO ${G.gold}`, 320, 236, 32, '#fff', 'center');
     text(`Poupados: ${G.spares}    Derrotados: ${G.kills}`, 320, 270, 32, '#fff', 'center');
     text(rota, 320, 304, 32, '#ffe680', 'center');
-    const line = this.phase === 3 ? 'Os irmãos fantasmas estão te esperando...'
+    const line = this.phase === 4 ? (G.flags.bulliesFriends ? 'Bit e os valentões agora são amigos!' : 'Novo contato no celular: BIT')
+      : this.phase === 3 ? 'Os irmãos fantasmas estão te esperando...'
       : G.flags.fireFriend ? 'FireGhost virou seu amigo!' : 'O IceGhost sabe que você está aqui...';
     text(line, 320, 344, 30, '#9fe4ff', 'center');
-    text(this.phase === 2 ? 'Próxima: FASE 3 — COLÔNIA DE GELO' : 'FASE 4 em breve...', 320, 386, 30, '#ff7f27', 'center');
-    if (this.t > 3 && Math.floor(this.t * 2) % 2) text(this.phase === 2 ? 'toque para continuar' : 'toque para voltar ao título', 320, 434, 26, '#777', 'center');
+    text({ 2: 'Próxima: FASE 3 — COLÔNIA DE GELO', 3: 'Próxima: FASE 4 — CIDADE FUTURISTA', 4: 'FASE 5 em breve...' }[this.phase], 320, 386, 30, '#ff7f27', 'center');
+    if (this.t > 3 && Math.floor(this.t * 2) % 2) text(this.phase < 4 ? 'toque para continuar' : 'toque para voltar ao título', 320, 434, 26, '#777', 'center');
   },
 };
 

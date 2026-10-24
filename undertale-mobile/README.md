@@ -64,7 +64,19 @@ Músicas novas com vários instrumentos (sino, piano, flauta, cordas, metais, pi
   7. **Ponte de gelo rachado**: siga as pegadas de pinguim ou SPLASH.
 - No fim, a **casa de gelo dos irmãos fantasmas**... continua na Fase 4.
 
-Fase 4: em breve.
+## Fase 4 — A Cidade Futurista
+
+- Os irmãos fantasmas preparam a vingança "gelada": um **ESCORREGADOR** que te joga lá embaixo, na **Cidade Futurista**.
+- Você conhece o **BIT**, um robô que te mostra a cidade com uma setinha de tour: **Holograma**, **Lanchonete**, **Mirante** (vista da cidade) e **Cinema** (filme *O Robô Pato contra os Pombos do Espaço*).
+- À noite você dorme na casa do Bit. No dia seguinte: **ESCOLA**. O Bit é o único robô; o resto são crianças humanas que caíram lá.
+- **Defender o Bit** dos valentões (Zé Marreta e Teca) e **ajudar ele a estudar**: na aula da Professora Volt você sussurra as respostas de "Sentimentos Humanos".
+- **BOSS FIGHT: Gangue dos Valentões** (Brutão, Teca e Zé) contra você, seu dragão e o Bit.
+  - **Bit: Música** cura HP de acordo com o seu nível (6 + 4×LV).
+  - Ataques que miram no Bit: bloqueie com a ALMA, senão a bateria dele acaba.
+  - Dá para convencê-los (Conversar, Defender, Mostrar amizade) ou vencer (eles fogem; ninguém morre).
+- No fim, você pega o **contato do Bit** (CELULAR → Bit) e vocês se despedem.
+
+Fase 5: em breve.
 
 ## Personagens
 
@@ -88,6 +100,10 @@ Fase 4: em breve.
 |---|---|---|
 | ![](arte/encapuzado.png) | ![](arte/pinguim.png) | ![](arte/nevoso.png) |
 
+| Bit | Valentões (Zé, Brutão, Teca) |
+|---|---|
+| ![](arte/bit.png) | ![](arte/valentoes.png) |
+
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
 ## Estrutura
@@ -97,6 +113,7 @@ www/            jogo (HTML5)
   js/sprites.js   pixel art e tiles (fase 1)
   js/sprites2.js  dragões, fantasmas e tiles de DragonCity
   js/sprites3.js  neve, pinguins, boneco de neve, encapuzado
+  js/sprites4.js  robôs, crianças, valentões, drones, tiles neon
   js/audio.js     efeitos e sequenciador de músicas (WebAudio)
   js/engine.js    controles, configurações, texto, diálogo, save
   js/battle.js    batalha, dragões, chefe e ataques
@@ -104,6 +121,7 @@ www/            jogo (HTML5)
   js/phase1.js    Fase 1: O Labirinto
   js/phase2.js    Fase 2: DragonCity
   js/phase3.js    Fase 3: Colônia de Gelo (puzzles, armadilhas, celular)
+  js/phase4.js    Fase 4: Cidade Futurista (Bit, cinema, escola, valentões)
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK
 apk/            APK pronto
