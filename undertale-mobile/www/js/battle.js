@@ -251,10 +251,13 @@ class Battle {
     this.textDone = then; this.state = 'text'; this.nextText();
   }
   nextText() {
-    const it = this.textQueue.shift();
+    let it = this.textQueue.shift();
     if (!it) { this.typer = null; const d = this.textDone; this.textDone = null; d && d(); return; }
+    const maxW = it.who === 'instr' ? 420 : 530;
+    const pages = paginate(it.t, maxW, 32, 3);
+    if (pages.length > 1) { this.textQueue.unshift(...pages.slice(1).map(t => ({ ...it, t }))); it = { ...it, t: pages[0] }; }
     this.typerWho = it.who;
-    this.typer = new Typer(it.t, it.who === 'instr' ? 'instr' : 'narr', it.who === 'instr' ? 420 : 530, 32);
+    this.typer = new Typer(it.t, it.who === 'instr' ? 'instr' : 'narr', maxW + 4, 32);
   }
   toMenu() {
     this.state = 'menu';

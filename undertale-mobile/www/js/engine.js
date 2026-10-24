@@ -179,16 +179,27 @@ function wrapText(str, maxW, size) {
   ctx.font = `${size}px ${FONT}`;
   const lines = [];
   for (const para of str.split('\n')) {
-    const words = para.split(' ');
-    let cur = '';
+    const lead = /^ */.exec(para)[0];
+    const words = para.slice(lead.length).split(' ');
+    let cur = lead;
     for (const w of words) {
-      const test = cur ? cur + ' ' + w : w;
-      if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = '  ' + w; }
+      const test = cur.trim() ? cur + ' ' + w : cur + w;
+      if (ctx.measureText(test).width > maxW && cur.trim()) { lines.push(cur); cur = '  ' + w; }
       else cur = test;
     }
     lines.push(cur);
   }
   return lines;
+}
+
+// Divide um texto longo em páginas de no máximo `maxLines` linhas.
+function paginate(str, maxW, size, maxLines = 3) {
+  const lines = wrapText(str, maxW, size);
+  const pages = [];
+  for (let i = 0; i < lines.length; i += maxLines) {
+    pages.push(lines.slice(i, i + maxLines).join('\n').replace(/^ +/, ''));
+  }
+  return pages.length ? pages : [''];
 }
 
 // Texto "máquina de escrever"
@@ -236,9 +247,16 @@ const Dialog = {
     if (!this.queue.length) { this.typer = null; this.cur = null; const r = this.resolve; this.resolve = null; r && r(); return; }
     let it = this.queue.shift();
     if (typeof it === 'string') it = { t: it };
+    const portrait = !!PORTRAITS[it.who], maxW = portrait ? 430 : 540;
+    const pages = paginate(it.t, maxW, 32, 3);
+    if (pages.length > 1) {
+      // texto grande demais para a caixa: quebra em várias páginas (as escolhas ficam na última)
+      const rest = pages.slice(1).map((p, i, a) => ({ ...it, t: p, choices: i === a.length - 1 ? it.choices : undefined }));
+      this.queue.unshift(...rest);
+      it = { ...it, t: pages[0], choices: undefined };
+    }
     this.cur = it;
-    const portrait = !!PORTRAITS[it.who];
-    this.typer = new Typer(it.t, VOICE_OF[it.who] || 'narr', portrait ? 430 : 540, 32);
+    this.typer = new Typer(it.t, VOICE_OF[it.who] || 'narr', maxW + 4, 32);
     this.sel = 0;
   },
   update(dt) {
@@ -263,10 +281,18 @@ const Dialog = {
   ask(text, choices, who) {
     return this.show([{ t: text, who, choices }], World.player && World.player.y - World.cam.y > 150).then(() => this.choice);
   },
+  // As escolhas aparecem numa caixa separada, uma por linha, para nunca se sobreporem.
+  choicePanel() {
+    const ch = this.cur.choices;
+    ctx.font = `32px ${FONT}`;
+    const w = Math.min(600, Math.max(...ch.map(c => ctx.measureText(c).width)) + 80);
+    const h = ch.length * 40 + 20;
+    const y = this.top ? 12 + 150 + 8 : 318 - 8 - h;
+    return { x: 624 - w, y, w, h };
+  },
   choiceRect(i) {
-    const y = this.top ? 12 : 318, n = this.cur.choices.length;
-    const tx = PORTRAITS[this.cur.who] ? 150 : 40, w = (600 - tx) / n;
-    return { x: tx + i * w, y: y + 100, w: w - 10, h: 40 };
+    const P = this.choicePanel();
+    return { x: P.x + 10, y: P.y + 10 + i * 40, w: P.w - 20, h: 40 };
   },
   draw() {
     if (!this.typer) return;
@@ -279,10 +305,12 @@ const Dialog = {
     }
     this.typer.draw(tx, y + 22);
     if (this.cur.choices && this.typer.done) {
+      const P = this.choicePanel();
+      frameBox(P.x, P.y, P.w, P.h, 5);
       this.cur.choices.forEach((c, i) => {
         const r = this.choiceRect(i);
-        if (i === this.sel) drawSpr(SPR.soul, r.x, r.y + 12, 1);
-        text(c, r.x + 24, r.y + 4, 32, i === this.sel ? '#ffff40' : '#fff');
+        if (i === this.sel) drawSpr(SPR.soul, r.x + 8, r.y + 13, 1);
+        text(c, r.x + 34, r.y + 4, 32, i === this.sel ? '#ffff40' : '#fff');
       });
       return;
     }
