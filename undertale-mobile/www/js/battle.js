@@ -422,6 +422,9 @@ const BTN = [
 const BTN_Y = 422, BTN_W = 131, BTN_H = 46;
 const BOX_FULL = { x: 32, y: 250, w: 576, h: 140 };
 
+// Lutas especiais registram sua própria classe aqui (ex.: o Mestre Encapuzado)
+const BATTLE_CLASSES = {};
+
 class Battle {
   constructor(key, opts = {}) {
     const def = ENEMIES[key];
@@ -856,14 +859,8 @@ class Battle {
   }
   st_enemyTurn(dt) {
     if (this.bubble) { this.bubble.life -= dt; if (this.bubble.life <= 0) this.bubble = null; }
-    // movimento da alma
-    const s = this.soul, sp = this.soulSpeed || 150;
-    const mv = moveVector();
-    s.x += mv.x * sp * dt; s.y += mv.y * sp * dt;
-    if (Input.drag.active) { s.x += Input.drag.dx * 1.1; s.y += Input.drag.dy * 1.1; }
-    const bx = this.box;
-    s.x = Math.max(bx.x + 13, Math.min(bx.x + bx.w - 13, s.x));
-    s.y = Math.max(bx.y + 12, Math.min(bx.y + bx.h - 12, s.y));
+    const s = this.soul;
+    this.moveSoul(dt);
     if (s.inv > 0) s.inv -= dt;
 
     if (this.bubble && this.pt === 0 && this.bubble.life > 0.9) { // deixa a fala aparecer
@@ -890,8 +887,11 @@ class Battle {
         if ((b.x < bx.x + 12 && b.vx < 0) || (b.x > bx.x + bx.w - 12 && b.vx > 0)) b.vx *= -1;
         if ((b.y < bx.y + 10 && b.vy < 0) || (b.y > bx.y + bx.h - 10 && b.vy > 0)) b.vy *= -1;
       }
-      let hitIt = b.w ? (Math.abs(b.x - s.x) < b.w / 2 + 4 && Math.abs(b.y - s.y) < b.h / 2 + 4) : Math.hypot(b.x - s.x, b.y - s.y) < b.r + 5;
+      let hitIt = b.hitFn ? b.hitFn(b, s) : b.w ? (Math.abs(b.x - s.x) < b.w / 2 + 4 && Math.abs(b.y - s.y) < b.h / 2 + 4) : Math.hypot(b.x - s.x, b.y - s.y) < b.r + 5;
       if (b.warn && b.t < b.warn) hitIt = false;
+      // ossos azuis só machucam quem se mexe; laranjas, quem fica parado
+      if (hitIt && b.color === 'blue' && !this.soulMoved) hitIt = false;
+      if (hitIt && b.color === 'orange' && this.soulMoved) hitIt = false;
       if (b.shield && hitIt) { b.dead = true; Sfx.toggle(); this.particles.push({ x: b.x, y: b.y, vx: 0, vy: -30, life: 0.4, c: '#5ff8ff' }); continue; }
       if (b.toRobot && Math.hypot(b.x - b.tx, b.y - b.ty) < 14) {
         b.dead = true; Sfx.hurt(); this.robotHitT = 0.3;
@@ -916,6 +916,18 @@ class Battle {
       } else this.toMenu();
     }
   }
+  // movimento da alma (subclasses podem trocar, ex.: alma azul com gravidade)
+  moveSoul(dt) {
+    const s = this.soul, sp = this.soulSpeed || 150, ox = s.x, oy = s.y;
+    const mv = moveVector();
+    s.x += mv.x * sp * dt; s.y += mv.y * sp * dt;
+    if (Input.drag.active) { s.x += Input.drag.dx * 1.1; s.y += Input.drag.dy * 1.1; }
+    const bx = this.box;
+    s.x = Math.max(bx.x + 13, Math.min(bx.x + bx.w - 13, s.x));
+    s.y = Math.max(bx.y + 12, Math.min(bx.y + bx.h - 12, s.y));
+    this.soulMoved = Math.hypot(s.x - ox, s.y - oy) > 0.3;
+  }
+
   hurt(dmg) {
     dmg = Math.max(1, dmg - playerDef());
     if (this.opts.tutorial) G.hp = Math.max(1, G.hp - dmg);
@@ -938,9 +950,12 @@ class Battle {
   // ---------- DESENHO ----------
   draw() {
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
-    // grade de fundo
-    ctx.strokeStyle = '#123a1e'; ctx.lineWidth = 2;
-    for (let i = 0; i < 3; i++) ctx.strokeRect(14 + i * 210, 14, 196, 200);
+    if (this.drawBg) this.drawBg();
+    else {
+      // grade de fundo
+      ctx.strokeStyle = '#123a1e'; ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) ctx.strokeRect(14 + i * 210, 14, 196, 200);
+    }
 
     // inimigo
     const img = SPR[this.e.spr], sc = this.e.scale;
@@ -951,6 +966,7 @@ class Battle {
     if (this.e.spr === 'fireghost' || this.e.spr === 'brasinha') ey += Math.sin(this.t * 2.4) * 5;
     if (this.e.spr === 'gelinho') ex += Math.sin(this.t * 1.5) * 8;
     if (this.fleeing) ex += this.dyingT * 300;
+    ex += this.e.offX || 0;
     if (this.e.alpha > 0) {
       if (this.e.group) this.drawGroup(ey);
       else if (this.e.brothers) { drawGhost('fire', 200, ey + 10 + Math.sin(this.t * 3) * 6, 4.5, this.t, this.e.alpha); drawGhost('ice', 330, ey - 4 + Math.sin(this.t * 2) * 6, 5, this.t, this.e.alpha, true); }

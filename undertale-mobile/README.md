@@ -144,7 +144,22 @@ A rota muda o final das Fases 6 e 7.
   - Preto → **Dragão das Trevas**: um golpe com dano altíssimo.
 - O Gigante acorda, o caminho desmorona e o dragão, que aprendeu a voar, te leva embora voando.
 
-Fase 9: em breve.
+## Fase 9 — O Mestre
+
+- O dragão pousa em **Vale Comum**, uma cidade normal e tranquila: parque, padaria, pousada e moradores comuns.
+- Os moradores falam de um **encapuzado** que está te esperando na ponte. É o mesmo estranho que te deu o celular na Colônia de Gelo.
+- **BOSS: Mestre Encapuzado.** Inspirado nas lutas mais difíceis de Undertale:
+  - ataque surpresa logo no começo;
+  - ele **quebra os botões AGIR e POUPAR**: luta 1 contra 1, sem dragão e sem amigos;
+  - **canhões de caveira** com raios, ossos com buracos, **ossos azuis** (fique parado) e **laranjas** (continue se mexendo);
+  - **alma azul** com gravidade (pule com o analógico para cima ou segurando A), batida no chão e espinhos;
+  - **tela de cabeça pra baixo**, caixa que encolhe, tempestade de canhões;
+  - **KARMA (KR)**: depois de cada golpe o HP continua caindo um pouco (a barra rosa);
+  - ele **desvia** dos primeiros ataques de cada fase, e tem 3 fases e um **ATAQUE FINAL**;
+  - na rota **pacifista**, depois do ataque final o botão POUPAR se reconstrói sozinho.
+- Cada derrota deixa os golpes dele um pouco mais fracos (até a metade), para ninguém ficar travado.
+
+Fase 10: em breve.
 
 ## Personagens
 
@@ -184,6 +199,10 @@ Fase 9: em breve.
 |---|---|---|
 | ![](arte/draco.png) | ![](arte/vulcanicos.png) | ![](arte/dragoes-evoluidos.png) |
 
+| Mestre Encapuzado | Canhão de Caveira |
+|---|---|
+| ![](arte/mestre.png) | ![](arte/canhao.png) |
+
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
 ## Estrutura
@@ -209,6 +228,8 @@ www/            jogo (HTML5)
   js/phase6.js    Fase 6: A Caverna (aranhas, esqueletos, guerra, irmãos fantasmas)
   js/phase7.js    Fase 7: Neo-Sakura (refugiados, escola, festival, guerra, fuga)
   js/phase8.js    Fase 8: Vila Vulcânica (treino do dragão, vulcão, evolução, voo)
+  js/boss9.js     luta contra o Mestre Encapuzado (canhões, alma azul, karma, botões quebrados)
+  js/phase9.js    Fase 9: Vale Comum (cidade, padaria, pousada, ponte)
   js/quests.js    painel de missões e seta de objetivo de todas as fases
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK

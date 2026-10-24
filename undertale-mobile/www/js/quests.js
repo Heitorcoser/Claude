@@ -96,6 +96,13 @@ const QUESTS = {
     return { t: 'Chegue ao TOPO e pegue o CORAÇÃO DO VULCÃO no altar.', x: 35, y: 3 };
   },
 
+  cidade(W) {
+    const F = G.flags;
+    if (!F.p9arrived || F.p9done) return null;
+    if (W.player.x < 56 * TS) return { t: 'Explore VALE COMUM. Dica: compre comida na PADARIA e descanse na POUSADA. Depois vá até a PONTE, no leste.', x: 63, y: 22 };
+    return { t: 'Vá até a PONTE.', x: 63, y: 22 };
+  },
+
   sakura(W) {
     const F = G.flags, inside = W.player.y > 50 * TS;
     if (F.p7escape) return F.p7done ? null : { t: 'FUJA! Corra para o METRÔ, no fim da avenida, a LESTE. Cuidado com os escombros!', x: 87, y: 27 };

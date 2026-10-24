@@ -361,6 +361,19 @@ const Sfx = (() => {
     voo: { bpm: 150, lead: 'brass', lead2: 'flute', pad: 'strings', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
       bars: `D: D5 . F#5 . A5 . D6 . | G: B5 . A5 . G5 . B5 . | A: C#6 . B5 . A5 . E5 . | D: F#5 . A5 . D6 . . . |
              Bm: D6 . C#6 . B5 . F#5 . | G: G5 . B5 . D6 . E6 . | A: E6 . D6 . C#6 . A5 . | D: D6 . . . A5 D6 . .` },
+    mestre: { bpm: 158, lead: 'square', lead2: 'brass', pad: 'strings', arp: 'pizz', bass: 'bassSaw', bassPat: 'eighths', drums: 'boss',
+      bars: `Dm: D5 D5 . A5 . G#5 G5 F5 | Dm: D5 F5 G5 . A5 . F5 D5 | C: C5 C5 . G5 . F#5 F5 E5 | C: C5 E5 F5 . G5 . E5 C5 |
+             Bb: Bb4 Bb4 . F5 . E5 Eb5 D5 | Bb: Bb4 D5 F5 . G5 . F5 D5 | A: A4 C#5 E5 . A5 . G5 E5 | A: C#6 . A5 . E5 . C#5 . |
+             Dm: D6 . C6 . A5 . F5 . | Gm: G5 . A5 . Bb5 . D6 . | A: C#6 . E6 . D6 . C#6 . | Dm: D6 . . . D5 . . .` },
+    mestre2: { bpm: 172, lead: 'square', lead2: 'flute', pad: 'organ', arp: 'harp', bass: 'bassSaw', bassPat: 'eighths', drums: 'boss',
+      bars: `Fm: F5 F5 C6 . B5 Bb5 Ab5 F5 | Fm: Ab5 Bb5 C6 . Eb6 . C6 Ab5 | Db: Db5 F5 Ab5 . Db6 . C6 Ab5 | Db: F5 . Ab5 . F5 . Db5 . |
+             Eb: Eb5 G5 Bb5 . Eb6 . D6 Bb5 | C: E5 G5 C6 . E6 . C6 G5 | Fm: F6 . Eb6 . C6 . Ab5 . | C: E6 . . . C6 . G5 .` },
+    cidade9: { bpm: 100, lead: 'piano', lead2: 'flute', pad: 'strings', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
+      bars: `C: E5 . G5 . C6 . G5 . | Am: A5 . E5 . C5 . E5 . | F: F5 . A5 . C6 . A5 . | G: G5 . B5 . D6 . . . |
+             C: G5 . E5 . C5 . E5 . | Em: E5 . G5 . B5 . G5 . | F: A5 . G5 . F5 . D5 . | G: D5 . . . G4 . . .` },
+    encontro: { bpm: 66, lead: 'piano', lead2: 'bell', pad: 'strings', arp: null, bass: 'bassTri', bassPat: 'root', drums: null,
+      bars: `Dm: D5 . . . F5 . . . | Bb: D5 . . . . . . . | Gm: G4 . Bb4 . D5 . . . | A: C#5 . . . . . . . |
+             Dm: A5 . . . F5 . . . | Bb: F5 . D5 . . . . . | Gm: Bb4 . . . G4 . . . | A: A4 . . . . . . .` },
     victory: { bpm: 120, lead: 'brass', lead2: 'bell', pad: 'organ', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
       bars: `C: C5 . E5 . G5 . C6 . | F: A5 . . . F5 . A5 . | G: B5 . D6 . G5 . B5 . | C: C6 . . . . . - -` },
   };
@@ -468,6 +481,10 @@ const Sfx = (() => {
     puff() { noise(0.4, 0.2, -800); },
     ring() { [0, 1, 2, 3, 4, 5].forEach(i => setTimeout(() => tone(i % 2 ? 1320 : 1760, 0.07, 'square', 0.09), i * 80)); },
     splash() { noise(0.7, 0.35, -1200); tone(400, 0.4, 'sine', 0.12, -300); },
+    blasterCharge() { tone(180, 0.55, 'square', 0.05, 700); tone(360, 0.55, 'sine', 0.05, 900); },
+    blasterFire() { noise(0.55, 0.32, -1600); tone(90, 0.55, 'sawtooth', 0.2, -30); },
+    slam() { tone(70, 0.25, 'square', 0.22, -40); noise(0.2, 0.3, -700); },
+    shatter() { [0, 90, 180].forEach((d, i) => setTimeout(() => { noise(0.18, 0.3, 2500 + i * 800); tone(1400 - i * 300, 0.1, 'square', 0.08, -900); }, d)); },
     crack() { noise(0.15, 0.3, 3000); tone(1200, 0.08, 'square', 0.08, -800); },
     toggle() { tone(760, 0.06, 'triangle', 0.12); },
     buzz() { tone(110, 0.25, 'sawtooth', 0.14); },

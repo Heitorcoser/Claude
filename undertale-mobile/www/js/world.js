@@ -339,8 +339,8 @@ const World = {
     }), this.player.y - this.cam.y > 150);
   },
   ask(text, choices) {
-    const m = /^([IFGBVMHLOEJQAX]):\s*(.*)$/s.exec(text);
-    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo', E: 'tecela', J: 'osso', Q: 'kitsune', A: 'draco', X: 'golem' }[m[1]] : null;
+    const m = /^([IFGBVMHLOEJQAXS]):\s*(.*)$/s.exec(text);
+    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo', E: 'tecela', J: 'osso', Q: 'kitsune', A: 'draco', X: 'golem', S: 'stranger' }[m[1]] : null;
     return Dialog.ask(m ? '* ' + m[2] : text, choices, who);
   },
 

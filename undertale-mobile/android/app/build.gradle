@@ -10,8 +10,8 @@ android {
         applicationId 'com.heitorcoser.perdido'
         minSdk 24
         targetSdk 35
-        versionCode 13
-        versionName '0.8.2'
+        versionCode 14
+        versionName '0.9-fase9'
     }
 
     // Chave própria do projeto: assim qualquer build (local ou GitHub Actions)
