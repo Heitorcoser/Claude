@@ -263,6 +263,88 @@ Object.assign(ENEMIES, {
   },
 });
 
+Object.assign(ENEMIES, {
+  aranhaSold: {
+    name: 'Aranha Soldado', spr: 'aranhaSold', scale: 6, hp: 40, atk: 5, def: 3, xp: 22, gold: 10, voice: 'spider',
+    intro: '* Uma Aranha Soldado desce do teto!',
+    check: '* ARANHA SOLDADO - ATK 5 DEF 3\n* Acredita que os esqueletos roubaram os ovos da colônia.\n* Quem contou isso foram os fantasmas.',
+    acts: {
+      'Falar dos filhos': { text: ['* Você pergunta se ela tem filhos.', "* 'Três... Eu nem sei onde eles estão agora.'", '* Ela abaixa as patas.'], mercy: 45 },
+      'Contar a verdade': { text: ['* Você conta que foram os FANTASMAS que inventaram tudo.', '* A Aranha Soldado hesita.'], mercy: 45 },
+      'Ameaçar': { text: ['* Você ameaça a aranha.', '* Ela fica com MAIS medo... e mais perigosa.'], mercy: -30, atkUp: 1 },
+    },
+    flavor: ['* A Aranha Soldado tece em silêncio.', '* Ao longe, alguém chama um nome.', '* Cheiro de fumaça e seda queimada.'],
+    talk: ['Pelos ovos!', 'Saia da frente!', 'Vocês começaram!', '...Cadê meus filhos?'],
+    spareTalk: 'Eu só quero ir pra casa.',
+    patterns: ['webs', 'spiderlings'],
+  },
+  esqSold: {
+    name: 'Esqueleto Soldado', spr: 'esqSold', scale: 6, hp: 42, atk: 5, def: 3, xp: 22, gold: 10, voice: 'bones',
+    intro: '* Um Esqueleto Soldado chacoalha a lança!',
+    check: '* ESQUELETO SOLDADO - ATK 5 DEF 3\n* Acredita que as aranhas querem os ossos da cidade.\n* Quem contou isso foram os fantasmas.',
+    acts: {
+      'Perguntar da família': { text: ['* Você pergunta da família dele.', "* 'Minha filha... ficou do outro lado da ponte quando tudo começou.'"], mercy: 45 },
+      'Contar a verdade': { text: ['* Você conta que foram os FANTASMAS que inventaram tudo.', '* O esqueleto abaixa a lança devagar.'], mercy: 45 },
+      'Ameaçar': { text: ['* Você ameaça o esqueleto.', '* Os ossos dele tremem de raiva.'], mercy: -30, atkUp: 1 },
+    },
+    flavor: ['* O Esqueleto Soldado range os dentes.', '* Os ossos dele estalam de cansaço.', '* Uma ponte desaba lá longe.'],
+    talk: ['Pela cidade!', 'Aranhas traidoras!', 'Volte pro buraco!', 'Eu... não sei mais.'],
+    spareTalk: 'Chega. Eu cansei.',
+    patterns: ['bones', 'boneThrow'],
+  },
+  irmaos: {
+    name: 'Irmãos Fantasmas', spr: 'iceghost', scale: 5, hp: 400, atk: 6, def: 4, xp: 150, gold: 0, voice: 'ice',
+    boss: true, nonlethal: true, brothers: true, music: 'irmaos', turnLen: 7.5, bubbleW: 240,
+    intro: '* FireGhost e IceGhost atacam JUNTOS!',
+    check: '* IRMÃOS FANTASMAS - ATK 6 DEF 4\n* Fogo e gelo. Começaram uma guerra inteira\n* só para te atingir.',
+    acts: {
+      'Mostrar a guerra': { text: ['* Você fala das mães e dos filhos separados pela guerra.', '* Os irmãos ficam em silêncio por um momento.'], mercy: 25 },
+      'Separar os dois': { text: ['* Você se coloca entre fogo e gelo.', '* Os ataques deles se atrapalham!', '* A DEFESA deles caiu!'], mercy: 15, defDown: 1 },
+      'Lembrar o passado': { text: ['* Você lembra do escorregador, das piadas, da casinha do rio...', '* FireGhost olha pro irmão, confuso.'], mercy: 25 },
+    },
+    flavor: ['* Fogo e gelo giram em volta de você.', '* O chão de cristal treme.', '* IceGhost não tira os olhos de você.', '* FireGhost não conta nenhuma piada.'],
+    talk: [
+      'G: Como você AINDA está vivo?!',
+      'F: Era pra ser só uma brincadeira... virou guerra!',
+      'G: Tudo isso é culpa SUA, humano.',
+      'F: Irmão... a gente exagerou?',
+      'G: Uma nova era de CAOS!',
+      'F: ...Eu não acho mais graça.',
+    ],
+    spareTalk: 'G: ...Chega. A gente para.',
+    defeatText: ['* Os Irmãos Fantasmas caem, exaustos.', '* As chamas e o gelo quase se apagam.'],
+    patterns: ['fireRain', 'icicles', 'fireRing', 'snow', 'jokeWords', 'frostfire', 'skulls'],
+    finale: ['frostfire', 'fireRing', 'frostfire', 'icicles'],
+  },
+  kitsune: {
+    name: 'Guardiã Kitsune', spr: 'kitsune', scale: 6, hp: 120, atk: 5, def: 3, xp: 60, gold: 0, voice: 'fox', nonlethal: true, boss: true, music: 'sakura',
+    intro: '* A GUARDIÃ KITSUNE protege o portão de Neo-Sakura!',
+    check: '* GUARDIÃ KITSUNE - ATK 5 DEF 3\n* Protege a cidade há 300 anos.\n* Tem medo de que a guerra venha junto com vocês.',
+    acts: {
+      'Mostrar as aranhinhas': { text: ['* Você mostra as aranhas bebês, tremendo de frio.', '* As caudas da Kitsune abaixam um pouco.'], mercy: 35 },
+      'Prometer': { text: ['* Você promete que ninguém vai trazer guerra para a cidade.', "* 'Promessas são fáceis, humano.'"], mercy: 25 },
+      'Contar a história': { text: ['* Você conta tudo: os fantasmas, a guerra, as famílias sem casa.', "* 'Então vocês também fogem da dor...'"], mercy: 40 },
+    },
+    flavor: ['* Pétalas de cerejeira caem devagar.', '* A Kitsune balança as nove... três caudas.', '* Lanternas vermelhas balançam no vento.'],
+    talk: ['Esta cidade é nossa paz.', 'A guerra segue vocês.', 'Provem que são dignos.', '...Eles são só crianças.'],
+    spareTalk: 'Entrem. Mas cuidem desta paz.',
+    patterns: ['foxfire', 'petals', 'foxfire'],
+  },
+  guerra: {
+    name: 'A Guerra', spr: 'esqSold', scale: 5, hp: 9999, atk: 6, def: 99, xp: 0, gold: 0, voice: 'narr',
+    boss: true, nonlethal: true, endless: true, noSpare: true, music: 'guerra', turnLen: 6, war: true,
+    intro: '* A GUERRA chegou a Neo-Sakura.\n* Soldados de todos os lados invadem as ruas.',
+    check: '* A GUERRA - ATK ? DEF ?\n* Não tem rosto. Não tem fim.\n* Ninguém lembra mais por que ela começou.',
+    acts: {
+      'Gritar PAREM': { text: ['* Você grita: "PAREM! POR FAVOR!"', '* Ninguém escuta. O barulho é alto demais.'], mercy: 0 },
+      'Proteger civis': { text: ['* Você ajuda uma família a fugir.', '* Mas outras dez ainda precisam de ajuda.'], mercy: 0 },
+    },
+    flavor: ['* Prédios caem ao longe.', '* Sirenes. Gritos. Fumaça.', '* Mais soldados chegam. E mais. E mais.'],
+    talk: ['...', 'AVANÇAR!', 'Pela colônia!', 'Pela cidade!'],
+    patterns: ['march', 'bones', 'webs'],
+  },
+});
+
 const DRAGONS = {
   preto: { name: 'Dragão Preto', act: 'Dragão: Investida', desc: 'FORTE. +3 de ATAQUE e golpes devastadores.' },
   branco: { name: 'Dragão Branco', act: 'Dragão: Ventania', desc: 'RÁPIDO. Sua ALMA fica mais veloz e ele encurta os ataques.' },
@@ -630,6 +712,12 @@ class Battle {
   }
 
   afterPlayer() {
+    if (this.e.endless) {
+      this.e.hpNow = this.e.hp;
+      if (this.turn >= 2) {
+        return this.say(['* Você para um soldado. Chegam outros cinco.', '* Não importa o que você faça...', '* ...você não consegue parar uma guerra sozinho.'], () => this.end('impossible'));
+      }
+    }
     if (this.magicCd > 0) this.magicCd--;
     if (this.dragonCd > 0) this.dragonCd--;
     if (this.robotCd > 0) this.robotCd--;
@@ -773,6 +861,8 @@ class Battle {
     if (this.fleeing) ex += this.dyingT * 300;
     if (this.e.alpha > 0) {
       if (this.e.group) this.drawGroup(ey);
+      else if (this.e.brothers) { drawGhost('fire', 200, ey + 10 + Math.sin(this.t * 3) * 6, 4.5, this.t, this.e.alpha); drawGhost('ice', 330, ey - 4 + Math.sin(this.t * 2) * 6, 5, this.t, this.e.alpha, true); }
+      else if (this.e.war) { for (let i = 0; i < 5; i++) { const im = i % 2 ? SPR.aranhaSold : SPR.esqSold; ctx.globalAlpha = 0.5 + i * 0.1; ctx.drawImage(im, 180 + i * 56, ey + 30 + (i % 2) * 20 + Math.sin(this.t * 4 + i) * 3, im.width * 4, im.height * 4); } ctx.globalAlpha = 1; }
       else if (this.e.spr === 'fireghost') drawGhost('fire', ex, ey, sc, this.t, this.e.alpha);
       else {
         ctx.globalAlpha = this.e.alpha * (this.e.spr === 'fantasminha' ? 0.9 : 1);
@@ -1059,6 +1149,74 @@ const PATTERNS = {
     },
   },
   insults: { update(B, dt) { PATTERNS.jokeWords.update(B, dt); } },
+  webs: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 1.0;
+        const bx = B.box, horiz = Math.random() < 0.5;
+        if (horiz) { const y = bx.y + 15 + Math.random() * (bx.h - 30), l = Math.random() < 0.5; B.bullets.push({ kind: 'web', x: l ? bx.x - 40 : bx.x + bx.w + 40, y, vx: l ? 120 : -120, vy: 0, w: 70, h: 6 }); }
+        else { const x = bx.x + 15 + Math.random() * (bx.w - 30); B.bullets.push({ kind: 'web', x, y: bx.y - 40, vx: 0, vy: 120, w: 6, h: 70 }); }
+      }
+    },
+  },
+  spiderlings: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.7;
+        const bx = B.box;
+        B.bullets.push({ kind: 'spiderling', x: bx.x + 10 + Math.random() * (bx.w - 20), y: bx.y + 6, vx: 0, vy: 0, r: 6, home: 1.6, pop: true, life: 4 });
+      }
+    },
+  },
+  bones: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.42;
+        const bx = B.box, h = 20 + Math.random() * (bx.h * 0.5), left = (B.pState.n = (B.pState.n || 0) + 1) % 2;
+        B.bullets.push({ kind: 'bone', x: left ? bx.x - 8 : bx.x + bx.w + 8, y: bx.y + bx.h - h / 2 - 4, vx: left ? 130 : -130, vy: 0, w: 8, h });
+      }
+    },
+  },
+  boneThrow: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.5;
+        const bx = B.box, left = Math.random() < 0.5;
+        B.bullets.push({ kind: 'boneH', x: left ? bx.x - 14 : bx.x + bx.w + 14, y: B.soul.y + (Math.random() - 0.5) * 40, vx: left ? 160 : -160, vy: 0, w: 26, h: 8 });
+      }
+    },
+  },
+  foxfire: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.75;
+        const bx = B.box, a = Math.random() * Math.PI * 2;
+        B.bullets.push({ kind: 'foxfire', x: B.soul.x + Math.cos(a) * 110, y: B.soul.y + Math.sin(a) * 90, vx: 0, vy: 0, r: 7, home: 1.2, pop: true, life: 3.5 });
+      }
+    },
+  },
+  petals: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.2;
+        const bx = B.box;
+        B.bullets.push({ kind: 'petal', x: bx.x - 10 + Math.random() * (bx.w + 40), y: bx.y - 8, vx: -30, vy: 70 + Math.random() * 40, r: 5, sway: 60, ph: Math.random() * 6 });
+      }
+    },
+  },
+  frostfire: {
+    update(B, dt) {
+      PATTERNS.fireRain.update(B, dt);
+      B.pState.f = (B.pState.f || 0) - dt;
+      if (B.pState.f <= 0) { B.pState.f = 0.8; const t = B.spawnT; B.spawnT = 0; PATTERNS.icicles.update(B, 0); B.spawnT = t; }
+    },
+  },
   propaganda: { update(B, dt) { PATTERNS.jokeWords.update(B, dt); } },
   march: {
     update(B, dt) {
@@ -1323,6 +1481,38 @@ const PATTERNS = {
 };
 
 const BULLET_DRAW = {
+  web(b) {
+    ctx.strokeStyle = 'rgba(240,240,255,0.9)'; ctx.lineWidth = 2;
+    const hw = b.w / 2, hh = b.h / 2;
+    ctx.beginPath(); ctx.moveTo(b.x - hw, b.y - hh); ctx.lineTo(b.x + hw, b.y + hh); ctx.moveTo(b.x + hw, b.y - hh); ctx.lineTo(b.x - hw, b.y + hh); ctx.stroke();
+    ctx.strokeRect(b.x - hw, b.y - hh, b.w, b.h);
+  },
+  spiderling(b, t) {
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8a2a2a'; ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+    for (let i = 0; i < 4; i++) { const a = i * 0.5 - 0.75 + Math.sin(t * 20) * 0.2; ctx.beginPath(); ctx.moveTo(b.x - 4, b.y); ctx.lineTo(b.x - 9, b.y + Math.sin(a) * 7); ctx.moveTo(b.x + 4, b.y); ctx.lineTo(b.x + 9, b.y + Math.sin(a) * 7); ctx.stroke(); }
+    ctx.fillStyle = '#ffd23a'; ctx.fillRect(b.x - 2, b.y - 2, 1, 1); ctx.fillRect(b.x + 1, b.y - 2, 1, 1);
+  },
+  bone(b) {
+    ctx.fillStyle = '#000'; ctx.fillRect(b.x - 4, b.y - b.h / 2, 8, b.h);
+    ctx.fillStyle = '#f0ece0'; ctx.fillRect(b.x - 3, b.y - b.h / 2 + 1, 6, b.h - 2);
+    ctx.fillRect(b.x - 5, b.y - b.h / 2, 10, 4); ctx.fillRect(b.x - 5, b.y + b.h / 2 - 4, 10, 4);
+  },
+  boneH(b) {
+    ctx.fillStyle = '#000'; ctx.fillRect(b.x - 13, b.y - 4, 26, 8);
+    ctx.fillStyle = '#f0ece0'; ctx.fillRect(b.x - 12, b.y - 3, 24, 6); ctx.fillRect(b.x - 14, b.y - 5, 4, 10); ctx.fillRect(b.x + 10, b.y - 5, 4, 10);
+  },
+  foxfire(b, t) {
+    ctx.fillStyle = 'rgba(95,200,255,0.4)'; ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5fc8ff'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e8f8ff'; ctx.beginPath(); ctx.arc(b.x, b.y - 2 + Math.sin(t * 10), 3, 0, Math.PI * 2); ctx.fill();
+  },
+  petal(b, t) {
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(t * 3 + b.ph);
+    ctx.fillStyle = '#f8a8c8'; ctx.beginPath(); ctx.ellipse(0, 0, 6, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffd8e8'; ctx.fillRect(-2, -1, 3, 1); ctx.restore();
+  },
   soldier(b, t) {
     const img = SPR.guard; ctx.drawImage(img, b.x - 8, b.y - 9 + (Math.floor(t * 8) % 2), 16, 17);
   },

@@ -94,7 +94,41 @@ Músicas novas com vários instrumentos (sino, piano, flauta, cordas, metais, pi
   - Não dá para poupá-lo: ele precisa ser detido. Ações como **Recusar obedecer** e **Lembrar das vítimas** derrubam a defesa dele.
   - No fim ele é preso para ser **julgado**, e todos recuperam seus **nomes**.
 
-Fase 6: em breve.
+## Rotas
+
+O jogo conta quantos monstros você **poupou** e quantos **derrotou**:
+
+- **Pacifista**: nenhum derrotado.
+- **Genocida**: 6 ou mais derrotados e no máximo 2 poupados.
+- **Neutra**: qualquer outro caso.
+
+A rota muda o final das Fases 6 e 7.
+
+## Fase 6 — A Caverna
+
+- Você se despede do Treinador, do Bit, da Marshmallow, do Chocolate e da Lia e desce cada vez mais fundo.
+- **Vila das Teias** (aranhas: a Tecelã e os filhotes Fio e Novelo) e **Cidade dos Ossos** (esqueletos: Mestre Osso e Fêmur Jr.), vizinhos há cem anos.
+- No Grande Salão, os **irmãos fantasmas** aparecem: "como você ainda está vivo?". Eles chamam todos os vilões, espalham mentiras e começam uma **nova era de caos**: aranhas contra esqueletos. Mães perdem filhos e filhos perdem mães.
+- Com a guerra, aparecem **soldados aranha** e **soldados esqueleto** pelo caminho.
+- Na **Toca Escura** você os confronta: "isso acabou, ponto final".
+  - **Pacifista**: sem vingança, só conversa. Vocês podem virar **amigos**.
+  - **Neutra**: **BOSS** contra os dois irmãos; eles são detidos, mas não viram amigos.
+  - **Genocida**: **BOSS** e depois um **ritual** que acaba com os dois fantasmas.
+- Depois... **nada mudou**. A guerra continua. Aranhas e esqueletos te pedem para achar a cidade lá no fundo.
+
+## Fase 7 — Neo-Sakura
+
+- Uma cidade enorme parecida com Tóquio: cerejeiras, neon, lanternas, torii e trens.
+- Os moradores não querem os refugiados. A **Guardiã Kitsune** decide:
+  - **Genocida**: ela olha nos seus olhos e deixa todos entrarem, com medo.
+  - **Neutra**: batalha contra a Kitsune.
+  - **Pacifista**: ela vê seu lado fofo e humilde e aceita todos.
+- Você vive lá por um bom tempo: **escola** (quiz de japonês), **konbini** (onigiri, mochi, ramen), o reencontro do **Novelo** com a mãe (salvo por esqueletos) e o **Festival das Lanternas**.
+- Meses depois, a **guerra chega**. Você tenta parar, mas é impossível: você não muda o mundo.
+- Você se culpa por ter conhecido os fantasmas. Se eles são seus amigos, terminam a amizade e vão embora; se só estão vivos, vão para longe; se não existem mais, não sobra ninguém para culpar.
+- A cidade é destruída pedaço por pedaço: **fuja até o metrô** antes do tempo acabar, desviando dos escombros.
+
+Fase 8: em breve.
 
 ## Personagens
 
@@ -126,6 +160,10 @@ Fase 6: em breve.
 |---|---|---|---|
 | ![](arte/macaron.png) | ![](arte/marsh-choco.png) | ![](arte/pirulito.png) | ![](arte/prisioneiros.png) |
 
+| Aranhas | Esqueletos | Guardiã Kitsune |
+|---|---|---|
+| ![](arte/aranhas.png) | ![](arte/esqueletos.png) | ![](arte/kitsune.png) |
+
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
 ## Estrutura
@@ -137,6 +175,7 @@ www/            jogo (HTML5)
   js/sprites3.js  neve, pinguins, boneco de neve, encapuzado
   js/sprites4.js  robôs, crianças, valentões, drones, tiles neon
   js/sprites5.js  doces, prisioneiros, uniforme, tiles da ilha e do campo
+  js/sprites6.js  aranhas, esqueletos, kitsune, tiles da caverna e de Neo-Sakura
   js/audio.js     efeitos e sequenciador de músicas (WebAudio)
   js/engine.js    controles, configurações, texto, diálogo, save
   js/battle.js    batalha, dragões, chefe e ataques
@@ -146,6 +185,8 @@ www/            jogo (HTML5)
   js/phase3.js    Fase 3: Colônia de Gelo (puzzles, armadilhas, celular)
   js/phase4.js    Fase 4: Cidade Futurista (Bit, cinema, escola, valentões)
   js/phase5.js    Fase 5: Ilha dos Doces (campo, fome, fuga, libertação)
+  js/phase6.js    Fase 6: A Caverna (aranhas, esqueletos, guerra, irmãos fantasmas)
+  js/phase7.js    Fase 7: Neo-Sakura (refugiados, escola, festival, guerra, fuga)
   js/quests.js    painel de missões e seta de objetivo de todas as fases
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK

@@ -74,6 +74,35 @@ const QUESTS = {
     if (!F.p5boss) return { t: 'Vá até a TORRE DOURADA (canto de cima, à direita) e entre.', x: 98, y: 22 };
     return null;
   },
+
+  caverna(W) {
+    const F = G.flags;
+    if (!F.p6metB) return { t: 'Siga pelo túnel para o LESTE, até a VILA DAS TEIAS.', x: 27, y: 28 };
+    if (!F.p6metC) return { t: 'Atravesse a PONTE sobre o abismo até a CIDADE DOS OSSOS.', x: 69, y: 25 };
+    if (!F.p6war) return { t: 'Desça até o GRANDE SALÃO, ao sul.', x: 60, y: 46 };
+    if (!F.p6confront) return { t: 'Os fantasmas fugiram para a TOCA ESCURA, no extremo LESTE. Vá atrás deles!', x: 101, y: 26 };
+    if (!F.p6after) return null;
+    return { t: 'Passe pela teia aberta e desça pelo BURACO, no fundo do salão.', x: 59, y: 58 };
+  },
+
+  sakura(W) {
+    const F = G.flags, inside = W.player.y > 50 * TS;
+    if (F.p7escape) return F.p7done ? null : { t: 'FUJA! Corra para o METRÔ, no fim da avenida, a LESTE. Cuidado com os escombros!', x: 87, y: 27 };
+    if (F.p7war) return null;
+    if (!F.p7accepted) return { t: 'Leve os refugiados até o PORTÃO da cidade.', x: 16, y: 27 };
+    if (F.p7day === 1) {
+      if (inside && W.player.x < 16 * TS) return { t: 'Fale com o robô do caixa para comprar comida. Saída: porta de baixo.', x: 8, y: 55 };
+      if (!F.p7school) return inside ? { t: 'Fale com a PROFESSORA.', x: 48, y: 54 } : { t: 'Vá para a ESCOLA (porta do prédio, à direita).', x: 72, y: 17 };
+      if (F.p7novFound && !F.p7reunion) return inside ? { t: 'Leve a notícia à TECELÃ: saia da escola.', x: 48, y: 64 } : { t: 'Conte à TECELÃ (no BAIRRO NOVO, ao sul) que o Novelo está vivo!', x: 26, y: 44 };
+      if (inside && W.player.x > 34 * TS && !F.p7novFound) return { t: 'Tem uma aranhinha no fundo da sala...', x: 52, y: 61 };
+      if (!F.p7food) return { t: 'Compre comida no KONBINI (porta verde, à esquerda).', x: 28, y: 17 };
+      if (!F.p7visit) return { t: 'Visite a TECELÃ no BAIRRO NOVO, ao sul da avenida.', x: 26, y: 44 };
+      return inside ? { t: 'Deite na CAMA para dormir.', x: 20, y: 56 } : { t: 'Volte ao seu APARTAMENTO (porta do meio) e durma.', x: 50, y: 17 };
+    }
+    if (F.p7day === 2 && !F.p7festival) return inside ? { t: 'Saia e procure a GUARDIÃ KITSUNE na avenida.', x: 24, y: 61 } : { t: 'Fale com a GUARDIÃ KITSUNE na avenida.', x: 45, y: 30 };
+    if (F.p7festival) return inside ? { t: 'Deite na CAMA para dormir.', x: 20, y: 56 } : { t: 'Volte ao seu APARTAMENTO e durma.', x: 50, y: 17 };
+    return null;
+  },
 };
 
 // Painel de missão + seta

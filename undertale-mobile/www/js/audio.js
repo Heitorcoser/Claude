@@ -75,6 +75,9 @@ const Sfx = (() => {
     harsh: () => tone(200 + Math.random() * 30, 0.05, 'sawtooth', 0.09),
     posh: () => tone(130 + Math.random() * 20, 0.08, 'square', 0.09),
     old: () => tone(420 + Math.random() * 30, 0.08, 'sine', 0.12),
+    spider: () => tone(980 + Math.random() * 200, 0.03, 'triangle', 0.08),
+    bones: () => tone([392, 523, 659][(Math.random() * 3) | 0], 0.05, 'square', 0.07),
+    fox: () => tone(560 + Math.random() * 80, 0.06, 'sine', 0.12),
   };
 
   // ---------- INSTRUMENTOS ----------
@@ -317,6 +320,35 @@ const Sfx = (() => {
     memoria: { bpm: 66, lead: 'piano', lead2: 'bell', pad: 'strings', arp: 'harp', bass: 'bassTri', bassPat: 'root', drums: null, leadVol: 0.7,
       bars: `C: E5 . . . G5 . . . | Am: A5 . . . E5 . . . | F: F5 . . . A5 . C6 . | G: B5 . . . D6 . . . |
              C: C6 . . . G5 . E5 . | Em: G5 . . . B5 . . . | F: A5 . . . F5 . . . | C: E5 . . . . . - -` },
+    caverna: { bpm: 70, lead: 'harp', lead2: 'bell', pad: 'strings', arp: null, bass: 'bassTri', bassPat: 'root', drums: 'tribal', leadVol: 0.8,
+      bars: `Am: E5 . . . C5 . . . | F: A4 . . . C5 . . . | G: B4 . . . D5 . . . | E: G#4 . . . B4 . . . |
+             Am: A5 . . . E5 . . . | Dm: F5 . . . D5 . A4 . | E: B4 . . . G#4 . . . | Am: A4 . . . - - - -` },
+    aranhas: { bpm: 100, lead: 'pizz', lead2: 'harp', pad: 'strings', arp: null, bass: 'bassPluck', bassPat: 'rootfifth', drums: null,
+      bars: `Dm: D5 F5 A5 F5 D6 . A5 . | Bb: D5 F5 Bb5 F5 D6 . Bb5 . | C: E5 G5 C6 G5 E6 . C6 . | A: C#5 E5 A5 E5 C#6 . A5 . |
+             Dm: F5 A5 D6 A5 F6 . D6 . | Gm: D5 G5 Bb5 G5 D6 . Bb5 . | A7: C#5 E5 G5 E5 A5 . G5 . | Dm: D5 . . . - - - -` },
+    ossos: { bpm: 126, lead: 'marimba', lead2: 'pizz', pad: null, arp: null, bass: 'bassPluck', bassPat: 'walk', drums: 'tick',
+      bars: `Em: E5 G5 B5 G5 E5 . B4 . | Am: A4 C5 E5 C5 A4 . E5 . | B7: B4 D#5 F#5 A5 B5 . F#5 . | Em: G5 . E5 . B4 . - - |
+             C: C5 E5 G5 E5 C6 . G5 . | D: D5 F#5 A5 F#5 D6 . A5 . | B7: D#6 . B5 . F#5 . D#5 . | Em: E5 . . . - - - -` },
+    guerra: { bpm: 88, lead: 'brass', pad: 'strings', arp: null, bass: 'bassSaw', bassPat: 'root', drums: 'tribal',
+      bars: `Cm: C5 . . . Eb5 . D5 C5 | Ab: Ab4 . . . C5 . . . | Fm: F4 . Ab4 . C5 . Bb4 Ab4 | G: G4 . . . B4 . . . |
+             Cm: Eb5 . . . G5 . F5 Eb5 | Ab: C5 . . . Eb5 . . . | G: D5 . B4 . G4 . B4 . | Cm: C5 . . . - - - -` },
+    irmaos: { bpm: 160, lead: 'square', lead2: 'bell', pad: 'strings', arp: 'marimba', bass: 'bassSaw', bassPat: 'eighths', drums: 'boss',
+      bars: `Em: E5 E5 G5 E5 B5 . A5 G5 | C: G5 . E5 . C5 . E5 G5 | Dm: D5 D5 F5 D5 A5 . G5 F5 | A: C#6 . A5 . E5 . A5 C#6 |
+             Em: E6 . D6 E6 B5 . G5 B5 | C: C6 . B5 C6 G5 . E5 G5 | B7: D#6 . B5 . F#5 . D#5 F#5 | E: G#5 . B5 . E6 . . . |
+             Am: C6 . . . E6 . C6 . | F: A5 . . . C6 . A5 . | G: B5 . D6 . G6 . F6 . | E: E6 . . . G#6 . . . |
+             Am: A6 . G6 . E6 . C6 . | F: F6 . E6 . C6 . A5 . | B7: D#6 . F#6 . B6 . A6 . | E: G#6 . . . B6 . . .` },
+    tristeza: { bpm: 58, lead: 'piano', pad: 'strings', arp: 'harp', bass: 'bassTri', bassPat: 'root', drums: null, leadVol: 0.7,
+      bars: `Am: E5 . . . A5 . . . | F: C6 . . . A5 . . . | C: G5 . . . E5 . . . | G: D5 . . . B4 . . . |
+             Am: C5 . . . E5 . . . | Dm: F5 . . . A5 . . . | E: G#5 . . . B5 . . . | Am: A5 . . . - - - -` },
+    sakura: { bpm: 92, lead: 'flute', lead2: 'bell', pad: 'strings', arp: 'harp', bass: 'bassTri', bassPat: 'root', drums: 'soft',
+      bars: `Am: A4 . C5 . D5 . E5 . | Am: G5 . E5 . D5 . C5 . | Dm: D5 . E5 . G5 . A5 . | Em: G5 . . . E5 . . . |
+             Am: A5 . G5 . E5 . D5 . | F: C5 . D5 . E5 . G5 . | G: A5 . G5 . E5 . D5 . | Am: E5 . . . A4 . . .` },
+    festival: { bpm: 128, lead: 'pizz', lead2: 'bell', pad: 'organ', arp: 'marimba', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'march',
+      bars: `Am: A5 A5 C6 A5 D6 . C6 A5 | G: G5 G5 A5 G5 E5 . D5 . | F: C5 D5 E5 G5 A5 . G5 E5 | E: E5 . . . G5 . A5 . |
+             Am: C6 . A5 . G5 . E5 . | G: D6 . C6 . A5 . G5 . | F: A5 . G5 . E5 . D5 . | Am: A5 . . . - - - -` },
+    fuga7: { bpm: 176, lead: 'square', pad: 'strings', arp: null, bass: 'bassSaw', bassPat: 'eighths', drums: 'boss',
+      bars: `Am: A5 . E5 . A5 . C6 B5 | F: A5 . F5 . C5 . F5 A5 | G: B5 . G5 . D5 . G5 B5 | E: G#5 . E5 . B4 . E5 G#5 |
+             Am: C6 . B5 . A5 . E5 . | Dm: D6 . C6 . A5 . F5 . | E: E6 . D6 . B5 . G#5 . | Am: A5 . . . - - - -` },
     victory: { bpm: 120, lead: 'brass', lead2: 'bell', pad: 'organ', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
       bars: `C: C5 . E5 . G5 . C6 . | F: A5 . . . F5 . A5 . | G: B5 . D6 . G5 . B5 . | C: C6 . . . . . - -` },
   };
@@ -327,6 +359,7 @@ const Sfx = (() => {
     pop: { k: 'k.....k.k.......', s: '....s.......s...', h: '..h...h...h...ho' },
     tick: { k: 'k.......k.......', s: '............s...', h: '..h...h...h...h.' },
     tribal: { k: 'k.......k..k....', s: '................', h: '................', t: '......t.......t.' },
+    march: { k: 'k...k...k...k...', s: '....s.......s.ss', h: '..h...h...h...h.' },
     boss: { k: 'k.k...k.k.k...k.', s: '....s.......s..s', h: 'hhhhhhhhhhhhhhhh' },
   };
 
@@ -433,6 +466,8 @@ const Sfx = (() => {
     whistle() { tone(2200, 0.5, 'sine', 0.15, 200); setTimeout(() => tone(2400, 0.4, 'sine', 0.12, -200), 500); },
     alarm() { [0, 1, 2, 3].forEach(i => setTimeout(() => tone(i % 2 ? 660 : 880, 0.2, 'square', 0.12), i * 220)); },
     cut() { tone(1600, 0.08, 'square', 0.1, -1000); noise(0.12, 0.25, 3000); },
+    rumble() { noise(1.4, 0.35, -300); tone(60, 1.2, 'sawtooth', 0.15, -20); },
+    siren() { [0, 1, 2, 3, 4, 5].forEach(i => setTimeout(() => tone(i % 2 ? 520 : 780, 0.32, 'sawtooth', 0.09), i * 340)); },
     icicle() { tone(2400, 0.3, 'sine', 0.08, -1800); setTimeout(() => noise(0.25, 0.25, 2500), 280); },
     stopMusic() {
       if (!song) return;

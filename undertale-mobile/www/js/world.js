@@ -317,16 +317,16 @@ const World = {
 
   say(lines) {
     const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon', T: 'trein', S: 'stranger', P: 'peng', B: 'bit', V: 'volt', R: 'brutao', K: 'teca', Z: 'ze', C: 'kid',
-      M: 'marsh', H: 'choco', Y: 'piru', N: 'macaron', O: 'vovo', U: 'ferrugem', L: 'lia' };
+      M: 'marsh', H: 'choco', Y: 'piru', N: 'macaron', O: 'vovo', U: 'ferrugem', L: 'lia', E: 'tecela', J: 'osso', Q: 'kitsune', W: 'novelo' };
     return Dialog.show(lines.map(t => {
       if (typeof t !== 'string') return t;
-      const m = /^([IFGDTSPBVRKZCMHYNOUL]):\s*(.*)$/s.exec(t);
+      const m = /^([IFGDTSPBVRKZCMHYNOULEJQW]):\s*(.*)$/s.exec(t);
       return m ? { who: WHO[m[1]], t: '* ' + m[2] } : t;
     }), this.player.y - this.cam.y > 150);
   },
   ask(text, choices) {
-    const m = /^([IFGBVMHLO]):\s*(.*)$/s.exec(text);
-    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo' }[m[1]] : null;
+    const m = /^([IFGBVMHLOEJQ]):\s*(.*)$/s.exec(text);
+    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo', E: 'tecela', J: 'osso', Q: 'kitsune' }[m[1]] : null;
     return Dialog.ask(m ? '* ' + m[2] : text, choices, who);
   },
 

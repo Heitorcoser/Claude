@@ -325,7 +325,14 @@ function hitRect(p, r) { return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && 
 
 const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon', trein: 'instr', stranger: 'deep', peng: 'peng',
   bit: 'robot', volt: 'robot2', brutao: 'bully', teca: 'bully', ze: 'bully', kid: 'kid',
-  marsh: 'soft', choco: 'narr', piru: 'harsh', macaron: 'posh', vovo: 'old', ferrugem: 'robot2', lia: 'kid' };
+  marsh: 'soft', choco: 'narr', piru: 'harsh', macaron: 'posh', vovo: 'old', ferrugem: 'robot2', lia: 'kid',
+  tecela: 'spider', osso: 'bones', kitsune: 'fox', novelo: 'spider' };
+// Rota do jogo inteiro, de acordo com o que o jogador fez nas lutas.
+function route() {
+  if (!G.kills) return 'pacifista';
+  if (G.kills >= 6 && G.spares <= 2) return 'genocida';
+  return 'neutra';
+}
 // No campo, o jogador é chamado por um número. O nome volta quando ele é libertado.
 function displayName() { return (G.flags && G.flags.p5camp && !G.flags.p5free) ? 'Nº4812' : G.name; }
 function sprPortrait(key, sw, sh, sc, ox = 0, oy = 0) {
@@ -368,6 +375,10 @@ const PORTRAITS = {
   vovo: sprPortrait('vovo', 28, 16, 3.4, -2, 16),
   ferrugem: (x, y, t) => robotPortrait('ferrugem')(x, y, t),
   lia: sprPortrait('lia', 14, 12, 6, 6, 10),
+  tecela: sprPortrait(() => SPR.aranha.mae[0], 26, 12, 3.6, -4, 16),
+  novelo: sprPortrait(() => SPR.aranha.bebe[0], 26, 12, 3.6, -4, 16),
+  osso: sprPortrait(() => SPR.esqueleto.mestre, 14, 9, 6, 6, 14),
+  kitsune: sprPortrait('kitsune', 18, 15, 5.4, 0, 2),
 };
 
 // Fantasmas com coroa animada (chamas ou pingentes de gelo)
