@@ -95,6 +95,10 @@ class MasterBattle extends Battle {
     this.tries = m9Tries();
     this.dmgMul = Math.max(0.5, 1 - this.tries * 0.1);
     this.m9turn = 0;
+    // part 1 = luta na ponte (Fase 9); 2 = continuação na Fase 11; 'full' = luta inteira (Fase 11, se perdeu na ponte)
+    this.part = opts.part || 'full';
+    if (this.part === 2) { this.phase = 2; this.dodges = 1; this.breaking = true; }
+    if (this.part === 1) this.dmgMul = 1;
   }
 
   // ----- início: ataque surpresa -----
@@ -102,12 +106,14 @@ class MasterBattle extends Battle {
     this.introT += dt;
     if (this.introT > 0.3 && !this.surprised) {
       this.surprised = true;
+      if (this.part === 2) return this.say(['* O Mestre Encapuzado estala os dedos.'], () => { this.state = 'breaking'; this.breakT = 0; });
       this.startEnemyTurn('mSurprise');
       this.bubble = null;
     }
   }
 
   toMenu() {
+    if (this.endingSeq) return;
     this.flip = false; this.soulMode = 'red';
     if (!this.broken) return this.breakButtons();
     if (this.finalPending) return this.afterFinal();
@@ -130,7 +136,11 @@ class MasterBattle extends Battle {
     if (this.breakT > 1.3 && !this.brokenMercy) { this.brokenMercy = true; Sfx.shatter(); shards(BTN[3].x); this.shakeT = 0.3; }
     if (this.breakT > 2.3) {
       this.state = 'text';
-      this.say([
+      this.say(this.part === 2 ? [
+        '* AGIR e POUPAR quebraram de novo.',
+        '* "Da última vez foi só o começo."',
+        '* "Agora começa a SEGUNDA PARTE."',
+      ] : [
         '* Ele QUEBROU os seus botões de AGIR e POUPAR.',
         '* Aqui não tem conversa. Não tem misericórdia.',
         '* Seu dragão está longe. Seus amigos estão longe.',
@@ -171,6 +181,7 @@ class MasterBattle extends Battle {
   afterPlayer() {
     if (this.exhausted) return this.say(['* Ele está esperando.'], () => this.toMenu());
     const fr = this.e.hpNow / this.e.hp;
+    if (this.part === 1 && fr <= 0.66) return this.part1Win();
     if (this.phase === 1 && fr <= 0.66) {
       this.phase = 2; this.dodges = 1; Sfx.slam();
       return this.say(['* O Encapuzado para de brincar.', '* Um olho brilha AZUL debaixo do capuz.', '* "O aquecimento acabou."'], () => this.nextAttack());
@@ -184,6 +195,33 @@ class MasterBattle extends Battle {
     }
     this.nextAttack();
   }
+  // ----- Fase 9: a luta para no fim da primeira parte -----
+  part1Win() {
+    this.endingSeq = true; this.kr = 0;
+    Sfx.slam();
+    this.say([
+      '* O Encapuzado recua e segura o braço.',
+      '* "...Hm. Você passou da PRIMEIRA PARTE."',
+      '* "A segunda parte fica pra depois. Mais pra frente."',
+      '* "Fique mais forte. Eu vou estar esperando."',
+      '* Ele some numa nuvem de poeira azul.',
+    ], () => { this.vanish = true; setTimeout(() => this.end('part1'), 900); });
+  }
+  notReady() {
+    if (this.endingSeq) return;
+    this.endingSeq = true; this.bullets = []; this.kr = 0; this.flip = false; this.soulMode = 'red';
+    G.hp = 1;
+    this.boxTarget = { ...BOX_FULL };
+    this.say([
+      '* Seu HP chegou a 1.',
+      '* O Encapuzado abaixa a mão. Os canhões somem.',
+      '* "...Chega. Você ainda não está pronto."',
+      '* "Treine. Fique mais forte."',
+      '* "Quando estiver preparado, me encontre de novo."',
+      '* Ele some numa nuvem de poeira azul.',
+    ], () => { this.vanish = true; setTimeout(() => this.end('notready'), 900); });
+  }
+
   nextAttack() {
     const list = M9_PHASES[this.phase];
     this.startEnemyTurn(list[this.m9turn++ % list.length]);
@@ -233,7 +271,9 @@ class MasterBattle extends Battle {
   }
 
   hurt() {
+    if (this.endingSeq) return;
     const d = Math.max(1, Math.round(2 * this.dmgMul));
+    if (this.part === 1 && G.hp - d <= 1) return this.notReady();
     G.hp = Math.max(0, G.hp - d);
     this.kr = Math.min(this.kr + (this.dmgMul < 0.8 ? 1 : 2), 40, Math.max(0, G.hp - 1));
     this.soul.inv = 0.3; Sfx.hurt(); this.hurtFlash = 0.12;
@@ -242,6 +282,8 @@ class MasterBattle extends Battle {
 
   update(dt) {
     super.update(dt);
+    if (this.vanish) this.e.alpha = Math.max(0, this.e.alpha - dt * 1.5);
+    if (this.part === 1 && G.hp <= 1 && !this.endingSeq && (this.state === 'enemyTurn' || this.state === 'menu')) this.notReady();
     if (this.kr > 0 && this.state !== 'over') {
       this.krT += dt;
       if (this.krT > 0.45) { this.krT = 0; this.kr--; if (G.hp > 1) G.hp--; }

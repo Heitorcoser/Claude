@@ -385,6 +385,7 @@ function buildSprites() {
   buildSprites5();
   buildSprites6();
   buildSprites7();
+  buildSprites8();
 }
 
 // ---------- TILES (16x16) gerados proceduralmente ----------

@@ -326,7 +326,7 @@ function hitRect(p, r) { return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && 
 const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon', trein: 'instr', stranger: 'deep', peng: 'peng',
   bit: 'robot', volt: 'robot2', brutao: 'bully', teca: 'bully', ze: 'bully', kid: 'kid',
   marsh: 'soft', choco: 'narr', piru: 'harsh', macaron: 'posh', vovo: 'old', ferrugem: 'robot2', lia: 'kid',
-  tecela: 'spider', osso: 'bones', kitsune: 'fox', novelo: 'spider', draco: 'old', golem: 'deep', fantl: 'fire' };
+  tecela: 'spider', osso: 'bones', kitsune: 'fox', novelo: 'spider', draco: 'old', golem: 'deep', fantl: 'fire', leao: 'dragon' };
 // Rota do jogo inteiro, de acordo com o que o jogador fez nas lutas.
 function route() {
   if (!G.kills) return 'pacifista';
@@ -380,6 +380,7 @@ const PORTRAITS = {
   osso: sprPortrait(() => SPR.esqueleto.mestre, 14, 9, 6, 6, 14),
   kitsune: sprPortrait('kitsune', 18, 15, 5.4, 0, 2),
   draco: sprPortrait('draco', 16, 12, 6, 0, 4),
+  leao: sprPortrait('leao', 16, 11, 6, 0, 4),
   golem: sprPortrait('golemLava', 18, 9, 5, 0, 20),
   fantl: sprPortrait('fantLava', 18, 12, 5, 0, 14),
 };
@@ -474,7 +475,9 @@ function loadGame() {
 }
 
 const LV_XP = [0, 10, 30, 70, 120, 200, 300, 450];
-function playerAtk() { return 8 + (G.lv - 1) * 2 + (G.dragon === 'preto' ? 3 : G.dragon === 'trevas' ? 6 : 0); }
+// Armas (a Fase 10 dá a Faca do Leão)
+const WEAPONS = { 'Faca do Leão': 6 };
+function playerAtk() { return 8 + (G.lv - 1) * 2 + (G.dragon === 'preto' ? 3 : G.dragon === 'trevas' ? 6 : 0) + (G.atkBonus || 0) + (WEAPONS[G.weapon] || 0); }
 function playerDef() { return (G.lv - 1); }
 function addXp(n) {
   G.xp += n;

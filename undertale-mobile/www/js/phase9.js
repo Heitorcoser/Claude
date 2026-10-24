@@ -239,10 +239,7 @@ const P9 = {
     Sfx.stopMusic();
     await W.walk(p, [[tx2x(63), ty2y(22)]], 60);
     p.dir = 'right';
-    const retry = m9Tries() > 0;
-    if (retry) {
-      await W.say(['S: ...De novo?', 'S: Hm. Gostei.']);
-    } else {
+    {
       const r = route();
       await W.say([
         '* (No meio da ponte, uma figura encapuzada.)',
@@ -259,37 +256,21 @@ const P9 = {
     }
     Sfx.slam(); W.shake = 0.6;
     this.busy = false;
-    W.battle('mestre', {}, res => this.afterMaster(res));
+    W.battle('mestre', { part: 1 }, res => this.afterMaster(res));
   },
 
   async afterMaster(res) {
     const W = World, F = G.flags, m = this.ent('mestre');
     W.locked = true;
-    m9Tries(0);
-    Sfx.playMusic('encontro');
-    const r = route();
-    if (res === 'spared') {
-      F.masterSpared = true;
-      await W.say([
-        'S: ...Você me poupou.',
-        'S: Eu quebrei a sua misericórdia. E ela voltou sozinha.',
-        'S: É por isso que você vai conseguir. Eu tenho certeza agora.',
-      ]);
-    } else if (r === 'genocida') {
-      await W.say(['S: Hah... forte.', 'S: Então é isso que você virou.', 'S: Tomara que o que está lá embaixo seja mais forte que você.']);
-    } else {
-      await W.say(['S: Hah... hah... forte.', 'S: Mas força sozinha não basta lá embaixo.', 'S: Lembre dos seus amigos. Você vai precisar deles.']);
-    }
-    await W.say([
-      'S: Meu nome? ...Um dia eu te conto.',
-      'S: Atravesse a ponte. O caminho desce pela última vez.',
-      'S: Eu vou estar olhando.',
-    ]);
-    Sfx.whoosh();
-    for (let i = 0; i < 40; i++) { await nextFrame(); m.alpha = 1 - i / 40; m.y -= 0.5; }
     m.hidden = true;
     F.p9done = true;
-    await W.say(['* (O Mestre Encapuzado sumiu numa nuvem de poeira azul.)', '* (Lá atrás, no parque, seu dragão acorda e voa até você.)']);
+    if (res === 'part1') F.p9part1 = true;
+    G.hp = Math.max(G.hp, 1);
+    Sfx.playMusic('encontro');
+    await W.say(res === 'part1'
+      ? ['* (Você ainda está tremendo.)', '* (Você venceu a PRIMEIRA PARTE da luta contra o Mestre Encapuzado.)', '* (Ele disse que a segunda parte vem mais pra frente.)']
+      : ['* (Você cai sentado no chão da ponte, sem fôlego.)', '* ("Quando estiver preparado, me encontre de novo.")', '* (Você precisa ficar MUITO mais forte.)']);
+    await W.say(['* (Lá atrás, no parque, seu dragão acorda e voa até você.)', '* (Do outro lado da ponte, uma estrada leva até um prédio enorme de pedra: uma ARENA.)']);
     W.saveHere(0);
     await Fade.to(1, 1);
     Sfx.stopMusic();

@@ -96,6 +96,19 @@ const QUESTS = {
     return { t: 'Chegue ao TOPO e pegue o CORAÇÃO DO VULCÃO no altar.', x: 35, y: 3 };
   },
 
+  arena(W) {
+    const F = G.flags;
+    if (!F.p10arrived) return null;
+    if (!F.p10gift) return { t: `Fale com o MESTRE LEÃO no meio da arena (${!F.p10l1 ? 'LIÇÃO 1: AGILIDADE' : !F.p10l2 ? 'LIÇÃO 2: FORÇA' : 'LIÇÃO 3: A VERDADEIRA FORÇA'}).`, x: 34, y: 14 };
+    return { t: 'Saia pelo portão LESTE da arena.', x: 55, y: 20 };
+  },
+
+  salao(W) {
+    const F = G.flags;
+    if (F.p11done) return null;
+    return { t: 'Atravesse o SALÃO DOURADO.', x: F.p11seen ? 57 : 47, y: 8 };
+  },
+
   cidade(W) {
     const F = G.flags;
     if (!F.p9arrived || F.p9done) return null;

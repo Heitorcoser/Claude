@@ -148,18 +148,33 @@ A rota muda o final das Fases 6 e 7.
 
 - O dragão pousa em **Vale Comum**, uma cidade normal e tranquila: parque, padaria, pousada e moradores comuns.
 - Os moradores falam de um **encapuzado** que está te esperando na ponte. É o mesmo estranho que te deu o celular na Colônia de Gelo.
-- **BOSS: Mestre Encapuzado.** Inspirado nas lutas mais difíceis de Undertale:
+- **BOSS: Mestre Encapuzado (1ª parte).** Inspirado nas lutas mais difíceis de Undertale:
   - ataque surpresa logo no começo;
   - ele **quebra os botões AGIR e POUPAR**: luta 1 contra 1, sem dragão e sem amigos;
   - **canhões de caveira** com raios, ossos com buracos, **ossos azuis** (fique parado) e **laranjas** (continue se mexendo);
-  - **alma azul** com gravidade (pule com o analógico para cima ou segurando A), batida no chão e espinhos;
-  - **tela de cabeça pra baixo**, caixa que encolhe, tempestade de canhões;
+  - **alma azul** com gravidade (pule com o analógico para cima ou segurando A);
   - **KARMA (KR)**: depois de cada golpe o HP continua caindo um pouco (a barra rosa);
-  - ele **desvia** dos primeiros ataques de cada fase, e tem 3 fases e um **ATAQUE FINAL**;
-  - na rota **pacifista**, depois do ataque final o botão POUPAR se reconstrói sozinho.
-- Cada derrota deixa os golpes dele um pouco mais fracos (até a metade), para ninguém ficar travado.
+  - ele **desvia** dos primeiros ataques.
+- Se o seu HP chegar a **1**, ele para: "quando estiver preparado, me encontre de novo" e some.
+- Se você vencer a 1ª parte, ele diz que a **2ª parte** vem mais pra frente.
 
-Fase 10: em breve.
+## Fase 10 — A Arena
+
+- Depois da ponte, a arena do **Mestre Leão**, que te mostra a **verdadeira força de você mesmo**:
+  1. **Agilidade**: sobreviva a 3 rodadas de ataques → sua alma fica mais rápida nas lutas.
+  2. **Força**: acerte o centro do alvo 5 vezes → +3 de ataque.
+  3. **A verdadeira força**: lute contra a sua própria **Sombra** (pode vencer ou aceitar).
+- Ele te dá a **FACA DO LEÃO** (+6 de ataque) e +10 de HP máximo.
+
+## Fase 11 — A Batalha
+
+- Um salão dourado. No fim, o Mestre Encapuzado: "A batalha vai começar."
+- Se você venceu a 1ª parte na ponte, a luta começa na **2ª parte**. Se não, é a luta **inteira**.
+- Fases da luta: olho azul, tela de cabeça pra baixo, caixa que encolhe, tempestade de canhões, fundo roxo e o **ATAQUE FINAL**.
+- Na rota **pacifista**, depois do ataque final o botão POUPAR se reconstrói sozinho.
+- Cada derrota deixa os golpes dele um pouco mais fracos (até a metade).
+
+Fase 12: em breve.
 
 ## Personagens
 
@@ -199,9 +214,9 @@ Fase 10: em breve.
 |---|---|---|
 | ![](arte/draco.png) | ![](arte/vulcanicos.png) | ![](arte/dragoes-evoluidos.png) |
 
-| Mestre Encapuzado | Canhão de Caveira |
-|---|---|
-| ![](arte/mestre.png) | ![](arte/canhao.png) |
+| Mestre Encapuzado | Canhão de Caveira | Mestre Leão | Sombra |
+|---|---|---|---|
+| ![](arte/mestre.png) | ![](arte/canhao.png) | ![](arte/leao.png) | ![](arte/sombra.png) |
 
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
@@ -216,6 +231,7 @@ www/            jogo (HTML5)
   js/sprites5.js  doces, prisioneiros, uniforme, tiles da ilha e do campo
   js/sprites6.js  aranhas, esqueletos, kitsune, tiles da caverna e de Neo-Sakura
   js/sprites7.js  golens e fantasmas de lava, Mestre Draco, dragões evoluídos, tiles do vulcão
+  js/sprites8.js  Mestre Leão, a Sombra, faca, arena e salão dourado
   js/audio.js     efeitos e sequenciador de músicas (WebAudio)
   js/engine.js    controles, configurações, texto, diálogo, save
   js/battle.js    batalha, dragões, chefe e ataques
@@ -230,6 +246,8 @@ www/            jogo (HTML5)
   js/phase8.js    Fase 8: Vila Vulcânica (treino do dragão, vulcão, evolução, voo)
   js/boss9.js     luta contra o Mestre Encapuzado (canhões, alma azul, karma, botões quebrados)
   js/phase9.js    Fase 9: Vale Comum (cidade, padaria, pousada, ponte)
+  js/phase10.js   Fase 10: A Arena (treino com o Mestre Leão, Sombra, faca)
+  js/phase11.js   Fase 11: A Batalha (salão dourado, luta de verdade)
   js/quests.js    painel de missões e seta de objetivo de todas as fases
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK

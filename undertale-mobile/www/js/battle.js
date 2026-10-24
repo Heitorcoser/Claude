@@ -846,7 +846,7 @@ class Battle {
     this.pt = 0; this.spawnT = 0; this.patternName = pattern;
     this.turnLen = pattern === 'stars' ? 6 : (this.e.turnLen || 5.5);
     if (this.haste) { this.turnLen *= 0.55; }
-    this.soulSpeed = 150 * (this.dragon === 'neve' ? 1.5 : this.dragon === 'branco' ? 1.25 : 1) * (this.haste ? 1.5 : 1);
+    this.soulSpeed = 150 * (this.dragon === 'neve' ? 1.5 : this.dragon === 'branco' ? 1.25 : 1) * (this.haste ? 1.5 : 1) * (G.agi ? 1.3 : 1);
     this.haste = 0;
     let talk = null;
     if (pattern !== 'stars') {
