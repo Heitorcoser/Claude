@@ -295,11 +295,22 @@ const Dialog = {
 
 function hitRect(p, r) { return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h; }
 
-const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon' };
+const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon', trein: 'instr', stranger: 'deep', peng: 'peng' };
 const PORTRAITS = {
   instr: (x, y, t) => drawInstrPortrait(x, y, t),
   fire: (x, y, t) => drawGhost('fire', x + 2, y + 22, 3.2, t),
   ice: (x, y, t) => drawGhost('ice', x + 2, y + 22, 3.2, t),
+  trein: (x, y, t) => {
+    drawInstrPortrait(x, y, t);
+    drawSpr(SPR.phone, x + 66, y + 54, 2);
+    text('TREINADOR', x + 46, y + 104, 20, '#ffe680', 'center');
+  },
+  stranger: (x, y, t) => {
+    const img = SPR.encapuzado;
+    ctx.drawImage(img, 0, 0, 16, 12, x + 6, y, 16 * 5.5, 12 * 5.5);
+    if ((t % 2.6) > 2.45) { ctx.fillStyle = '#26305a'; ctx.fillRect(x + 30, y + 26, 50, 10); }
+  },
+  peng: (x, y, t) => { ctx.drawImage(SPR.pinguimNpc, 0, 0, 20, 16, x + 4, y + 4, 20 * 4.4, 16 * 4.4); },
 };
 
 // Fantasmas com coroa animada (chamas ou pingentes de gelo)

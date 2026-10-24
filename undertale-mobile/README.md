@@ -47,7 +47,24 @@ Em **CONFIGURAÇÕES** (tela inicial ou menu B) dá para trocar entre **analógi
 
 Músicas novas com vários instrumentos (sino, piano, flauta, cordas, metais, pizzicato, marimba, baixo, bateria e reverb), uma para cada área.
 
-Fase 3: em breve.
+## Fase 3 — Colônia de Gelo
+
+- **Cutscene**: enquanto você lutava na casinha, o **IceGhost** estava na colônia. Ele encontra o irmão (cinzas, ou desmaiado se você poupou) e jura **VINGANÇA**.
+- Um **estranho encapuzado** te entrega um **CELULAR** e some na neve.
+- O celular toca: é o **TREINADOR** (seu ex-Instrutor). Ele conta que o IceGhost levou o FireGhost pra casa (fantasma não morre!) e que os irmãos, estressados, encheram a colônia de armadilhas.
+- **CELULAR** no menu B: ligue pro Treinador para pedir dicas (muda conforme o progresso). Tem também um número misterioso...
+- Vila dos pinguins, Quiosque do Pinguim (loja) e moradores.
+- Longa e chata de propósito:
+  1. **Placas X/O**: transforme todo X em O sem pisar duas vezes.
+  2. **Lago escorregadio**: só para quando bate em algo (solução de 10 movimentos).
+  3. **Corredor das estalactites**: fuja das sombras.
+  4. **Campo de neve funda** com encontros (Pinguim Bravo, Nevoso, Gelinho).
+  5. **Blocos de gelo** até os botões.
+  6. **Porta das Piadas** do FireGhost: errou, alçapão!
+  7. **Ponte de gelo rachado**: siga as pegadas de pinguim ou SPLASH.
+- No fim, a **casa de gelo dos irmãos fantasmas**... continua na Fase 4.
+
+Fase 4: em breve.
 
 ## Personagens
 
@@ -67,6 +84,10 @@ Fase 3: em breve.
 |---|---|
 | ![](arte/fireghost.png) | ![](arte/iceghost.png) |
 
+| Encapuzado | Pinguim Bravo | Nevoso |
+|---|---|---|
+| ![](arte/encapuzado.png) | ![](arte/pinguim.png) | ![](arte/nevoso.png) |
+
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
 ## Estrutura
@@ -75,12 +96,14 @@ Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 www/            jogo (HTML5)
   js/sprites.js   pixel art e tiles (fase 1)
   js/sprites2.js  dragões, fantasmas e tiles de DragonCity
+  js/sprites3.js  neve, pinguins, boneco de neve, encapuzado
   js/audio.js     efeitos e sequenciador de músicas (WebAudio)
   js/engine.js    controles, configurações, texto, diálogo, save
   js/battle.js    batalha, dragões, chefe e ataques
   js/world.js     motor do mundo (mapa, movimento, roteiros)
   js/phase1.js    Fase 1: O Labirinto
   js/phase2.js    Fase 2: DragonCity
+  js/phase3.js    Fase 3: Colônia de Gelo (puzzles, armadilhas, celular)
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK
 apk/            APK pronto

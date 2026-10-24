@@ -380,6 +380,7 @@ function buildSprites() {
   SPR.sign = spriteFromRows(ICON_SIGN);
   buildTiles();
   buildSprites2();
+  buildSprites3();
 }
 
 // ---------- TILES (16x16) gerados proceduralmente ----------

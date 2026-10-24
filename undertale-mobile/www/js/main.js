@@ -22,14 +22,14 @@ const Game = {
   update(dt) {
     Timers.update(dt); Fade.update(dt); flushFrameWaiters(dt);
     if (ConfigMenu.isOpen) { ConfigMenu.update(dt); return; }
-    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter }[this.scene];
+    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, cine: Cine3 }[this.scene];
     if (this.scene === 'battle') this.battleObj.update(dt);
     else if (S) S.update(dt);
   },
 
   draw() {
     ctx.imageSmoothingEnabled = false;
-    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter }[this.scene];
+    const S = { title: Title, intro: Intro, world: World, gameover: GameOver, end: End, chapter: Chapter, cine: Cine3 }[this.scene];
     if (this.scene === 'battle') this.battleObj.draw();
     else if (S) S.draw();
     if (this.flashT > 0) this.drawFlash();
@@ -59,6 +59,7 @@ const Game = {
     const s = loadGame();
     G = Object.assign(newGameState(), s);
     if (!G.flags) G.flags = {};
+    if (G.map === 'dragoncity' && G.flags.bossDone) { this.goChapter(3); return; }
     this.enterMap(G.map || 'labirinto');
     if (Fade.a > 0 && !(G.map === 'dragoncity' && !G.flags.p2arrived)) Fade.to(0, 1.5);
     Sfx.playMusic(World.M.musicAt ? World.M.musicAt(World) : World.M.music);
@@ -71,6 +72,7 @@ const Game = {
 
   goChapter(n) {
     if (n === 2) { G.map = 'dragoncity'; G.pos = null; saveGame(null); }
+    if (n === 3) { G.map = 'gelo'; G.pos = null; saveGame(null); }
     this.scene = 'chapter'; Chapter.enter(n);
   },
 
@@ -143,7 +145,7 @@ const Title = {
     }
     text('PERDIDO', 320, 90, 52, '#fff', 'center', FONT_TITLE);
     text('um fangame de Undertale', 320, 160, 30, '#aaa', 'center');
-    const fase = this.save && this.save.map === 'dragoncity' ? 'FASE 2: DRAGONCITY' : 'FASE 1: O LABIRINTO';
+    const fase = { dragoncity: 'FASE 2: DRAGONCITY', gelo: 'FASE 3: COLÔNIA DE GELO' }[this.save && this.save.map] || 'FASE 1: O LABIRINTO';
     text(fase, 320, 196, 30, '#ffe680', 'center');
     drawSpr(SPR.soul, 312, 244 + Math.sin(this.t * 3) * 4, 1);
     this.opts.forEach((o, i) => text(o, 320, 284 + i * 44, 34, i === this.sel ? '#ffff40' : '#fff', 'center'));
@@ -198,7 +200,11 @@ const Chapter = {
     this.t += dt;
     if (!this.done && (this.t > 4.5 || (this.t > 1.2 && (Input.isPressed('a') || Input.tap)))) {
       this.done = true;
-      Fade.to(1, 1.2).then(() => { Sfx.stopMusic(); Game.enterMap(this.n === 2 ? 'dragoncity' : 'labirinto'); });
+      Fade.to(1, 1.2).then(() => {
+        Sfx.stopMusic();
+        if (this.n === 3) { Game.scene = 'cine'; Cine3.run(); }
+        else Game.enterMap(this.n === 2 ? 'dragoncity' : 'labirinto');
+      });
     }
   },
   draw() {
@@ -206,7 +212,12 @@ const Chapter = {
     const a = Math.min(1, this.t);
     ctx.globalAlpha = a;
     text('FASE ' + this.n, 320, 150, 40, '#fff', 'center', FONT_TITLE);
-    text(this.n === 2 ? 'DRAGONCITY' : 'O LABIRINTO', 320, 220, 30, '#ff9a3a', 'center', FONT_TITLE);
+    text({ 1: 'O LABIRINTO', 2: 'DRAGONCITY', 3: 'COLÔNIA DE GELO' }[this.n], 320, 220, 30, this.n === 3 ? '#9fe4ff' : '#ff9a3a', 'center', FONT_TITLE);
+    if (this.n === 3) {
+      drawGhost('ice', 278, 280 + Math.sin(this.t * 2) * 6, 3, this.t);
+      ctx.fillStyle = '#fff';
+      for (let i = 0; i < 40; i++) ctx.fillRect((i * 97 + this.t * 30) % 640, (i * 53 + this.t * 50) % 480, 2, 2);
+    }
     if (this.n === 2) {
       const k = ['preto', 'branco', 'laranja'];
       k.forEach((d, i) => drawSpr(SPR.dragon[d].right[Math.floor(this.t * 3 + i) % 2], 170 + i * 110, 300 + Math.sin(this.t * 2 + i) * 6, 3));
@@ -386,24 +397,34 @@ const GameOver = {
 // ---------------- FIM DA FASE ----------------
 const End = {
   t: 0, phase: 2,
-  enter(phase) { this.t = 0; this.phase = phase || 2; Fade.to(0, 0.8); Sfx.playMusic('victory'); },
+  enter(phase) {
+    this.t = 0; this.phase = phase || 2; Fade.to(0, 0.8); Sfx.playMusic('victory');
+    if (this.phase === 2) { G.map = 'gelo'; G.pos = null; G.flags.p2done = true; saveGame(null); }
+  },
   update(dt) {
     this.t += dt;
-    if (this.t > 3 && (Input.isPressed('a') || Input.tap)) { Sfx.select(); Fade.to(1, 1).then(() => { Sfx.stopMusic(); Game.goTitle(); }); this.t = -99; }
+    if (this.t > 3 && (Input.isPressed('a') || Input.tap)) {
+      Sfx.select(); this.t = -99;
+      Fade.to(1, 1).then(() => { Sfx.stopMusic(); this.phase === 2 ? Game.goChapter(3) : Game.goTitle(); });
+    }
   },
   draw() {
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    const T = Math.max(0, this.t);
     text('FIM DA FASE ' + this.phase, 320, 50, 34, '#fff', 'center', FONT_TITLE);
     drawSpr(SPR.player.down[0], 300, 140, 3);
-    if (G.dragon) drawSpr(SPR.dragon[G.dragon].right[Math.floor(Math.max(0, this.t) * 4) % 2], 170, 118, 4);
-    if (G.flags.fireFriend) drawGhost('fire', 380, 112, 3, Math.max(0, this.t));
+    if (G.dragon) drawSpr(SPR.dragon[G.dragon].right[Math.floor(T * 4) % 2], 170, 118, 4);
+    if (this.phase === 2 && G.flags.fireFriend) drawGhost('fire', 380, 112, 3, T);
+    if (this.phase === 3) { drawGhost('ice', 380, 100, 3, T); drawGhost('fire', 470, 120, 2, T, G.flags.fireFriend ? 1 : 0.5); }
     const rota = G.kills === 0 ? 'Rota: PACIFISTA (até agora...)' : (G.kills >= 4 && G.spares === 0) ? 'Rota: ...GENOCIDA?' : 'Rota: NEUTRA';
     text(`LV ${G.lv}   EXP ${G.xp}   OURO ${G.gold}`, 320, 236, 32, '#fff', 'center');
     text(`Poupados: ${G.spares}    Derrotados: ${G.kills}`, 320, 270, 32, '#fff', 'center');
     text(rota, 320, 304, 32, '#ffe680', 'center');
-    text(G.flags.fireFriend ? 'FireGhost virou seu amigo!' : 'O IceGhost sabe que você está aqui...', 320, 344, 30, '#9fe4ff', 'center');
-    text('FASE 3 em breve...', 320, 386, 30, '#ff7f27', 'center');
-    if (this.t > 3 && Math.floor(this.t * 2) % 2) text('toque para voltar ao título', 320, 434, 26, '#777', 'center');
+    const line = this.phase === 3 ? 'Os irmãos fantasmas estão te esperando...'
+      : G.flags.fireFriend ? 'FireGhost virou seu amigo!' : 'O IceGhost sabe que você está aqui...';
+    text(line, 320, 344, 30, '#9fe4ff', 'center');
+    text(this.phase === 2 ? 'Próxima: FASE 3 — COLÔNIA DE GELO' : 'FASE 4 em breve...', 320, 386, 30, '#ff7f27', 'center');
+    if (this.t > 3 && Math.floor(this.t * 2) % 2) text(this.phase === 2 ? 'toque para continuar' : 'toque para voltar ao título', 320, 434, 26, '#777', 'center');
   },
 };
 

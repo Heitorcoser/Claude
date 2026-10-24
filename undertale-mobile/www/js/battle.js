@@ -97,6 +97,37 @@ Object.assign(ENEMIES, {
   },
 });
 
+Object.assign(ENEMIES, {
+  pinguim: {
+    name: 'Pinguim Bravo', spr: 'pinguim', scale: 7, hp: 32, atk: 4, def: 2, xp: 18, gold: 12, voice: 'peng',
+    intro: '* Pinguim Bravo desliza de barriga até você!',
+    check: '* PINGUIM BRAVO - ATK 4 DEF 2\n* Guarda das armadilhas do IceGhost.\n* Ama peixe. Odeia ser ignorado.',
+    acts: {
+      'Imitar': { text: ['* Você imita o andar do pinguim.', '* Ele fica impressionado! Que talento!'], mercy: 50 },
+      'Dar peixe': { text: ['* Você finge jogar um peixe.', '* Pinguim Bravo pula pra pegar... e fica feliz igual.'], mercy: 55 },
+      'Ignorar': { text: ['* Você ignora o pinguim.', '* Ele fica MUITO ofendido!'], mercy: -40, atkUp: 1 },
+    },
+    flavor: ['* Pinguim Bravo bate as asinhas.', '* Cheira a peixe congelado.', '* Pinguim Bravo ajeita o smoking.'],
+    talk: ['Quá!', 'Ninguém passa!', 'Ordens do chefe!', 'Tem peixe aí?'],
+    spareTalk: 'Quá quá! Valeu!',
+    patterns: ['slide', 'fish'],
+  },
+  nevoso: {
+    name: 'Nevoso', spr: 'nevoso', scale: 6, hp: 36, atk: 4, def: 3, xp: 20, gold: 14, voice: 'narr',
+    intro: '* Nevoso surge da neve!',
+    check: '* NEVOSO - ATK 4 DEF 3\n* Um boneco de neve muito vaidoso.\n* Seu nariz vive caindo.',
+    acts: {
+      'Ajeitar nariz': { text: ['* Você ajeita a cenoura de Nevoso.', '* Ele se olha num lago congelado. Perfeito!'], mercy: 60 },
+      'Dar cachecol': { text: ['* Você empresta seu cachecol imaginário.', '* Nevoso agradece muito, todo elegante.'], mercy: 50 },
+      'Derreter': { text: ['* Você bafeja ar quente em Nevoso.', '* Ele ficou com MUITA raiva!'], mercy: -40, atkUp: 1 },
+    },
+    flavor: ['* Nevoso posa para uma foto invisível.', '* Um vento gelado sopra.', '* O nariz de Nevoso caiu. Ele finge que não.'],
+    talk: ['Que frio gostoso.', 'Não me derrete!', 'Sou o mais bonito.', 'Brrrilhante!'],
+    spareTalk: 'Você tem estilo!',
+    patterns: ['snowballs', 'snow'],
+  },
+});
+
 const DRAGONS = {
   preto: { name: 'Dragão Preto', act: 'Dragão: Investida', desc: 'FORTE. +3 de ATAQUE e golpes devastadores.' },
   branco: { name: 'Dragão Branco', act: 'Dragão: Ventania', desc: 'RÁPIDO. Sua ALMA fica mais veloz e ele encurta os ataques.' },
@@ -509,6 +540,7 @@ class Battle {
           if (v > mx) { b.vx *= mx / v; b.vy *= mx / v; }
         }
       }
+      if (b.g) b.vy += b.g * dt;
       b.x += b.vx * dt; b.y += b.vy * dt;
       if (b.sway) b.x += Math.sin(b.t * 5 + b.ph) * b.sway * dt;
       const hitIt = b.w ? (Math.abs(b.x - s.x) < b.w / 2 + 4 && Math.abs(b.y - s.y) < b.h / 2 + 4) : Math.hypot(b.x - s.x, b.y - s.y) < b.r + 5;
@@ -812,6 +844,36 @@ const PATTERNS = {
       }
     },
   },
+  slide: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.95;
+        const bx = B.box, left = Math.random() < 0.5, y = bx.y + 18 + Math.random() * (bx.h - 36);
+        B.bullets.push({ kind: 'peng', x: left ? bx.x - 20 : bx.x + bx.w + 20, y, vx: left ? 170 : -170, vy: 0, w: 22, h: 12, left });
+      }
+    },
+  },
+  fish: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.45;
+        const bx = B.box, fromLeft = Math.random() < 0.5;
+        B.bullets.push({ kind: 'fish', x: fromLeft ? bx.x + 6 : bx.x + bx.w - 6, y: bx.y + bx.h - 4, vx: (fromLeft ? 1 : -1) * (40 + Math.random() * 70), vy: -260 - Math.random() * 60, g: 300, r: 6, life: 3 });
+      }
+    },
+  },
+  snowballs: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.8;
+        const bx = B.box, x = bx.x + 15 + Math.random() * (bx.w - 30);
+        B.bullets.push({ kind: 'snowball', x, y: bx.y - 10, vx: (Math.random() - 0.5) * 60, vy: 60, g: 140, r: 10, life: 4 });
+      }
+    },
+  },
   embers: {
     update(B, dt) {
       B.spawnT -= dt;
@@ -927,6 +989,21 @@ const PATTERNS = {
 };
 
 const BULLET_DRAW = {
+  peng(b) {
+    const img = SPR.pinguim; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.left ? Math.PI / 2 : -Math.PI / 2);
+    ctx.drawImage(img, -12, -12, 24, 24); ctx.restore();
+  },
+  fish(b, t) {
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
+    ctx.fillStyle = '#8ab4d8'; ctx.beginPath(); ctx.ellipse(0, 0, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-7, 0); ctx.lineTo(-13, -5); ctx.lineTo(-13, 5); ctx.fill();
+    ctx.fillStyle = '#000'; ctx.fillRect(4, -2, 2, 2); ctx.restore();
+  },
+  snowball(b) {
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(b.x, b.y, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f4f8ff'; ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#c8d8ec'; ctx.beginPath(); ctx.arc(b.x + 3, b.y + 3, 5, 0, Math.PI * 2); ctx.fill();
+  },
   ember(b, t) { drawFlame(b.x, b.y + 5, 13, t * 10 + b.ph); },
   fireball(b, t) {
     ctx.fillStyle = 'rgba(255,90,20,0.5)'; ctx.beginPath(); ctx.arc(b.x - b.vx * 0.04, b.y - b.vy * 0.04, 6, 0, Math.PI * 2); ctx.fill();

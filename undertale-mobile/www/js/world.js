@@ -47,6 +47,14 @@ const World = {
     return false;
   },
 
+  redrawTile(x, y) {
+    const g = this.mapImg.getContext('2d');
+    g.clearRect(x * TS, y * TS, TS, TS);
+    const img = this.M.tileImg(this.g[y][x], x, y, this);
+    if (img) g.drawImage(img, x * TS, y * TS);
+  },
+  feetTile() { return [Math.floor(this.player.x / TS), Math.floor((this.player.y - 2) / TS)]; },
+
   renderMap() {
     const cvs = document.createElement('canvas');
     cvs.width = this.mw * TS; cvs.height = this.mh * TS;
@@ -71,7 +79,8 @@ const World = {
     if (this.menu) { this.updateMenu(); return; }
     const p = this.player;
     p.moving = false;
-    if (!this.locked && !p.lying) {
+    const ctl = !this.locked && !p.lying && this.M.playerControl && this.M.playerControl(this, dt);
+    if (!this.locked && !p.lying && !ctl) {
       const v = moveVector();
       if (v.x || v.y) {
         const sp = 90 * dt;
@@ -162,7 +171,7 @@ const World = {
   // ---------- menu do mundo (botão B) ----------
   menuOpts() {
     const M = this.menu;
-    if (M.level === 'main') return ['ITEM', 'STATUS', 'CONFIG', 'FECHAR'];
+    if (M.level === 'main') return G.flags.phone ? ['ITEM', 'STATUS', 'CELULAR', 'CONFIG', 'FECHAR'] : ['ITEM', 'STATUS', 'CONFIG', 'FECHAR'];
     if (M.level === 'items') return G.items.concat(['VOLTAR']);
     return ['VOLTAR'];
   },
@@ -184,6 +193,7 @@ const World = {
       if (o === 'ITEM') this.menu = G.items.length ? { level: 'items', sel: 0 } : this.menu;
       else if (o === 'STATUS') this.menu = { level: 'stat', sel: 0 };
       else if (o === 'CONFIG') { this.menu = null; ConfigMenu.open(); }
+      else if (o === 'CELULAR') { this.menu = null; Phone.open(); }
       else this.menu = null;
     } else if (M.level === 'items') {
       if (o === 'VOLTAR') this.menu = { level: 'main', sel: 0 };
@@ -291,10 +301,10 @@ const World = {
   },
 
   say(lines) {
-    const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon' };
+    const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon', T: 'trein', S: 'stranger', P: 'peng' };
     return Dialog.show(lines.map(t => {
       if (typeof t !== 'string') return t;
-      const m = /^([IFGD]):\s*(.*)$/s.exec(t);
+      const m = /^([IFGDTSP]):\s*(.*)$/s.exec(t);
       return m ? { who: WHO[m[1]], t: '* ' + m[2] } : t;
     }), this.player.y - this.cam.y > 150);
   },
