@@ -1,0 +1,5 @@
+apk/
+android/app/build/
+android/build/
+android/.gradle/
+*.min.js

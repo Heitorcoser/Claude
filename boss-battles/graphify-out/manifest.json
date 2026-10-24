@@ -1,0 +1,182 @@
+{
+  "android/app/build.gradle": {
+    "mtime": 1792881677.2015922,
+    "seen": 1792884676.7117803,
+    "ast_hash": "9b77377ccba3f1c9c8c133f3454ebcc5",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/java/com/heitorcoser/bossbattles/ApkProvider.java": {
+    "mtime": 1792881681.1101525,
+    "seen": 1792884676.7117894,
+    "ast_hash": "d90d1c8829560b832c80efbd4997479d",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/java/com/heitorcoser/bossbattles/MainActivity.java": {
+    "mtime": 1792881681.1107638,
+    "seen": 1792884676.7117927,
+    "ast_hash": "1ebb18c8ebcb2f060714f3995ed3353f",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/java/com/heitorcoser/bossbattles/Updater.java": {
+    "mtime": 1792881681.1111598,
+    "seen": 1792884676.7117941,
+    "ast_hash": "667f01014348a23db1f19b264a232bdb",
+    "semantic_hash": ""
+  },
+  "android/build.gradle": {
+    "mtime": 1792798482.0,
+    "seen": 1792884676.7117958,
+    "ast_hash": "5fa07717e0f1227b3242e44e7a7a65a0",
+    "semantic_hash": ""
+  },
+  "android/gradlew": {
+    "mtime": 1792798523.0,
+    "seen": 1792884676.711797,
+    "ast_hash": "794669d78aef1dd5c7d889ef618b311a",
+    "semantic_hash": ""
+  },
+  "android/settings.gradle": {
+    "mtime": 1792881681.1159787,
+    "seen": 1792884676.7117982,
+    "ast_hash": "5dd640e0641b8722049f7e8abec4222a",
+    "semantic_hash": ""
+  },
+  "www/js/audio.js": {
+    "mtime": 1792880987.7072964,
+    "seen": 1792884676.7117996,
+    "ast_hash": "c1751bcf799fe0c350315497011d8b26",
+    "semantic_hash": ""
+  },
+  "www/js/battle.js": {
+    "mtime": 1792880974.531828,
+    "seen": 1792884676.7118008,
+    "ast_hash": "bdf6a98d8a5c41ec8717d6768625e11c",
+    "semantic_hash": ""
+  },
+  "www/js/bosses.js": {
+    "mtime": 1792881552.339197,
+    "seen": 1792884676.711802,
+    "ast_hash": "bc0eb75abe43594e5a7c320d6958cd6c",
+    "semantic_hash": ""
+  },
+  "www/js/engine.js": {
+    "mtime": 1792880974.5317578,
+    "seen": 1792884676.7118032,
+    "ast_hash": "7eda7365f6d8ba0b232578e535bfd6d5",
+    "semantic_hash": ""
+  },
+  "www/js/game.js": {
+    "mtime": 1792881638.9740965,
+    "seen": 1792884676.7118044,
+    "ast_hash": "3e8a88694d816b3fef5e5ef041d2108c",
+    "semantic_hash": ""
+  },
+  "www/js/sprites.js": {
+    "mtime": 1792880974.5319138,
+    "seen": 1792884676.7118053,
+    "ast_hash": "6efb8605f140248723f3eb814f9f3222",
+    "semantic_hash": ""
+  },
+  "www/js/sprites2.js": {
+    "mtime": 1792880974.5319319,
+    "seen": 1792884676.7118065,
+    "ast_hash": "b9420d66a2e5f3263e4a794faab015cf",
+    "semantic_hash": ""
+  },
+  "www/js/sprites3.js": {
+    "mtime": 1792880974.5319524,
+    "seen": 1792884676.7118075,
+    "ast_hash": "27e8beb4fe4cfe2b2eb1e928a14dfab4",
+    "semantic_hash": ""
+  },
+  "www/js/sprites4.js": {
+    "mtime": 1792880974.5319686,
+    "seen": 1792884676.7118087,
+    "ast_hash": "57557eabfca7902b5ab115668c89852d",
+    "semantic_hash": ""
+  },
+  "www/js/sprites5.js": {
+    "mtime": 1792880974.5319834,
+    "seen": 1792884676.7118099,
+    "ast_hash": "92e46b820897d2ef7f28be36eb11c95d",
+    "semantic_hash": ""
+  },
+  "www/js/sprites6.js": {
+    "mtime": 1792880974.5320039,
+    "seen": 1792884676.711811,
+    "ast_hash": "8e04aeef511de49a91181de16b049541",
+    "semantic_hash": ""
+  },
+  "www/js/sprites7.js": {
+    "mtime": 1792880974.53202,
+    "seen": 1792884676.7118123,
+    "ast_hash": "6161fdd2fac6eaf5ee784a2fecc91a8e",
+    "semantic_hash": ""
+  },
+  "www/js/sprites8.js": {
+    "mtime": 1792880974.5320356,
+    "seen": 1792884676.7118134,
+    "ast_hash": "0d66f5f4bfb35ae65a37141658ccc8fb",
+    "semantic_hash": ""
+  },
+  "www/js/sprites9.js": {
+    "mtime": 1792880974.5320513,
+    "seen": 1792884676.7118144,
+    "ast_hash": "000ceacb4ee3545111af43c84ba53743",
+    "semantic_hash": ""
+  },
+  "www/fonts/OFL-PressStart2P.txt": {
+    "mtime": 1792880974.5245185,
+    "seen": 1792884676.7118154,
+    "ast_hash": "1baa75dd221245d109abf3464dbcae45",
+    "semantic_hash": ""
+  },
+  "www/fonts/OFL-VT323.txt": {
+    "mtime": 1792880974.5284033,
+    "seen": 1792884676.711817,
+    "ast_hash": "c0e4a8dc44030994b5f7f62afb80d2ee",
+    "semantic_hash": ""
+  },
+  "www/index.html": {
+    "mtime": 1792881359.1379101,
+    "seen": 1792884676.7118177,
+    "ast_hash": "1edc8846eb3c99a166e5263c13cd97ca",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-hdpi/ic_launcher.png": {
+    "mtime": 1792881690.9154458,
+    "seen": 1792884676.7118187,
+    "ast_hash": "c9ff41b3c7b127b60beae7c59302a57d",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-mdpi/ic_launcher.png": {
+    "mtime": 1792881690.9137542,
+    "seen": 1792884676.71182,
+    "ast_hash": "a66c4bb0329edd4ab726a6e090c9fa65",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-xhdpi/ic_launcher.png": {
+    "mtime": 1792881690.9172351,
+    "seen": 1792884676.711821,
+    "ast_hash": "022236a71fd32070e17375dc4a80844a",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png": {
+    "mtime": 1792881690.918735,
+    "seen": 1792884676.711822,
+    "ast_hash": "f395f3a1b9575358352c0f18a69a06a2",
+    "semantic_hash": ""
+  },
+  "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png": {
+    "mtime": 1792881690.9203806,
+    "seen": 1792884676.7118235,
+    "ast_hash": "80f64cc3bae0d2d9810457bea81137a9",
+    "semantic_hash": ""
+  },
+  "www/favicon.png": {
+    "mtime": 1792881690.9229143,
+    "seen": 1792884676.7118244,
+    "ast_hash": "80f64cc3bae0d2d9810457bea81137a9",
+    "semantic_hash": ""
+  }
+}
