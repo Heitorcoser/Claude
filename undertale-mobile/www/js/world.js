@@ -83,7 +83,7 @@ const World = {
     if (!this.locked && !p.lying && !ctl) {
       const v = moveVector();
       if (v.x || v.y) {
-        const sp = 90 * dt;
+        const sp = 90 * dt * (this.M.speedMul ? this.M.speedMul(this) : 1);
         if (Math.abs(v.y) > Math.abs(v.x) * 1.05) p.dir = v.y < 0 ? 'up' : 'down';
         else if (v.x) p.dir = v.x < 0 ? 'left' : 'right';
         const ox = p.x, oy = p.y;
@@ -208,7 +208,7 @@ const World = {
     if (M.level === 'stat') {
       frameBox(20, 20, 330, 380, 5);
       const dn = G.dragon ? DRAGONS[G.dragon].name : '---';
-      const L = [`"${G.name}"`, `LV ${G.lv}`, `HP ${G.hp} / ${G.maxhp}`, `ATQ ${playerAtk()}   DEF ${playerDef()}`,
+      const L = [`"${displayName()}"`, `LV ${G.lv}`, `HP ${G.hp} / ${G.maxhp}`, `ATQ ${playerAtk()}   DEF ${playerDef()}`,
         `EXP ${G.xp}   OURO ${G.gold}`, `Dragão: ${dn}`, `Poupados: ${G.spares}`, `Derrotados: ${G.kills}`];
       L.forEach((l, i) => text(l, 46, 40 + i * 40, 32));
       return;
@@ -257,7 +257,9 @@ const World = {
     list.push({ y: p.y, d: () => {
       if (p.lying) { drawSpr(SPR.playerLying, sx(p.x - 10), sy(p.y - 12), 2); return; }
       const fr = p.moving ? Math.floor(p.anim) % 4 : 0;
-      drawSpr(SPR.player[p.dir][fr], sx(p.x - 7), sy(p.y - 21), 2);
+      const pset = (G.flags.p5uniform && !G.flags.p5free) ? SPR.playerGray : SPR.player;
+      drawSpr(pset[p.dir][fr], sx(p.x - 7), sy(p.y - 21), 2);
+      if (p.carry) drawSpr(SPR.brick, sx(p.x - 5), sy(p.y - 30), 2);
       if (this.excl > 0) text('!', sx(p.x), sy(p.y - 36), 40, '#fff', 'center', FONT_TITLE);
     } });
     list.sort((a, b) => a.y - b.y).forEach(o => o.d());
@@ -308,16 +310,17 @@ const World = {
   },
 
   say(lines) {
-    const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon', T: 'trein', S: 'stranger', P: 'peng', B: 'bit', V: 'volt', R: 'brutao', K: 'teca', Z: 'ze', C: 'kid' };
+    const WHO = { I: 'instr', F: 'fire', G: 'ice', D: 'dragon', T: 'trein', S: 'stranger', P: 'peng', B: 'bit', V: 'volt', R: 'brutao', K: 'teca', Z: 'ze', C: 'kid',
+      M: 'marsh', H: 'choco', Y: 'piru', N: 'macaron', O: 'vovo', U: 'ferrugem', L: 'lia' };
     return Dialog.show(lines.map(t => {
       if (typeof t !== 'string') return t;
-      const m = /^([IFGDTSPBVRKZC]):\s*(.*)$/s.exec(t);
+      const m = /^([IFGDTSPBVRKZCMHYNOUL]):\s*(.*)$/s.exec(t);
       return m ? { who: WHO[m[1]], t: '* ' + m[2] } : t;
     }), this.player.y - this.cam.y > 150);
   },
   ask(text, choices) {
-    const m = /^([IFGBV]):\s*(.*)$/s.exec(text);
-    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt' }[m[1]] : null;
+    const m = /^([IFGBVMHLO]):\s*(.*)$/s.exec(text);
+    const who = m ? { I: 'instr', F: 'fire', G: 'ice', B: 'bit', V: 'volt', M: 'marsh', H: 'choco', L: 'lia', O: 'vovo' }[m[1]] : null;
     return Dialog.ask(m ? '* ' + m[2] : text, choices, who);
   },
 

@@ -76,7 +76,23 @@ Músicas novas com vários instrumentos (sino, piano, flauta, cordas, metais, pi
   - Dá para convencê-los (Conversar, Defender, Mostrar amizade) ou vencer (eles fogem; ninguém morre).
 - No fim, você pega o **contato do Bit** (CELULAR → Bit) e vocês se despedem.
 
-Fase 5: em breve.
+## Fase 5 — A Ilha dos Doces
+
+> Esta fase é uma crítica ao nazismo. Ela mostra, sem violência gráfica, como a propaganda de "raça superior", a desumanização e a obediência cega levam à opressão — e como solidariedade e resistência podem vencer. Termina com um cartão de **memória** sobre o que aconteceu de verdade.
+
+- **Cutscene**: os irmãos fantasmas te atacam por vingança com uma TEMPESTADE DE GELO.
+- Você acorda num **hospital da Ilha dos Doces** e conhece a enfermeira **Marshmallow** e o jovem guarda **Chocolate**.
+- Na ilha, os doces se dizem um "povo perfeito". Não-doces (robôs, humanos, fantasmas) são levados ao **campo de trabalho**.
+- No campo: seu nome vira o **Nº 4812**, seu celular é confiscado, você usa uniforme cinza e **não pode falar com doces** (3 advertências = solitária).
+- **FOME** (barra no canto): diminui com o tempo e mais rápido carregando peso; com pouca fome você anda devagar e pode desmaiar.
+- Desafios: **construir uma casa** carregando blocos de açúcar (onde você nunca poderá entrar), **sopa rala** (dá para dividir com a Lia), **chamada** com tempo, **fábrica** (minijogo de embalar doces).
+- Prisioneiros: **Vovó Fantasma**, **Ferrugem** (robô) e **Lia** (humana).
+- Defender o Ferrugem do **Capataz Pirulito**, ir para a solitária, receber ajuda da Marshmallow, conseguir o **alicate** e o **mapa das rondas**, **fugir à noite** desviando das lanternas dos guardas e convencer o Chocolate a te deixar ir.
+- Do lado de fora tem sinal: você chama o **Treinador**, o **Bit** e seu **dragão**, liberta o campo e enfrenta o **BOSS: Diretor Macaron Dourado** com os três ao seu lado.
+  - Não dá para poupá-lo: ele precisa ser detido. Ações como **Recusar obedecer** e **Lembrar das vítimas** derrubam a defesa dele.
+  - No fim ele é preso para ser **julgado**, e todos recuperam seus **nomes**.
+
+Fase 6: em breve.
 
 ## Personagens
 
@@ -104,6 +120,10 @@ Fase 5: em breve.
 |---|---|
 | ![](arte/bit.png) | ![](arte/valentoes.png) |
 
+| Diretor Macaron | Marshmallow e Chocolate | Capataz Pirulito | Lia, Ferrugem e Vovó Fantasma |
+|---|---|---|---|
+| ![](arte/macaron.png) | ![](arte/marsh-choco.png) | ![](arte/pirulito.png) | ![](arte/prisioneiros.png) |
+
 Toda a arte é pixel art original, desenhada em código (`www/js/sprites.js`).
 
 ## Estrutura
@@ -114,6 +134,7 @@ www/            jogo (HTML5)
   js/sprites2.js  dragões, fantasmas e tiles de DragonCity
   js/sprites3.js  neve, pinguins, boneco de neve, encapuzado
   js/sprites4.js  robôs, crianças, valentões, drones, tiles neon
+  js/sprites5.js  doces, prisioneiros, uniforme, tiles da ilha e do campo
   js/audio.js     efeitos e sequenciador de músicas (WebAudio)
   js/engine.js    controles, configurações, texto, diálogo, save
   js/battle.js    batalha, dragões, chefe e ataques
@@ -122,6 +143,7 @@ www/            jogo (HTML5)
   js/phase2.js    Fase 2: DragonCity
   js/phase3.js    Fase 3: Colônia de Gelo (puzzles, armadilhas, celular)
   js/phase4.js    Fase 4: Cidade Futurista (Bit, cinema, escola, valentões)
+  js/phase5.js    Fase 5: Ilha dos Doces (campo, fome, fuga, libertação)
   js/main.js      título, cutscene, cartões de fase, game over, final
 android/        projeto Android (WebView) que gera o APK
 apk/            APK pronto

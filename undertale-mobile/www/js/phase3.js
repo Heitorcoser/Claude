@@ -346,6 +346,9 @@ MAPS.gelo = {
 const Phone = {
   async open() {
     const W = World;
+    if (World.mapId === 'ilha' && G.flags.p5camp && !G.flags.p5out) {
+      return W.say(['* (SEM SINAL.)', '* (A Marshmallow disse: só do lado de FORA da cerca.)']);
+    }
     const opts = ['Treinador'].concat(G.flags.bitContact ? ['Bit'] : [], ['???', 'Sair']);
     const o = opts[await W.ask('* (CELULAR) Para quem ligar?', opts)];
     if (o === 'Treinador') return P3.callTrainer();

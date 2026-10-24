@@ -324,7 +324,13 @@ const Dialog = {
 function hitRect(p, r) { return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h; }
 
 const VOICE_OF = { instr: 'instr', fire: 'fire', ice: 'ice', dragon: 'dragon', trein: 'instr', stranger: 'deep', peng: 'peng',
-  bit: 'robot', volt: 'robot2', brutao: 'bully', teca: 'bully', ze: 'bully', kid: 'kid' };
+  bit: 'robot', volt: 'robot2', brutao: 'bully', teca: 'bully', ze: 'bully', kid: 'kid',
+  marsh: 'soft', choco: 'narr', piru: 'harsh', macaron: 'posh', vovo: 'old', ferrugem: 'robot2', lia: 'kid' };
+// No campo, o jogador é chamado por um número. O nome volta quando ele é libertado.
+function displayName() { return (G.flags && G.flags.p5camp && !G.flags.p5free) ? 'Nº4812' : G.name; }
+function sprPortrait(key, sw, sh, sc, ox = 0, oy = 0) {
+  return (x, y) => { const img = typeof key === 'function' ? key() : SPR[key]; ctx.drawImage(img, 0, 0, sw, sh, x + ox, y + oy, sw * sc, sh * sc); };
+}
 function robotPortrait(pal) {
   return (x, y, t) => {
     const set = SPR.robot[pal], img = (t % 3) > 2.85 ? set.sad : set.right[0];
@@ -355,6 +361,13 @@ const PORTRAITS = {
   teca: (x, y) => kidPortrait('teca')(x, y),
   ze: (x, y) => kidPortrait('ze')(x, y),
   kid: (x, y) => kidPortrait('k1')(x, y),
+  marsh: sprPortrait('marsh', 18, 18, 5, 4, 4),
+  choco: sprPortrait('choco', 16, 9, 6, 2, 16),
+  piru: sprPortrait('pirulito', 20, 16, 5, 0, 8),
+  macaron: sprPortrait('macaron', 28, 18, 3.4, -2, 10),
+  vovo: sprPortrait('vovo', 28, 16, 3.4, -2, 16),
+  ferrugem: (x, y, t) => robotPortrait('ferrugem')(x, y, t),
+  lia: sprPortrait('lia', 14, 12, 6, 6, 10),
 };
 
 // Fantasmas com coroa animada (chamas ou pingentes de gelo)

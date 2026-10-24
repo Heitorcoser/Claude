@@ -71,6 +71,10 @@ const Sfx = (() => {
     robot2: () => tone([520, 780][(Math.random() * 2) | 0], 0.05, 'triangle', 0.12),
     bully: () => tone(160 + Math.random() * 40, 0.05, 'square', 0.08),
     kid: () => tone(600 + Math.random() * 200, 0.04, 'triangle', 0.1),
+    soft: () => tone(740 + Math.random() * 60, 0.05, 'sine', 0.1),
+    harsh: () => tone(200 + Math.random() * 30, 0.05, 'sawtooth', 0.09),
+    posh: () => tone(130 + Math.random() * 20, 0.08, 'square', 0.09),
+    old: () => tone(420 + Math.random() * 30, 0.08, 'sine', 0.12),
   };
 
   // ---------- INSTRUMENTOS ----------
@@ -293,6 +297,26 @@ const Sfx = (() => {
              Em: E6 . D6 E6 B5 . G5 B5 | C: C6 . B5 C6 G5 . E5 G5 | Am: A5 . B5 C6 E6 . D6 C6 | B7: B5 . A5 . F#5 . D#5 F#5 |
              C: G5 . . . C6 . G5 . | G: B5 . . . D6 . B5 . | Am: C6 . B5 . A5 . E5 . | Em: G5 . . . B5 . . . |
              C: E6 . D6 . C6 . G5 . | D: F#6 . E6 . D6 . A5 . | Am: C6 . D6 . E6 . F#6 . | B: D#6 . . . F#6 . . .` },
+    doce: { bpm: 96, lead: 'bell', lead2: 'piano', pad: 'organ', arp: 'harp', bass: 'bassTri', bassPat: 'rootfifth', drums: 'tick', leadVol: 0.8,
+      bars: `C: E5 . G5 . C6 . G5 . | Am: A5 . E5 . C5 . E5 . | Dm: F5 . A5 . D6 . A5 . | G7: G5 . B5 . F5 . D5 . |
+             C: E5 . G5 . C6 . E6 . | Fm: Ab5 . F5 . C6 . Ab5 . | C: G5 . E5 . C5 . G4 . | G: D5 . . . - - - -` },
+    campo: { bpm: 60, lead: 'piano', pad: 'strings', arp: null, bass: 'bassTri', bassPat: 'root', drums: null, leadVol: 0.8,
+      bars: `Dm: A4 . . . D5 . . . | Bb: F5 . . . D5 . . . | Gm: D5 . . . Bb4 . . . | A: C#5 . . . E5 . . . |
+             Dm: F5 . . . A5 . . . | Gm: G5 . . . Bb4 . . . | Dm: A4 . . . F4 . . . | A7: E4 . . . - - - -` },
+    fuga: { bpm: 104, lead: 'pizz', pad: 'strings', arp: null, bass: 'bassPluck', bassPat: 'walk', drums: 'tick',
+      bars: `Em: E4 - G4 - B4 - G4 - | C: E4 - G4 - C5 - G4 - | Am: A4 - C5 - E5 - C5 - | B7: D#5 - B4 - F#4 - B4 - |
+             Em: G4 - B4 - E5 - B4 - | C: C5 - E5 - G5 - E5 - | D: F#5 - D5 - A4 - D5 - | B7: B4 . . . - - - -` },
+    resistencia: { bpm: 112, lead: 'brass', lead2: 'bell', pad: 'strings', arp: 'harp', bass: 'bassSaw', bassPat: 'rootfifth', drums: 'pop',
+      bars: `D: F#5 . A5 . D6 . . . | Bm: D6 . C#6 . B5 . F#5 . | G: G5 . B5 . D6 . E6 . | A: C#6 . . . E6 . . . |
+             D: F#6 . E6 . D6 . A5 . | G: B5 . D6 . G6 . F#6 . | Em: E6 . D6 . B5 . G5 . | A: A5 . . . C#6 . E6 .` },
+    macaron: { bpm: 140, lead: 'brass', lead2: 'square', pad: 'strings', arp: 'marimba', bass: 'bassSaw', bassPat: 'eighths', drums: 'boss',
+      bars: `Cm: C5 C5 Eb5 C5 G5 . F5 Eb5 | Ab: Eb5 . C5 . Ab4 . C5 Eb5 | Bb: D5 D5 F5 D5 Bb5 . Ab5 G5 | G: B4 . D5 . G5 . B5 D6 |
+             Cm: C6 . Bb5 C6 G5 . Eb5 G5 | Fm: Ab5 . G5 Ab5 F5 . C5 F5 | G: G5 . F5 . D5 . B4 . | G7: B4 . D5 . F5 . G5 . |
+             Ab: C6 . . . Eb6 . C6 . | Eb: Bb5 . . . G5 . Eb5 . | Fm: Ab5 . G5 . F5 . C6 . | G: B5 . . . D6 . . . |
+             Ab: Eb6 . D6 . C6 . Ab5 . | Bb: F6 . Eb6 . D6 . Bb5 . | Cm: Eb6 . D6 . C6 . G5 . | G: B5 . . . D6 . G6 .` },
+    memoria: { bpm: 66, lead: 'piano', lead2: 'bell', pad: 'strings', arp: 'harp', bass: 'bassTri', bassPat: 'root', drums: null, leadVol: 0.7,
+      bars: `C: E5 . . . G5 . . . | Am: A5 . . . E5 . . . | F: F5 . . . A5 . C6 . | G: B5 . . . D6 . . . |
+             C: C6 . . . G5 . E5 . | Em: G5 . . . B5 . . . | F: A5 . . . F5 . . . | C: E5 . . . . . - -` },
     victory: { bpm: 120, lead: 'brass', lead2: 'bell', pad: 'organ', arp: 'harp', bass: 'bassPluck', bassPat: 'rootfifth', drums: 'pop',
       bars: `C: C5 . E5 . G5 . C6 . | F: A5 . . . F5 . A5 . | G: B5 . D6 . G5 . B5 . | C: C6 . . . . . - -` },
   };
@@ -406,6 +430,9 @@ const Sfx = (() => {
     robotSong() { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => setTimeout(() => { tone(f, 0.16, 'square', 0.08); tone(f / 2, 0.16, 'triangle', 0.1); }, i * 110)); },
     schoolBell() { [0, 1, 2, 3, 4, 5, 6, 7].forEach(i => setTimeout(() => tone(1400, 0.06, 'square', 0.12), i * 70)); },
     beep() { tone(1320, 0.05, 'square', 0.08); setTimeout(() => tone(990, 0.05, 'square', 0.08), 70); },
+    whistle() { tone(2200, 0.5, 'sine', 0.15, 200); setTimeout(() => tone(2400, 0.4, 'sine', 0.12, -200), 500); },
+    alarm() { [0, 1, 2, 3].forEach(i => setTimeout(() => tone(i % 2 ? 660 : 880, 0.2, 'square', 0.12), i * 220)); },
+    cut() { tone(1600, 0.08, 'square', 0.1, -1000); noise(0.12, 0.25, 3000); },
     icicle() { tone(2400, 0.3, 'sine', 0.08, -1800); setTimeout(() => noise(0.25, 0.25, 2500), 280); },
     stopMusic() {
       if (!song) return;

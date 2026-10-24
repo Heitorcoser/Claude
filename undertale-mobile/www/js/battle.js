@@ -208,6 +208,61 @@ Object.assign(ENEMIES, {
   },
 });
 
+const PROPAGANDA = ['ORDEM', 'OBEDEÇA', 'SUPERIOR', 'SILÊNCIO', 'TRABALHE', 'INFERIOR', 'NÚMERO'];
+Object.assign(ENEMIES, {
+  pirulito: {
+    name: 'Capataz Pirulito', spr: 'pirulito', scale: 6, hp: 56, atk: 5, def: 2, xp: 25, gold: 0, voice: 'harsh', nonlethal: true, words: PROPAGANDA,
+    intro: '* O Capataz Pirulito apita na sua cara!',
+    check: '* CAPATAZ PIRULITO - ATK 5 DEF 2\n* Repete as regras sem pensar.\n* Tem mais medo do Diretor do que de qualquer um.',
+    acts: {
+      'Defender Ferrugem': { text: ['* Você fica na frente do Ferrugem.', '* Pirulito não esperava que um número reagisse.'], mercy: 35 },
+      'Perguntar': { text: ['* Você pergunta: "Por que você faz isso?"', "* Pirulito: '...São as ordens. Eu só cumpro as ordens.'", '* Ele mesmo parece não acreditar.'], mercy: 35 },
+      'Encarar': { text: ['* Você encara o Capataz sem abaixar a cabeça.', '* Ele desvia o olhar primeiro.'], mercy: 30 },
+    },
+    flavor: ['* Pirulito apita sem motivo.', '* "Regra número 1: obedecer."', '* O apito dele treme um pouco.'],
+    talk: ['TRABALHE!', 'Números não falam!', 'ORDEM!', 'Volta pra fila!'],
+    spareTalk: '...Volta pro trabalho.',
+    patterns: ['march', 'propaganda', 'cubes'],
+  },
+  chocolate: {
+    name: 'Chocolate', spr: 'choco', scale: 6, hp: 44, atk: 4, def: 2, xp: 20, gold: 0, voice: 'narr', nonlethal: true, words: PROPAGANDA,
+    intro: '* Chocolate aponta a lanterna pra você.\n* As mãos dele estão tremendo.',
+    check: '* CHOCOLATE - ATK 4 DEF 2\n* Guarda jovem. Entrou no exército porque mandaram.\n* Não dorme direito faz semanas.',
+    acts: {
+      'Lembrar do pão': { text: ['* Você lembra do pão que ele te deu escondido.', "* Chocolate: '...Eu não devia ter feito aquilo. Ou devia?'"], mercy: 40 },
+      'Mostrar o número': { text: ['* Você mostra o número no seu peito.', '* "Eu tenho um NOME. Assim como você."', '* Chocolate abaixa a lanterna.'], mercy: 35 },
+      'Perguntar por quê': { text: ['* Você pergunta por que ele faz isso.', "* Chocolate: 'Me disseram que era o certo... que vocês eram perigosos.'", "* 'Mas você não parece perigoso.'"], mercy: 35 },
+    },
+    flavor: ['* Chocolate olha para os lados, nervoso.', '* A lanterna pisca.', '* Chocolate está derretendo de suor.'],
+    talk: ['P-para!', 'Volta pro barracão!', 'Eu... eu tenho ordens!', 'Não me olha assim...'],
+    spareTalk: 'Vai. Antes que eu mude de ideia.',
+    patterns: ['spotlight', 'march'],
+  },
+  macaron: {
+    name: 'Diretor Macaron', spr: 'macaron', scale: 6, hp: 330, atk: 6, def: 8, xp: 120, gold: 0, voice: 'posh',
+    boss: true, nonlethal: true, noSpare: true, music: 'macaron', turnLen: 7.5, bubbleW: 240, words: PROPAGANDA,
+    intro: '* O DIRETOR MACARON DOURADO se levanta do trono.\n* "Vocês não passam de NÚMEROS."',
+    check: '* DIRETOR MACARON - ATK 6 DEF 8\n* O doce mais caro da ilha. Comanda o campo.\n* A defesa dele vem do medo dos outros.',
+    acts: {
+      'Recusar obedecer': { text: ['* Você se recusa a obedecer.', '* Pela primeira vez, ninguém abaixa a cabeça.', '* A DEFESA de Macaron caiu!'], mercy: 0, defDown: 2 },
+      'Lembrar vítimas': { text: ['* Você lembra de cada número... e de cada NOME por trás deles.', '* Os prisioneiros lá fora gritam seus nomes.', '* A DEFESA de Macaron caiu!'], mercy: 0, defDown: 2 },
+      'Rasgar cartaz': { text: ['* Você rasga um cartaz de propaganda.', '* "DOCES SÃO SUPERIORES" vira papel picado.', '* O ATAQUE de Macaron caiu!'], mercy: 0, atkDown: 1 },
+    },
+    flavor: ['* Macaron ajeita o monóculo.', '* O salão cheira a açúcar e medo.', '* Os guardas lá fora largaram as armas.', '* Macaron grita ordens. Ninguém obedece mais.'],
+    talk: [
+      'Vocês nasceram para SERVIR.',
+      'Os doces são SUPERIORES. Sempre foram.',
+      'Um número não tem nome, não tem voz.',
+      'Eu construí esta ilha com ORDEM!',
+      'Ninguém vai lembrar de vocês.',
+      'Por que... por que ninguém me obedece?!',
+    ],
+    defeatText: ['* Macaron cai de joelhos. O monóculo rola pelo chão.', "* 'Isso... não pode acontecer... eu sou SUPERIOR...'", '* Ninguém é superior a ninguém.'],
+    patterns: ['propaganda', 'march', 'cubes', 'coins', 'spotlight', 'propaganda', 'march'],
+    finale: ['macaronFinale', 'coins', 'macaronFinale', 'spotlight'],
+  },
+});
+
 const DRAGONS = {
   preto: { name: 'Dragão Preto', act: 'Dragão: Investida', desc: 'FORTE. +3 de ATAQUE e golpes devastadores.' },
   branco: { name: 'Dragão Branco', act: 'Dragão: Ventania', desc: 'RÁPIDO. Sua ALMA fica mais veloz e ele encurta os ataques.' },
@@ -272,7 +327,7 @@ class Battle {
     for (const n of Object.keys(this.e.acts)) list.push({ name: n, kind: 'act' });
     if (this.opts.withInstr) {
       list.push({ name: 'Instr: Magia', kind: 'magic', disabled: this.magicCd > 0 });
-      list.push({ name: 'Instr: Acalmar', kind: 'calm' });
+      if (!this.opts.instrNoCalm) list.push({ name: 'Instr: Acalmar', kind: 'calm' });
     }
     if (this.dragon) list.push({ name: DRAGONS[this.dragon].act, kind: 'dragon', disabled: this.dragonCd > 0 });
     if (this.robot) list.push({ name: 'Bit: Música', kind: 'robot', disabled: this.robotCd > 0 || this.robotBat <= 0 });
@@ -394,6 +449,8 @@ class Battle {
       const act = this.e.acts[a.name];
       this.e.mercy = Math.max(0, Math.min(100, this.e.mercy + act.mercy));
       if (act.atkUp) this.e.atkNow += act.atkUp;
+      if (act.atkDown) this.e.atkNow = Math.max(2, this.e.atkNow - act.atkDown);
+      if (act.defDown) this.e.def = Math.max(0, this.e.def - act.defDown);
       const t = (typeof act.text === 'function' ? act.text(this) : act.text).slice();
       if (this.spareable) t.push(`* ${this.e.name} não quer mais lutar.`);
       this.say(t, () => this.afterPlayer());
@@ -438,6 +495,7 @@ class Battle {
     if (i < 0) return;
     Sfx.select();
     if (i === 0) {
+      if (this.e.noSpare) { return this.say(['* Macaron ri com desprezo.', "* 'Piedade? Eu nunca tive piedade de ninguém.'", '* (Ele precisa ser DETIDO.)'], () => this.afterPlayer()); }
       if (this.spareable) return this.doSpare();
       this.say([`* Você tentou poupar ${this.e.name}...`, '* Mas ele ainda quer lutar.'], () => this.afterPlayer());
     } else {
@@ -520,7 +578,7 @@ class Battle {
       const xp = this.e.xp, gold = this.e.gold;
       G.gold += gold;
       const up = addXp(xp);
-      const t = [`* ${this.e.name} fugiu correndo!\n* 'Vou contar pra diretora!'`, `* VOCÊ VENCEU!\n* Você ganhou ${xp} EXP e ${gold} OURO.`];
+      const t = (this.e.defeatText || [`* ${this.e.name} fugiu correndo!\n* 'Vou contar pra diretora!'`]).concat([`* VOCÊ VENCEU!\n* Você ganhou ${xp} EXP${gold ? ` e ${gold} OURO` : ''}.`]);
       if (up) { Sfx.levelUp(); t.push('* Seu LV aumentou.'); }
       return this.say(t, () => this.end('defeated'));
     }
@@ -731,8 +789,8 @@ class Battle {
 
     // Instrutor ao lado
     if (this.opts.withInstr || this.opts.tutorial) {
-      const ix = 60, iy = 70 + Math.sin(this.t * 1.5) * 3;
-      drawSpr(SPR.instr.right[0], ix, iy, 4);
+      const both = !!this.dragon, ix = both ? 22 : 60, iy = (both ? 100 : 70) + Math.sin(this.t * 1.5) * 3;
+      drawSpr(SPR.instr.right[0], ix, iy, both ? 3 : 4);
       if (this.instrCast) {
         const k = Math.min(1, this.instrCast.t / 0.8);
         const sx = ix + 80 + (320 - ix - 80) * k, sy = iy + 20 + (ey + 60 - iy - 20) * k - Math.sin(k * Math.PI) * 60;
@@ -825,7 +883,7 @@ class Battle {
 
   drawDragon(ex, ey, img, sc) {
     const set = SPR.dragon[this.dragon];
-    let x = 40, y = 66 + Math.sin(this.t * 3) * 6;
+    let x = this.opts.withInstr ? 84 : 40, y = (this.opts.withInstr ? 52 : 66) + Math.sin(this.t * 3) * 6;
     const fx = this.dragonFx;
     if (fx) fx.t += 1 / 60;
     if (fx && fx.kind === 'preto' && fx.hit) { const k = Math.min(1, fx.t / 0.25); x += (ex - 140) * Math.sin(k * Math.PI); }
@@ -905,7 +963,7 @@ class Battle {
 
   drawStats() {
     const y = 394;
-    text(G.name, 32, y, 30);
+    text(displayName(), 32, y, 30);
     text('LV ' + G.lv, 160, y, 30);
     text('HP', 250, y, 24);
     const w = G.maxhp * 2.4;
@@ -1001,6 +1059,49 @@ const PATTERNS = {
     },
   },
   insults: { update(B, dt) { PATTERNS.jokeWords.update(B, dt); } },
+  propaganda: { update(B, dt) { PATTERNS.jokeWords.update(B, dt); } },
+  march: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 1.25;
+        const bx = B.box, gap = bx.y + 28 + Math.random() * (bx.h - 56), left = (B.pState.n = (B.pState.n || 0) + 1) % 2;
+        for (let y = bx.y + 12; y < bx.y + bx.h - 4; y += 22) {
+          if (Math.abs(y - gap) < 24) continue;
+          B.bullets.push({ kind: 'soldier', x: left ? bx.x - 12 : bx.x + bx.w + 12, y, vx: left ? 95 : -95, vy: 0, w: 14, h: 18 });
+        }
+      }
+    },
+  },
+  cubes: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = 0.24;
+        const bx = B.box;
+        B.bullets.push({ kind: 'cube', x: bx.x + 8 + Math.random() * (bx.w - 16), y: bx.y - 8, vx: 0, vy: 110 + Math.random() * 80, w: 10, h: 10 });
+      }
+    },
+  },
+  coins: {
+    update(B, dt) {
+      B.spawnT -= dt;
+      if (B.spawnT <= 0) {
+        B.spawnT = B.pState.n ? 1.2 : 0.1;
+        B.pState.n = (B.pState.n || 0) + 1;
+        const bx = B.box;
+        B.bullets.push({ kind: 'coin', x: bx.x + 20 + Math.random() * (bx.w - 40), y: bx.y + 16, vx: (Math.random() < 0.5 ? -1 : 1) * (110 + Math.random() * 40), vy: 100 + Math.random() * 40, r: 7, bounce: true, life: 6 });
+      }
+    },
+  },
+  spotlight: { update(B, dt) { PATTERNS.lasers.update(B, dt); } },
+  macaronFinale: {
+    update(B, dt) {
+      PATTERNS.cubes.update(B, dt);
+      B.pState.m = (B.pState.m || 0) - dt;
+      if (B.pState.m <= 0) { B.pState.m = 1.6; const t = B.spawnT; B.spawnT = 0; PATTERNS.march.update(B, 0); B.spawnT = t; }
+    },
+  },
   paperBalls: {
     update(B, dt) {
       B.spawnT -= dt;
@@ -1222,6 +1323,18 @@ const PATTERNS = {
 };
 
 const BULLET_DRAW = {
+  soldier(b, t) {
+    const img = SPR.guard; ctx.drawImage(img, b.x - 8, b.y - 9 + (Math.floor(t * 8) % 2), 16, 17);
+  },
+  cube(b) {
+    ctx.fillStyle = '#000'; ctx.fillRect(b.x - 6, b.y - 6, 12, 12);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(b.x - 5, b.y - 5, 10, 10); ctx.fillStyle = '#d8dce8'; ctx.fillRect(b.x - 5, b.y + 2, 10, 3);
+  },
+  coin(b, t) {
+    const w = Math.abs(Math.cos(t * 6)) * 7 + 1;
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(b.x, b.y, w + 1, 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffd23a'; ctx.beginPath(); ctx.ellipse(b.x, b.y, w, 7, 0, 0, Math.PI * 2); ctx.fill();
+  },
   paper(b, t) {
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#f4f4f0'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill();
