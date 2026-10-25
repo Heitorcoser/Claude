@@ -34,14 +34,16 @@ const F2_ATK = {
   2: ['cDash', 'cKnifeWalls', 'cMirror', 'cHands', 'cSpiral', 'cClones', 'cVortex'],
   '2f': ['cHands', 'cClones', 'cVortex', 'cDash', 'cSpiral', 'cMirror', 'cKnifeWalls'],
   // 2ª FASE: os dois DESPERTOS, com os ataques combinados
-  3: ['xRing', 'xGrav', 'xHands', 'xRun', 'xMirror', 'xVortex', 'xDash'],
-  '3f': ['xHands', 'xGrav', 'xVortex', 'xRun', 'xDash', 'xMirror', 'xRing'],
+  // 2ª FASE: alma VERDE (escudo), estilo Undyne
+  3: ['gBasic', 'gReverse', 'gSpin', 'gDouble', 'gFast', 'gChaos'],
+  '3f': ['gSpin', 'gChaos', 'gReverse', 'gDouble', 'gFast'],
 };
 
 class FinalBattle extends Battle {
   constructor(key, opts) {
     super(key, { ...opts, party: ['kai', 'luna'] });
     boss9Sprites();
+    if (!BOSS9_SPR.soulGreen) BOSS9_SPR.soulGreen = makeCanvas(SPR.soul.width, SPR.soul.height, g => { g.drawImage(SPR.soul, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = '#2ae04a'; g.fillRect(0, 0, 32, 32); });
     this.stage = 1; this.soulCd = 1; this.broke = false; this.redFlash = 0; this.shakeT = 0;
     this.phase = 3; this.flip = false; this.soulMode = 'red'; this.kr = 0; this.krT = 0;
     this.dodges = 2; this.dodgeT = 0; this.atkN = 0; this.finalUsed = false;
@@ -76,7 +78,7 @@ class FinalBattle extends Battle {
     if (this.stage === 3 && fr < 0.3 && !this.finalUsed) {
       this.finalUsed = true; this.dodges = 1; Sfx.slam();
       this.turn++;
-      return this.say([{ who: 'stranger', t: '* Carmim. Juntos.' }, { who: 'carmim', t: '* Juntos.' }, '* O altar inteiro começa a desmoronar.', '* ÚLTIMO SUSPIRO.'], () => this.startEnemyTurn('xFinal'));
+      return this.say([{ who: 'stranger', t: '* Carmim. Juntos.' }, { who: 'carmim', t: '* Juntos.' }, '* O altar inteiro começa a desmoronar.', '* ÚLTIMO SUSPIRO.'], () => this.startEnemyTurn('gFinal'));
     }
     if (this.stage === 2 && fr < 0.35 && !this.finalUsed) {
       this.finalUsed = true; Sfx.slam();
@@ -87,7 +89,7 @@ class FinalBattle extends Battle {
   }
 
   startEnemyTurn(p) {
-    if (p !== 'f2Doom' && p !== 'dDuoFinal' && p !== 'cFinal' && p !== 'xFinal') {
+    if (p !== 'f2Doom' && p !== 'dDuoFinal' && p !== 'cFinal' && p !== 'gFinal') {
       const lowHp = this.e.hpNow < this.e.hp * 0.4;
       const list = F2_ATK[this.stage + (lowHp ? 'f' : '')];
       p = list[this.atkN++ % list.length];
@@ -97,15 +99,17 @@ class FinalBattle extends Battle {
     const P = PATTERNS[p];
     this.turnLen = P.len || 7.5;
     if (p === 'f2Doom') this.turnLen = 5;
-    this.soulMode = P.blue ? 'blue' : 'red';
+    this.soulMode = P.green ? 'green' : P.blue ? 'blue' : 'red';
     this.soul.vy = 0;
     if (P.blue) this.soul.y = 316 + 80 - 12;
+    if (P.green) { this.boxTarget = { x: 320 - 35, y: 316 - 35, w: 70, h: 70 }; this.soul.x = 320; this.soul.y = 316; this.shield = this.shield || 'up'; }
     if (p === 'f2Doom') return;
     const L = F2_TALK[this.stage], q = L[(this.talkN = (this.talkN ?? -1) + 1) % L.length];
-    this.bubble = (p === 'dDuoFinal' || p === 'cFinal' || p === 'xFinal') ? null : { t: q[1], life: 2.2 };
+    this.bubble = (p === 'dDuoFinal' || p === 'cFinal' || p === 'gFinal') ? null : { t: q[1], life: 2.2 };
   }
   // alma azul com gravidade para QUALQUER lado (o ataque escolhe) + puxão pro centro
   moveSoul(dt) {
+    if (this.soulMode === 'green') return this.moveShield();
     const s = this.soul, bx = this.box, ox = s.x, oy = s.y;
     if (this.soulMode !== 'blue') Battle.prototype.moveSoul.call(this, dt);
     else {
@@ -145,6 +149,38 @@ class FinalBattle extends Battle {
     super.dealDamage(dmg, then, quiet);
   }
 
+  // alma verde: ela não anda; você vira o ESCUDO (setas, analógico, ou toque/arraste pro lado)
+  moveShield() {
+    const s = this.soul, v = moveVector();
+    s.x = 320; s.y = 316; this.soulMoved = false;
+    const pick = (x, y) => { if (Math.abs(x) < 0.01 && Math.abs(y) < 0.01) return; this.shield = Math.abs(x) > Math.abs(y) ? (x < 0 ? 'left' : 'right') : (y < 0 ? 'up' : 'down'); };
+    if (Math.hypot(v.x, v.y) > 0.4) pick(v.x, v.y);
+    if (Input.tap) pick(Input.tap.x - 320, Input.tap.y - 316);
+    if (Input.drag.active && Math.hypot(Input.drag.dx, Input.drag.dy) > 2) pick(Input.drag.dx, Input.drag.dy);
+  }
+  // lanças: quando chegam no escudo, bloqueia ou machuca
+  updateSpears(dt) {
+    for (const b of this.bullets) {
+      if (b.kind === 'gBlast') {
+        if (!b.fired && this.pt >= b.fire) {
+          b.fired = true; Sfx.blasterFire(); this.shakeT = 0.12;
+          if (this.shield === b.dir) { Sfx.toggle(); this.blocked = 0.25; } else this.hurt(4);
+        }
+        if (this.pt >= b.fire + 0.35) b.dead = true;
+        continue;
+      }
+      if (b.kind !== 'gSpear' || b.dead) continue;
+      b.d -= b.spd * dt;
+      if (b.rev && !b.flipped && b.d < 85) { b.flipped = true; b.dir = { up: 'down', down: 'up', left: 'right', right: 'left' }[b.dir]; Sfx.whoosh(); }
+      const [dx, dy] = GDIR[b.dir]; b.x = 320 + dx * b.d; b.y = 316 + dy * b.d;
+      if (b.d <= 24) {
+        b.dead = true;
+        if (this.shield === b.dir) { Sfx.toggle(); this.particles.push({ x: b.x, y: b.y, vx: dx * 60, vy: dy * 60, life: 0.4, c: '#9fe4ff' }); this.blocked = 0.12; }
+        else this.hurt(4);
+      }
+    }
+  }
+
   // ----- ação nova: a alma do Instrutor -----
   actList() {
     const l = super.actList();
@@ -182,10 +218,10 @@ class FinalBattle extends Battle {
       return this.end('dead');
     }
     if (!this.broke) return this.breakAttack();
-    const d = this.stage === 1 ? 3 : this.stage === 2 ? 4 + (this.finalUsed ? 1 : 0) : 5 + (this.finalUsed ? 1 : 0);
+    const d = this.stage === 1 ? 3 : this.stage === 2 ? 4 + (this.finalUsed ? 1 : 0) : 4 + (this.finalUsed ? 1 : 0);
     G.hp = Math.max(0, G.hp - d);
-    this.kr = Math.min(this.kr + (this.stage === 3 ? 3 : 2), 40, Math.max(0, G.hp - 1));
-    if (who) who.inv = 0.6; else this.soul.inv = 0.35;
+    this.kr = Math.min(this.kr + 2, 40, Math.max(0, G.hp - 1));
+    if (who) who.inv = 0.6; else this.soul.inv = this.soulMode === 'green' ? 0 : 0.35;
     Sfx.hurt(); this.hurtFlash = 0.12;
     if (G.hp <= 0) { this.kr = 0; this.end('dead'); }
   }
@@ -246,7 +282,7 @@ class FinalBattle extends Battle {
       ], () => {
         Sfx.shatter(); this.shakeT = 0.6; this.mercyBroken = true;
         for (let i = 0; i < 16; i++) this.particles.push({ x: BTN[3].x + 20 + Math.random() * 90, y: BTN_Y + 10 + Math.random() * 30, vx: (Math.random() - 0.5) * 200, vy: -60 - Math.random() * 160, life: 1.2, c: '#ff7f27' });
-        this.say(['* O botão POUPAR QUEBROU.', '* Agora só resta LUTAR.', '3: A gente não vai parar agora!', '4: Eu ainda tenho magia. Vai!'], () => {
+        this.say(['* O botão POUPAR QUEBROU.', '* Agora só resta LUTAR.', '* Sua alma fica VERDE. Você não pode fugir: tem que DEFENDER.', '* Vire o ESCUDO pro lado de onde vem cada ataque.\n* (Setas ou analógico. No celular, toque ou arraste pro lado.)', '* Facas, corações e ossos AMARELOS dão a volta e chegam pelo lado OPOSTO!', '* E os canhões: vire o escudo pra eles antes do raio sair.', '3: A gente não vai parar agora!', '4: Eu ainda tenho magia. Vai!'], () => {
           this.stage = 3; this.talkN = -1; this.atkN = 0; this.finalUsed = false; this.dodges = 2;
           this.diffMul *= 1.15;
           Object.assign(this.e, { name: 'Carmim e Encapuzado', spr: 'c2duo', scale: 5, hp: 720, hpNow: 720, atkNow: 7, def: 4, alpha: 1,
@@ -288,6 +324,8 @@ class FinalBattle extends Battle {
       this.krT += dt;
       if (this.krT > 0.4) { this.krT = 0; this.kr--; if (G.hp > 1) G.hp--; }
     }
+    if (this.state === 'enemyTurn' && this.soulMode === 'green') this.updateSpears(dt);
+    if (this.blocked > 0) this.blocked -= dt;
     if (this.state === 'enemyTurn') for (const b of this.bullets) {
       if (b.kind === 'blaster' && !b.fired && b.t >= b.warn) { b.fired = true; Sfx.blasterFire(); this.shakeT = 0.12; }
       if (b.spd && !b.go && b.t >= b.warn) { b.go = 1; b.vx = Math.cos(b.ang) * b.spd; b.vy = Math.sin(b.ang) * b.spd; Sfx.cut(); }
@@ -331,6 +369,7 @@ class FinalBattle extends Battle {
       for (const b of this.bullets) if (b.kind === 'blaster') drawBlaster(b);
       const s = this.soul;
       if (this.soulMode === 'blue' && (s.inv <= 0 || Math.floor(s.inv * 12) % 2)) drawSpr(BOSS9_SPR.soulBlue, s.x - 8, s.y - 7, 1);
+      if (this.soulMode === 'green') this.drawShield(t);
       if (G.flags.redEyes && !this.opts.oneShot) { ctx.strokeStyle = `rgba(255,40,60,${0.4 + Math.sin(t * 10) * 0.2})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 14, 0, Math.PI * 2); ctx.stroke(); }
     }
     if (this.e.alpha > 0.1) {
@@ -342,6 +381,43 @@ class FinalBattle extends Battle {
     if (this.mercyBroken) { if (this.btnShake > 0) this.btnShake -= 1 / 60; MasterBattle.prototype.drawBrokenButtons.call(this); }
     ctx.restore();
     if (this.redFlash > 0) { ctx.fillStyle = `rgba(255,0,30,${Math.min(0.6, this.redFlash)})`; ctx.fillRect(0, 0, W, H); }
+  }
+  drawShield(t) {
+    // trilhos das 4 direções
+    ctx.strokeStyle = 'rgba(120,255,140,0.12)'; ctx.lineWidth = 2;
+    for (const k in GDIR) { const [dx, dy] = GDIR[k]; ctx.beginPath(); ctx.moveTo(320 + dx * 40, 316 + dy * 40); ctx.lineTo(320 + dx * 170, 316 + dy * 170); ctx.stroke(); }
+    for (const b of this.bullets) {
+      if (b.kind === 'gBlast') {
+        const [dx, dy] = GDIR[b.dir], hx = 320 + dx * 150, hy = 316 + dy * 150, a = Math.atan2(-dy, -dx);
+        const k = Math.min(1, (this.pt - (b.fire - 0.8)) / 0.3);
+        if (!b.fired) { ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.sin(t * 40) * 0.1})`; ctx.save(); ctx.translate(hx, hy); ctx.rotate(a); ctx.fillRect(20, -1, 110, 2); ctx.restore(); }
+        else {
+          const f = Math.max(0, 1 - (this.pt - b.fire) / 0.35), w = 26 * f, stop = this.shield === b.dir ? 30 : 0;
+          ctx.save(); ctx.translate(hx, hy); ctx.rotate(a); ctx.fillStyle = '#fff'; ctx.fillRect(18, -w / 2, 150 - 18 - stop, w); ctx.restore();
+        }
+        const img = BOSS9_SPR.blaster[b.fired ? 1 : 0], sc = 2.6;
+        ctx.save(); ctx.translate(320 + dx * (150 + 60 * (1 - k)), 316 + dy * (150 + 60 * (1 - k))); ctx.rotate(a); ctx.drawImage(img, -img.width * sc / 2, -img.height * sc / 2, img.width * sc, img.height * sc); ctx.restore();
+        continue;
+      }
+      if (b.kind !== 'gSpear') continue;
+      const [dx, dy] = GDIR[b.dir], a = Math.atan2(-dy, -dx), rev = b.rev && !b.flipped;
+      if (rev) { ctx.fillStyle = `rgba(255,224,64,${0.35 + Math.sin(t * 20) * 0.15})`; ctx.beginPath(); ctx.arc(b.x, b.y, 14, 0, Math.PI * 2); ctx.fill(); }
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(a);
+      if (b.type === 'faca') ctx.drawImage(SPR.faca, -16, -16, 32, 32);
+      else if (b.type === 'osso') {
+        ctx.fillStyle = '#000'; ctx.fillRect(-14, -5, 28, 10); ctx.fillStyle = rev ? '#ffe040' : '#fff'; ctx.fillRect(-11, -2, 22, 4); ctx.fillRect(-14, -5, 6, 10); ctx.fillRect(8, -5, 6, 10);
+      } else {
+        ctx.rotate(-a); ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(-4, -3, 6, 0, Math.PI * 2); ctx.arc(4, -3, 6, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(0, 11); ctx.lineTo(9, 0); ctx.fill();
+        ctx.fillStyle = rev ? '#ffe040' : '#ff2a4a'; ctx.beginPath(); ctx.arc(-4, -3, 4.5, 0, Math.PI * 2); ctx.arc(4, -3, 4.5, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.moveTo(-8, -1); ctx.lineTo(0, 9); ctx.lineTo(8, -1); ctx.fill();
+      }
+      ctx.restore();
+    }
+    // alma verde + escudo
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(320, 316, 18, 0, Math.PI * 2); ctx.fill();
+    drawSpr(BOSS9_SPR.soulGreen, 312, 309, 1);
+    const [dx, dy] = GDIR[this.shield || 'up'], a = Math.atan2(dy, dx);
+    ctx.strokeStyle = this.blocked > 0 ? '#ffffff' : '#5ac8ff'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(320, 316, 26, a - 0.75, a + 0.75); ctx.stroke();
   }
   // KARMA ao lado do HP
   drawStats() {
@@ -662,6 +738,65 @@ D_ATK.xFinal = {
     if ((P.n || 0) < 4) safeCorner(B, P, 1.3);
   },
 };
+
+// ===== 2ª FASE: ALMA VERDE (escudo, estilo Undyne) =====
+const GDIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+const GDIRS = ['up', 'right', 'down', 'left'];
+// monta a sequência de lanças pela hora em que CHEGAM no escudo
+function gSchedule(arr) {
+  // arr: [{ at, dir, spd, rev }] -> sai cada lança 160 px antes, no tempo certo
+  // cada um vira faca, coração, osso ou um canhão (que dispara o raio direto no escudo)
+  return arr.map(a => {
+    const r = Math.random(), type = a.rev ? (r < 0.5 ? 'faca' : 'coracao') : r < 0.33 ? 'faca' : r < 0.58 ? 'coracao' : r < 0.85 ? 'osso' : 'canhao';
+    return { ...a, type, spawn: type === 'canhao' ? a.at - 0.8 : a.at - 160 / a.spd };
+  }).sort((x, y) => x.spawn - y.spawn);
+}
+function gPattern(len, make) {
+  return { len, green: true, update(B, dt) {
+    const S = B.pState;
+    if (!S.q) S.q = gSchedule(make());
+    while (S.q.length && B.pt >= S.q[0].spawn + 0.6) {
+      const a = S.q.shift();
+      if (a.type === 'canhao') { B.bullets.push({ kind: 'gBlast', dir: a.dir, fire: a.at + 0.6, x: 320, y: 316, vx: 0, vy: 0, life: 99, hitFn: () => false }); Sfx.blasterCharge(); continue; }
+      B.bullets.push({ kind: 'gSpear', type: a.type, dir: a.dir, d: 160, spd: a.spd, rev: a.rev, x: 320, y: 316, vx: 0, vy: 0, life: 99, hitFn: () => false });
+    }
+  } };
+}
+const rdir = () => GDIRS[(Math.random() * 4) | 0];
+const opp = d => ({ up: 'down', down: 'up', left: 'right', right: 'left' })[d];
+// sequências: sempre com tempo pra virar o escudo entre uma lança e outra
+function gSeq(n, gap, spd, revChance = 0, start = 1) {
+  const out = []; let last = null;
+  for (let i = 0; i < n; i++) { let d = rdir(); if (d === last && Math.random() < 0.5) d = rdir(); last = d; out.push({ at: start + i * gap, dir: d, spd, rev: Math.random() < revChance }); }
+  return out;
+}
+function gSpinSeq(n, gap, spd, start = 1) {
+  const out = []; let k = (Math.random() * 4) | 0, step = 1;
+  for (let i = 0; i < n; i++) { if (i % 6 === 5 && Math.random() < 0.5) step = -step; k = (k + step + 4) % 4; out.push({ at: start + i * gap, dir: GDIRS[k], spd }); }
+  return out;
+}
+function gDoubleSeq(n, gap, spd, start = 1) {
+  const out = [];
+  for (let i = 0; i < n; i++) { const d = rdir(); out.push({ at: start + i * gap, dir: d, spd }, { at: start + i * gap + 0.27, dir: opp(d), spd }); }
+  return out;
+}
+Object.assign(D_ATK, {
+  gBasic: gPattern(8.5, () => gSeq(14, 0.48, 210)),
+  gReverse: gPattern(8.5, () => gSeq(14, 0.5, 220, 0.4)),
+  gSpin: gPattern(8, () => gSpinSeq(24, 0.26, 240)),
+  gDouble: gPattern(8.5, () => gDoubleSeq(9, 0.72, 240)),
+  gFast: gPattern(8, () => gSeq(20, 0.31, 280, 0.15)),
+  gChaos: gPattern(9, () => gSeq(24, 0.29, 290, 0.35)),
+  // ÚLTIMO SUSPIRO: cada vez mais rápido
+  gFinal: gPattern(26, () => [].concat(
+    gSeq(12, 0.4, 230, 0.2, 1),
+    gSpinSeq(20, 0.22, 270, 6.2),
+    gDoubleSeq(6, 0.62, 280, 11),
+    gSeq(18, 0.27, 300, 0.4, 15),
+    gSpinSeq(16, 0.19, 330, 20.2))),
+});
+Object.assign(BULLET_DRAW, { gSpear() {}, gBlast() {} });
+
 Object.assign(PATTERNS, D_ATK);
 
 Object.assign(PATTERNS, {
