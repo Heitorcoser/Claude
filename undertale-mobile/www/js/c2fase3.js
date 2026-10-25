@@ -23,6 +23,7 @@ ENEMIES.c2final = {
 };
 const F2_TALK = {
   1: [['S', 'Eu não vou deixar você chegar perto dela.'], ['5', 'Hehe. Vai, mostra.'], ['S', 'Desvia. Ou não.'], ['5', 'Que olhos bonitos você tem agora.'], ['S', 'Por que você não desiste?!']],
+  3: [['5', 'A gente DESPERTOU.'], ['S', 'Agora não tem mais volta.'], ['5', 'Sem piedade. Pra ninguém.'], ['S', 'Isso é tudo que a gente tem.'], ['5', 'CAI! CAI! CAI!'], ['S', '...Por que você ainda tá de pé?']],
   2: [['5', 'VOCÊ MACHUCOU ELE.'], ['5', 'Sua alma vai ser a SÉTIMA.'], ['5', 'Meu irmão era fraco. Igual você.'], ['5', 'POR QUE VOCÊ NÃO CAI?!'], ['5', 'Eu... eu...']],
 };
 
@@ -32,6 +33,9 @@ const F2_ATK = {
   '1f': ['dCrossDash', 'dGravity', 'dSpinBones', 'dKnifeRing', 'dSlashCircle', 'dBoxRun'],
   2: ['cDash', 'cKnifeWalls', 'cMirror', 'cHands', 'cSpiral', 'cClones', 'cVortex'],
   '2f': ['cHands', 'cClones', 'cVortex', 'cDash', 'cSpiral', 'cMirror', 'cKnifeWalls'],
+  // 2ª FASE: os dois DESPERTOS, com os ataques combinados
+  3: ['xRing', 'xGrav', 'xHands', 'xRun', 'xMirror', 'xVortex', 'xDash'],
+  '3f': ['xHands', 'xGrav', 'xVortex', 'xRun', 'xDash', 'xMirror', 'xRing'],
 };
 
 class FinalBattle extends Battle {
@@ -69,6 +73,11 @@ class FinalBattle extends Battle {
       this.turn++;
       return this.say(['* O olho do Encapuzado brilha AZUL e AMARELO.', { who: 'stranger', t: '* Pela Carmim... ATAQUE FINAL.' }], () => this.startEnemyTurn('dDuoFinal'));
     }
+    if (this.stage === 3 && fr < 0.3 && !this.finalUsed) {
+      this.finalUsed = true; this.dodges = 1; Sfx.slam();
+      this.turn++;
+      return this.say([{ who: 'stranger', t: '* Carmim. Juntos.' }, { who: 'carmim', t: '* Juntos.' }, '* O altar inteiro começa a desmoronar.', '* ÚLTIMO SUSPIRO.'], () => this.startEnemyTurn('xFinal'));
+    }
     if (this.stage === 2 && fr < 0.35 && !this.finalUsed) {
       this.finalUsed = true; Sfx.slam();
       this.turn++;
@@ -78,7 +87,7 @@ class FinalBattle extends Battle {
   }
 
   startEnemyTurn(p) {
-    if (p !== 'f2Doom' && p !== 'dDuoFinal' && p !== 'cFinal') {
+    if (p !== 'f2Doom' && p !== 'dDuoFinal' && p !== 'cFinal' && p !== 'xFinal') {
       const lowHp = this.e.hpNow < this.e.hp * 0.4;
       const list = F2_ATK[this.stage + (lowHp ? 'f' : '')];
       p = list[this.atkN++ % list.length];
@@ -93,7 +102,7 @@ class FinalBattle extends Battle {
     if (P.blue) this.soul.y = 316 + 80 - 12;
     if (p === 'f2Doom') return;
     const L = F2_TALK[this.stage], q = L[(this.talkN = (this.talkN ?? -1) + 1) % L.length];
-    this.bubble = (p === 'dDuoFinal' || p === 'cFinal') ? null : { t: q[1], life: 2.2 };
+    this.bubble = (p === 'dDuoFinal' || p === 'cFinal' || p === 'xFinal') ? null : { t: q[1], life: 2.2 };
   }
   // alma azul com gravidade para QUALQUER lado (o ataque escolhe) + puxão pro centro
   moveSoul(dt) {
@@ -127,7 +136,7 @@ class FinalBattle extends Battle {
 
   // o Encapuzado desvia dos primeiros golpes
   dealDamage(dmg, then, quiet) {
-    if (!quiet && this.stage === 1 && this.dodges > 0) {
+    if (!quiet && this.stage !== 2 && this.dodges > 0) {
       this.dodges--;
       this.state = 'damage'; this.dodgeT = 0.6; Sfx.whoosh();
       this.dmgPop = { v: 'MISS', t: 0 }; this.afterDamage = then; this.damageT = 0;
@@ -173,9 +182,9 @@ class FinalBattle extends Battle {
       return this.end('dead');
     }
     if (!this.broke) return this.breakAttack();
-    const d = this.stage === 1 ? 3 : 4 + (this.finalUsed ? 1 : 0);
+    const d = this.stage === 1 ? 3 : this.stage === 2 ? 4 + (this.finalUsed ? 1 : 0) : 5 + (this.finalUsed ? 1 : 0);
     G.hp = Math.max(0, G.hp - d);
-    this.kr = Math.min(this.kr + 2, 40, Math.max(0, G.hp - 1));
+    this.kr = Math.min(this.kr + (this.stage === 3 ? 3 : 2), 40, Math.max(0, G.hp - 1));
     if (who) who.inv = 0.6; else this.soul.inv = 0.35;
     Sfx.hurt(); this.hurtFlash = 0.12;
     if (G.hp <= 0) { this.kr = 0; this.end('dead'); }
@@ -222,7 +231,44 @@ class FinalBattle extends Battle {
         this.toMenu();
       });
     }
+    if (this.stage === 2) {
+      this.state = 'text';
+      Sfx.stopMusic(); this.kr = 0; this.bullets = [];
+      return this.say([
+        '* A Carmim cai.',
+        '* ...',
+        '* O altar fica em silêncio.',
+        { who: 'sombra', t: '* ...AINDA NÃO.' },
+        '* A sombra levanta a Carmim do chão como uma marionete.',
+        '* E levanta o Encapuzado também.',
+        '* Os olhos dos dois se acendem: um VERMELHO, um AZUL.',
+        '* ELES DESPERTARAM.',
+      ], () => {
+        Sfx.shatter(); this.shakeT = 0.6; this.mercyBroken = true;
+        for (let i = 0; i < 16; i++) this.particles.push({ x: BTN[3].x + 20 + Math.random() * 90, y: BTN_Y + 10 + Math.random() * 30, vx: (Math.random() - 0.5) * 200, vy: -60 - Math.random() * 160, life: 1.2, c: '#ff7f27' });
+        this.say(['* O botão POUPAR QUEBROU.', '* Agora só resta LUTAR.', '3: A gente não vai parar agora!', '4: Eu ainda tenho magia. Vai!'], () => {
+          this.stage = 3; this.talkN = -1; this.atkN = 0; this.finalUsed = false; this.dodges = 2;
+          this.diffMul *= 1.15;
+          Object.assign(this.e, { name: 'Carmim e Encapuzado', spr: 'c2duo', scale: 5, hp: 720, hpNow: 720, atkNow: 7, def: 4, alpha: 1,
+            check: '* CARMIM E ENCAPUZADO - DESPERTOS\n* A sombra controla os dois.\n* Este é o último suspiro deles.' });
+          Sfx.playMusic('final2');
+          this.toMenu();
+        });
+      });
+    }
     return super.doKill();
+  }
+  isBroken(i) { return i === 3 && this.mercyBroken; }
+  st_menu(dt) {
+    let target = -1;
+    if (Input.tap) target = BTN.findIndex(b => hit(Input.tap, b.x, BTN_Y, BTN_W, BTN_H));
+    else if (Input.isPressed('a')) target = this.btn;
+    if (target >= 0 && this.isBroken(target)) {
+      this.btn = target; Sfx.buzz(); this.btnShake = 0.35;
+      this.flavorTyper = new Typer('* O botão POUPAR está quebrado.', 'narr', 520, 32);
+      return;
+    }
+    super.st_menu(dt);
   }
   st_dying(dt) {
     this.dyingT += dt;
@@ -251,6 +297,12 @@ class FinalBattle extends Battle {
 
   drawBg() {
     const t = this.t, g = ctx.createLinearGradient(0, 0, 0, H);
+    if (this.stage === 3) {
+      g.addColorStop(0, '#000'); g.addColorStop(1, '#3a0018'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 2; i++) { ctx.fillStyle = i ? `rgba(60,140,255,${0.12 + Math.sin(t * 3) * 0.06})` : `rgba(255,20,60,${0.14 + Math.sin(t * 2.3) * 0.06})`; ctx.beginPath(); ctx.arc(i ? 250 : 390, 120, 90 + Math.sin(t * 2 + i) * 12, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = 'rgba(255,255,255,0.5)'; for (let i = 0; i < 20; i++) ctx.fillRect((i * 97 + t * 40) % 640, 480 - ((i * 53 + t * 90) % 480), 2, 6);
+      return;
+    }
     g.addColorStop(0, this.stage === 2 ? '#2a0410' : '#0a0618'); g.addColorStop(1, this.stage === 2 ? '#5a0a1a' : '#1a0a2a');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     for (let i = 0; i < 6; i++) {
@@ -283,10 +335,11 @@ class FinalBattle extends Battle {
     }
     if (this.e.alpha > 0.1) {
       const img = SPR[this.e.spr], sc = this.e.scale, ex = 320 - img.width * sc / 2 + (this.e.offX || 0), ey = this.enemyY();
-      const cx = this.stage === 1 ? ex + (SPR.encapuzado.width + 4) * sc : ex, cy = this.stage === 1 ? ey + (img.height - SPR.carmimDemon.height) * sc : ey;
+      const duo = this.stage !== 2, cx = duo ? ex + (SPR.encapuzado.width + 4) * sc : ex, cy = duo ? ey + (img.height - SPR.carmimDemon.height) * sc : ey;
       ctx.fillStyle = `rgba(255,20,40,${0.7 + Math.sin(t * 8) * 0.3})`;
       ctx.fillRect(cx + 5 * sc, cy + 6 * sc, sc, sc); ctx.fillRect(cx + 8 * sc, cy + 6 * sc, sc, sc);
     }
+    if (this.mercyBroken) { if (this.btnShake > 0) this.btnShake -= 1 / 60; MasterBattle.prototype.drawBrokenButtons.call(this); }
     ctx.restore();
     if (this.redFlash > 0) { ctx.fillStyle = `rgba(255,0,30,${Math.min(0.6, this.redFlash)})`; ctx.fillRect(0, 0, W, H); }
   }
@@ -549,6 +602,47 @@ const D_ATK = {
           B.bullets.push({ kind: 'cSafe', x: sx, y: sy, vx: 0, vy: 0, warn: 1.1, life: 1.5, hitFn: (b, q) => b.t >= b.warn && Math.hypot(q.x - b.x, q.y - b.y) > 26 }); }
       }
     },
+  },
+};
+
+// ===== 2ª FASE: ataques combinados (os dois ao mesmo tempo) =====
+function combo(B, dt, parts) {
+  const S = B.pState, keep = B.pState;
+  parts.forEach(([name, k], i) => { S['sub' + i] = S['sub' + i] || {}; B.pState = S['sub' + i]; D_ATK[name].update(B, dt * (k || 1)); });
+  B.pState = keep;
+}
+const X_COMBOS = {
+  xRing: { len: 8.5, parts: [['dSlashCircle', 1.15], ['dKnifeRing', 1.1]] },
+  xGrav: { len: 9, blue: true, parts: [['dGravity', 1.1], ['cKnifeWalls', 0.9]] },
+  xHands: { len: 9, parts: [['cHands', 1], ['dSpinBones', 1.1]] },
+  xRun: { len: 9, parts: [['dBoxRun', 1.1], ['cClones', 1]] },
+  xMirror: { len: 8.5, parts: [['cMirror', 1], ['dCrossDash', 1]] },
+  xVortex: { len: 8.5, parts: [['cVortex', 1.1], ['dSlashCircle', 0.9]] },
+  xDash: { len: 8.5, parts: [['cDash', 1.15], ['dKnifeRing', 0.9]] },
+};
+for (const k in X_COMBOS) { const c = X_COMBOS[k]; D_ATK[k] = { len: c.len, blue: c.blue, update(B, dt) { combo(B, dt, c.parts); } }; }
+// ÚLTIMO SUSPIRO: 26 segundos de tudo junto, cada vez mais rápido
+D_ATK.xFinal = {
+  len: 26,
+  update(B, dt) {
+    const t = B.pt, steps = [[0, 'xRing'], [5, 'xGrav'], [10, 'xHands'], [15, 'xRun'], [20, 'xVortex'], [23.5, 'end']];
+    let cur = 0; for (let i = 0; i < steps.length; i++) if (t >= steps[i][0]) cur = i;
+    const S = B.pState;
+    if (S.cur !== cur) {
+      B.pState = { cur }; B.pull = 0; B.gdir = 'down'; B.boxTarget = { ...BOX0 }; B.soulMode = steps[cur][1] === 'xGrav' ? 'blue' : 'red'; B.soul.vg = 0;
+      B.bullets = B.bullets.filter(b => !['cClone', 'cBead', 'cSpikes'].includes(b.kind) && !(b.kind === 'knife' && b.life === 99));
+      Sfx.slam(); B.shakeT = 0.3;
+    }
+    const name = steps[cur][1], spd = 1 + t * 0.012;
+    if (name !== 'end') return D_ATK[name].update(B, dt * spd);
+    // fim: cortes gigantes (só um canto seguro) alternando com canhões cruzados
+    const P = B.pState, bx = bf(B);
+    P.s = (P.s ?? 0.1) - dt;
+    if (P.s <= 0 && (P.n || 0) < 4) {
+      P.s = 0.6; P.n = (P.n || 0) + 1; const safe = (Math.random() * 4) | 0;
+      const sx = safe % 2 ? bx.x + bx.w - 22 : bx.x + 22, sy = safe > 1 ? bx.y + bx.h - 20 : bx.y + 20;
+      B.bullets.push({ kind: 'cSafe', x: sx, y: sy, vx: 0, vy: 0, warn: 0.95, life: 1.3, hitFn: (b, q) => b.t >= b.warn && Math.hypot(q.x - b.x, q.y - b.y) > 26 });
+    }
   },
 };
 Object.assign(PATTERNS, D_ATK);
