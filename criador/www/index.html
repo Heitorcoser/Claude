@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Criador de Batalhas</title>
+<meta name="description" content="Crie batalhas no estilo Undertale: sua foto, seus ataques, suas falas. Teste e mande pros amigos.">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+  @font-face { font-family: "VT323"; src: url(fonts/vt323.woff2) format("woff2"); }
+  @font-face { font-family: "PressStart"; src: url(fonts/pressstart2p.woff2) format("woff2"); }
+  :root { --amarelo: #ffe680; --laranja: #ff7f27; --linha: #fff; --fundo: #000; --cinza: #9a9aa8; --btn: rgba(255,255,255,0.10); --btn-on: rgba(255,255,255,0.28); --line: rgba(255,255,255,0.35); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: #000; color: #fff; font: 22px "VT323", monospace; }
+  button { font: 20px "VT323", monospace; color: #fff; background: #000; border: 3px solid #fff; padding: 8px 12px; cursor: pointer; }
+  button:active { background: #222; }
+  button.play { color: var(--amarelo); border-color: var(--amarelo); }
+  button.perigo { color: #ff7a7a; border-color: #ff7a7a; }
+  input[type=text], input[type=number], textarea, select { width: 100%; font: 22px "VT323", monospace; color: #fff; background: #111; border: 2px solid #777; padding: 6px 8px; }
+  textarea { resize: vertical; }
+  input[type=range] { width: 100%; accent-color: var(--laranja); }
+  h1 { font: 22px "PressStart", monospace; text-align: center; margin: 18px 0 6px; line-height: 1.5; }
+  h1 .vermelho { color: #ff3b3b; }
+  h2 { font: 14px "PressStart", monospace; color: var(--amarelo); margin: 0 0 12px; }
+  .tela { max-width: 760px; margin: 0 auto; padding: 12px 14px 60px; }
+  .sub { text-align: center; color: var(--cinza); margin: 0 0 16px; }
+  .topo { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .topo button { flex: 1 1 160px; font-size: 22px; padding: 12px; }
+  .card { display: flex; align-items: center; gap: 12px; border: 3px solid #fff; padding: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .card .info { flex: 1 1 140px; display: flex; flex-direction: column; }
+  .card .info b { font-size: 26px; } .card .info small { color: var(--cinza); }
+  .card .acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .thumb { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: #111; border: 2px solid #444; flex: none; }
+  .thumb img, .thumb canvas { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+  .thumb.grande { width: 96px; height: 96px; } .thumb span { color: #666; font-size: 18px; }
+  .barra { position: sticky; top: 0; z-index: 5; background: #000; display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 3px solid #fff; margin-bottom: 12px; }
+  .barra b { flex: 1; font-size: 26px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  details { border: 3px solid #fff; margin-bottom: 12px; }
+  summary { font: 14px "PressStart", monospace; padding: 14px 12px; cursor: pointer; color: var(--amarelo); list-style: none; }
+  summary::before { content: "▶ "; } details[open] summary::before { content: "▼ "; }
+  .corpo { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px; }
+  .campo { display: flex; flex-direction: column; gap: 4px; } .campo > span { color: #ddd; }
+  .campo b { color: var(--amarelo); }
+  .check { display: flex; gap: 10px; align-items: center; } .check input { width: 26px; height: 26px; accent-color: var(--laranja); flex: none; }
+  .linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .linha.mini button { padding: 4px 10px; }
+  .lista { display: flex; flex-direction: column; gap: 10px; }
+  .item { border: 2px dashed #666; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .titulo-atk { font: 12px "PressStart", monospace; color: var(--laranja); }
+  .add { border-style: dashed; color: #7aff9a; border-color: #7aff9a; }
+  .dica { color: var(--cinza); }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 12px; }
+  .modal .caixa { background: #000; border: 4px solid #fff; padding: 16px; width: min(560px, 100%); display: flex; flex-direction: column; gap: 10px; max-height: 94vh; overflow: auto; }
+  .modal .codigo { font-size: 16px; word-break: break-all; }
+  .modal .fechar { color: var(--cinza); border-color: var(--cinza); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #000; border: 3px solid var(--amarelo); color: var(--amarelo); padding: 10px 16px; z-index: 30; }
+  /* ---- tela do jogo ---- */
+  body.play { overflow: hidden; touch-action: none; height: 100%; user-select: none; -webkit-user-select: none; }
+  #jogo { position: fixed; inset: 0; max-width: none; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); display: flex; align-items: center; justify-content: center; gap: 12px; }
+  #jogo[hidden] { display: none; }
+  #wrap { position: relative; flex: 0 1 auto; aspect-ratio: 4 / 3; height: min(100vh, calc((100vw - 340px) * 0.75)); max-width: 100%; }
+  #game { width: 100%; height: 100%; display: block; image-rendering: pixelated; background: #000; }
+  #sair { position: fixed; top: max(6px, env(safe-area-inset-top)); right: 8px; z-index: 10; padding: 4px 10px; font-size: 18px; }
+  .side { flex: 0 0 160px; height: 100%; display: flex; align-items: center; justify-content: center; }
+  #dpad { position: relative; width: 150px; height: 150px; border-radius: 50%; background: var(--btn); border: 2px solid var(--line); touch-action: none; }
+  #dpad span { position: absolute; color: rgba(255,255,255,0.7); font: 20px "PressStart", monospace; pointer-events: none; }
+  #dpad .u { left: 50%; top: 10%; transform: translateX(-50%); } #dpad .d { left: 50%; bottom: 10%; transform: translateX(-50%); }
+  #dpad .l { top: 50%; left: 10%; transform: translateY(-50%); } #dpad .r { top: 50%; right: 10%; transform: translateY(-50%); }
+  #stick { position: relative; width: 150px; height: 150px; border-radius: 50%; touch-action: none; background: radial-gradient(circle, rgba(255,255,255,0.06) 0 55%, rgba(255,255,255,0.12) 56% 100%); border: 2px solid var(--line); }
+  #knob { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.55), rgba(255,255,255,0.22)); border: 2px solid rgba(255,255,255,0.6); pointer-events: none; }
+  body[data-control="analog"] #dpad, body:not([data-control]) #dpad { display: none; } body[data-control="dpad"] #stick { display: none; }
+  .ab { display: flex; flex-direction: column; gap: 22px; align-items: center; }
+  .ab div { width: 78px; height: 78px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 22px "PressStart", monospace; color: #fff; background: var(--btn); border: 2px solid var(--line); touch-action: none; }
+  .ab .a { border-color: #ffd23a; color: #ffd23a; transform: translateX(-22px); } .ab .b { border-color: #ff7f27; color: #ff7f27; transform: translateX(22px); } .ab div.on { background: var(--btn-on); }
+  @media (orientation: portrait) { #jogo { flex-direction: column; justify-content: flex-start; padding-top: 48px; } #wrap { width: 100vw; height: auto; } .controls { display: flex; width: 100%; justify-content: space-around; align-items: center; } .side { height: auto; } }
+  @media (orientation: landscape) { .controls { display: contents; } #left { order: 0; } #wrap { order: 1; } #right { order: 2; } }
+  body.desktop .controls { display: none; } body.desktop #wrap { height: min(100vh, 100vw * 0.75); }
+</style>
+</head>
+<body>
+  <div id="home" class="tela">
+    <h1>CRIADOR DE<br><span class="vermelho">BATALHAS</span></h1>
+    <p class="sub">Monte sua luta estilo Undertale: foto, ataques, falas. Teste e mande pros amigos.</p>
+    <div class="topo">
+      <button class="play" onclick="App.novo()">+ NOVA BATALHA</button>
+      <button onclick="App.importar()">📥 JOGAR CÓDIGO DE AMIGO</button>
+    </div>
+    <div id="lista"></div>
+  </div>
+
+  <div id="editor" class="tela" hidden>
+    <div class="barra">
+      <button onclick="App.saveNow(); App.home()">◀</button>
+      <b id="tituloEditor"></b>
+      <button onclick="App.share(App.b)">📤</button>
+      <button class="play" onclick="App.testar()">▶ TESTAR</button>
+    </div>
+    <div id="form"></div>
+  </div>
+
+  <div id="jogo" class="tela" hidden>
+    <button id="sair" onclick="App.sair()">SAIR</button>
+    <div id="wrap"><canvas id="game" width="640" height="480"></canvas></div>
+    <div class="controls">
+      <div class="side" id="left">
+        <div id="stick"><div id="knob"></div></div>
+        <div id="dpad"><span class="u">▲</span><span class="d">▼</span><span class="l">◀</span><span class="r">▶</span></div>
+      </div>
+      <div class="side" id="right"><div class="ab"><div class="a" data-key="a">A</div><div class="b" data-key="b">B</div></div></div>
+    </div>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/batalha.js"></script>
+  <script src="js/dados.js"></script>
+  <script src="js/editor.js"></script>
+</body>
+</html>
