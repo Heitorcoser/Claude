@@ -35,15 +35,16 @@ const F2_ATK = {
   '2f': ['cHands', 'cClones', 'cVortex', 'cDash', 'cSpiral', 'cMirror', 'cKnifeWalls'],
   // 2ª FASE: os dois DESPERTOS, com os ataques combinados
   // 2ª FASE: alma VERDE (escudo), estilo Undyne
-  3: ['gBasic', 'gReverse', 'gSpin', 'gDouble', 'gFast', 'gChaos'],
-  '3f': ['gSpin', 'gChaos', 'gReverse', 'gDouble', 'gFast'],
+  3: ['gBasic', 'pLines', 'gReverse', 'oRun', 'mixGP', 'gSpin', 'mixGO', 'gDouble', 'mixPO', 'gFast', 'gChaos'],
+  '3f': ['mixGP', 'gChaos', 'oRun', 'gSpin', 'mixPO', 'gReverse', 'mixGO', 'pLines', 'gFast'],
 };
 
 class FinalBattle extends Battle {
   constructor(key, opts) {
     super(key, { ...opts, party: ['kai', 'luna'] });
     boss9Sprites();
-    if (!BOSS9_SPR.soulGreen) BOSS9_SPR.soulGreen = makeCanvas(SPR.soul.width, SPR.soul.height, g => { g.drawImage(SPR.soul, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = '#2ae04a'; g.fillRect(0, 0, 32, 32); });
+    const tint = c => makeCanvas(SPR.soul.width, SPR.soul.height, g => { g.drawImage(SPR.soul, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = c; g.fillRect(0, 0, 32, 32); });
+    if (!BOSS9_SPR.soulGreen) Object.assign(BOSS9_SPR, { soulGreen: tint('#2ae04a'), soulPurple: tint('#c040ff'), soulOrange: tint('#ff9a1a') });
     this.stage = 1; this.soulCd = 1; this.broke = false; this.redFlash = 0; this.shakeT = 0;
     this.phase = 3; this.flip = false; this.soulMode = 'red'; this.kr = 0; this.krT = 0;
     this.dodges = 2; this.dodgeT = 0; this.atkN = 0; this.finalUsed = false;
@@ -99,10 +100,10 @@ class FinalBattle extends Battle {
     const P = PATTERNS[p];
     this.turnLen = P.len || 7.5;
     if (p === 'f2Doom') this.turnLen = 5;
-    this.soulMode = P.green ? 'green' : P.blue ? 'blue' : 'red';
+    this.soulMode = P.blue ? 'blue' : 'red';
     this.soul.vy = 0;
     if (P.blue) this.soul.y = 316 + 80 - 12;
-    if (P.green) { this.boxTarget = { x: 320 - 35, y: 316 - 35, w: 70, h: 70 }; this.soul.x = 320; this.soul.y = 316; this.shield = this.shield || 'up'; }
+    if (P.mode) this.setSoul(P.mode, true);
     if (p === 'f2Doom') return;
     const L = F2_TALK[this.stage], q = L[(this.talkN = (this.talkN ?? -1) + 1) % L.length];
     this.bubble = (p === 'dDuoFinal' || p === 'cFinal' || p === 'gFinal') ? null : { t: q[1], life: 2.2 };
@@ -110,6 +111,8 @@ class FinalBattle extends Battle {
   // alma azul com gravidade para QUALQUER lado (o ataque escolhe) + puxão pro centro
   moveSoul(dt) {
     if (this.soulMode === 'green') return this.moveShield();
+    if (this.soulMode === 'purple') return this.movePurple(dt);
+    if (this.soulMode === 'orange') return this.moveOrange(dt);
     const s = this.soul, bx = this.box, ox = s.x, oy = s.y;
     if (this.soulMode !== 'blue') Battle.prototype.moveSoul.call(this, dt);
     else {
@@ -149,6 +152,45 @@ class FinalBattle extends Battle {
     super.dealDamage(dmg, then, quiet);
   }
 
+  // As almas que a Carmim roubou: ela troca a cor da sua alma no meio da luta
+  setSoul(mode, quiet) {
+    const s = this.soul, prev = this.soulMode;
+    this.soulMode = mode;
+    if (mode === 'green') { this.boxTarget = { x: 320 - 35, y: 316 - 35, w: 70, h: 70 }; s.x = 320; s.y = 316; this.shield = this.shield || 'up'; }
+    if (mode === 'purple') { this.boxTarget = { x: 320 - 150, y: 316 - 60, w: 300, h: 120 }; s.line = 1; s.x = 320; s.y = 316; }
+    if (mode === 'orange') { this.boxTarget = { x: 320 - 120, y: 316 - 70, w: 240, h: 140 }; s.x = 320; s.y = 316; this.odir = { x: 1, y: 0 }; }
+    if (prev !== mode) {
+      this.bullets = this.bullets.filter(b => b.kind === 'gSpear' || b.kind === 'gBlast');
+      if (!quiet) { Sfx.magic(); this.shakeT = 0.2; }
+      this.modeFx = { t: 0, mode };
+      this.bubble = { t: { green: 'Alma da BONDADE!', purple: 'Alma da PERSEVERANÇA!', orange: 'Alma da CORAGEM!' }[mode], life: 1.3 };
+    }
+  }
+  // alma roxa: presa em 3 linhas. Anda pros lados e pula de linha (cima/baixo, ou toque acima/abaixo)
+  movePurple(dt) {
+    const s = this.soul, bx = this.box, v = moveVector(), d = Input.drag;
+    s.x += v.x * 150 * dt; if (d.active) s.x += d.dx * 1.1;
+    let ch = 0;
+    if (Input.isPressed('up')) ch = -1; if (Input.isPressed('down')) ch = 1;
+    if (Input.tap) { if (Input.tap.y < s.y - 16) ch = -1; else if (Input.tap.y > s.y + 16) ch = 1; }
+    if (d.active) { this.pdy = (this.pdy || 0) + d.dy; if (this.pdy < -22) { ch = -1; this.pdy = 0; } if (this.pdy > 22) { ch = 1; this.pdy = 0; } } else this.pdy = 0;
+    if (ch) { s.line = Math.max(0, Math.min(2, (s.line ?? 1) + ch)); Sfx.move(); }
+    const ty = 316 + ((s.line ?? 1) - 1) * 40;
+    s.y += (ty - s.y) * Math.min(1, dt * 22);
+    s.x = Math.max(bx.x + 13, Math.min(bx.x + bx.w - 13, s.x));
+    this.soulMoved = true;
+  }
+  // alma laranja: CORAGEM, não para nunca. Você só escolhe a direção
+  moveOrange(dt) {
+    const s = this.soul, bx = this.box, v = moveVector(), d = Input.drag, ox = s.x, oy = s.y;
+    if (Math.hypot(v.x, v.y) > 0.3) { const l = Math.hypot(v.x, v.y); this.odir = { x: v.x / l, y: v.y / l }; }
+    if (d.active && Math.hypot(d.dx, d.dy) > 1.5) { const l = Math.hypot(d.dx, d.dy); this.odir = { x: d.dx / l, y: d.dy / l }; }
+    const o = this.odir || { x: 1, y: 0 };
+    s.x += o.x * 135 * dt; s.y += o.y * 135 * dt;
+    s.x = Math.max(bx.x + 13, Math.min(bx.x + bx.w - 13, s.x));
+    s.y = Math.max(bx.y + 12, Math.min(bx.y + bx.h - 12, s.y));
+    this.soulMoved = Math.hypot(s.x - ox, s.y - oy) > 0.3;
+  }
   // alma verde: ela não anda; você vira o ESCUDO (setas, analógico, ou toque/arraste pro lado)
   moveShield() {
     const s = this.soul, v = moveVector();
@@ -170,8 +212,15 @@ class FinalBattle extends Battle {
         continue;
       }
       if (b.kind !== 'gSpear' || b.dead) continue;
+      if (b.arc) {
+        // dá a volta em meio círculo em volta da alma até o lado oposto
+        b.arc.t += dt; const k = Math.min(1, b.arc.t / G_ARC), a = b.arc.a0 + b.arc.side * Math.PI * k;
+        b.x = 320 + Math.cos(a) * 85; b.y = 316 + Math.sin(a) * 85; b.ang = a + Math.PI;
+        if (k >= 1) { b.arc = null; b.flipped = true; b.dir = opp(b.dir); b.ang = null; }
+        continue;
+      }
       b.d -= b.spd * dt;
-      if (b.rev && !b.flipped && b.d < 85) { b.flipped = true; b.dir = { up: 'down', down: 'up', left: 'right', right: 'left' }[b.dir]; Sfx.whoosh(); }
+      if (b.rev && !b.flipped && b.d < 85) { b.d = 85; const [ax, ay] = GDIR[b.dir]; b.arc = { t: 0, a0: Math.atan2(ay, ax), side: Math.random() < 0.5 ? 1 : -1 }; Sfx.whoosh(); continue; }
       const [dx, dy] = GDIR[b.dir]; b.x = 320 + dx * b.d; b.y = 316 + dy * b.d;
       if (b.d <= 24) {
         b.dead = true;
@@ -282,7 +331,7 @@ class FinalBattle extends Battle {
       ], () => {
         Sfx.shatter(); this.shakeT = 0.6; this.mercyBroken = true;
         for (let i = 0; i < 16; i++) this.particles.push({ x: BTN[3].x + 20 + Math.random() * 90, y: BTN_Y + 10 + Math.random() * 30, vx: (Math.random() - 0.5) * 200, vy: -60 - Math.random() * 160, life: 1.2, c: '#ff7f27' });
-        this.say(['* O botão POUPAR QUEBROU.', '* Agora só resta LUTAR.', '* Sua alma fica VERDE. Você não pode fugir: tem que DEFENDER.', '* Vire o ESCUDO pro lado de onde vem cada ataque.\n* (Setas ou analógico. No celular, toque ou arraste pro lado.)', '* Facas, corações e ossos AMARELOS dão a volta e chegam pelo lado OPOSTO!', '* E os canhões: vire o escudo pra eles antes do raio sair.', '3: A gente não vai parar agora!', '4: Eu ainda tenho magia. Vai!'], () => {
+        this.say(['* O botão POUPAR QUEBROU.', '* Agora só resta LUTAR.', '* Sua alma fica VERDE. Você não pode fugir: tem que DEFENDER.', '* Vire o ESCUDO pro lado de onde vem cada ataque.\n* (Setas ou analógico. No celular, toque ou arraste pro lado.)', '* Facas, corações e ossos AMARELOS dão a volta e chegam pelo lado OPOSTO!', '* E os canhões: vire o escudo pra eles antes do raio sair.', '* Cuidado: a Carmim tem as almas que roubou. Ela pode mudar a cor da SUA.', '* ROXA: pule de linha (cima/baixo). LARANJA: você não para de andar.', '3: A gente não vai parar agora!', '4: Eu ainda tenho magia. Vai!'], () => {
           this.stage = 3; this.talkN = -1; this.atkN = 0; this.finalUsed = false; this.dodges = 2;
           this.diffMul *= 1.15;
           Object.assign(this.e, { name: 'Carmim e Encapuzado', spr: 'c2duo', scale: 5, hp: 720, hpNow: 720, atkNow: 7, def: 4, alpha: 1,
@@ -370,6 +419,21 @@ class FinalBattle extends Battle {
       const s = this.soul;
       if (this.soulMode === 'blue' && (s.inv <= 0 || Math.floor(s.inv * 12) % 2)) drawSpr(BOSS9_SPR.soulBlue, s.x - 8, s.y - 7, 1);
       if (this.soulMode === 'green') this.drawShield(t);
+      if (this.soulMode === 'purple') {
+        const bx = this.box;
+        ctx.strokeStyle = 'rgba(200,90,255,0.75)'; ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(bx.x + 6, 276 + i * 40); ctx.lineTo(bx.x + bx.w - 6, 276 + i * 40); ctx.stroke(); }
+        if (s.inv <= 0 || Math.floor(s.inv * 12) % 2) drawSpr(BOSS9_SPR.soulPurple, s.x - 8, s.y - 7, 1);
+      }
+      if (this.soulMode === 'orange') {
+        const o = this.odir || { x: 1, y: 0 };
+        if (s.inv <= 0 || Math.floor(s.inv * 12) % 2) drawSpr(BOSS9_SPR.soulOrange, s.x - 8, s.y - 7, 1);
+        ctx.fillStyle = 'rgba(255,154,26,0.8)'; ctx.beginPath(); ctx.arc(s.x + o.x * 15, s.y + o.y * 15, 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+      if (this.modeFx) {
+        this.modeFx.t += 1 / 60; const k = this.modeFx.t;
+        if (k < 0.6) { ctx.strokeStyle = { green: '#2ae04a', purple: '#c040ff', orange: '#ff9a1a' }[this.modeFx.mode]; ctx.globalAlpha = 1 - k / 0.6; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(s.x, s.y, 10 + k * 120, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
+      }
       if (G.flags.redEyes && !this.opts.oneShot) { ctx.strokeStyle = `rgba(255,40,60,${0.4 + Math.sin(t * 10) * 0.2})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 14, 0, Math.PI * 2); ctx.stroke(); }
     }
     if (this.e.alpha > 0.1) {
@@ -400,7 +464,8 @@ class FinalBattle extends Battle {
         continue;
       }
       if (b.kind !== 'gSpear') continue;
-      const [dx, dy] = GDIR[b.dir], a = Math.atan2(-dy, -dx), rev = b.rev && !b.flipped;
+      const [dx, dy] = GDIR[b.dir], a = b.ang ?? Math.atan2(-dy, -dx), rev = b.rev && !b.flipped;
+      if (b.arc) { ctx.strokeStyle = 'rgba(255,224,64,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(320, 316, 85, b.arc.a0, b.arc.a0 + b.arc.side * Math.PI * Math.min(1, b.arc.t / G_ARC), b.arc.side < 0); ctx.stroke(); }
       if (rev) { ctx.fillStyle = `rgba(255,224,64,${0.35 + Math.sin(t * 20) * 0.15})`; ctx.beginPath(); ctx.arc(b.x, b.y, 14, 0, Math.PI * 2); ctx.fill(); }
       ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(a);
       if (b.type === 'faca') ctx.drawImage(SPR.faca, -16, -16, 32, 32);
@@ -743,25 +808,58 @@ D_ATK.xFinal = {
 const GDIR = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const GDIRS = ['up', 'right', 'down', 'left'];
 // monta a sequência de lanças pela hora em que CHEGAM no escudo
+const G_ARC = 0.4; // tempo da volta dos amarelos
 function gSchedule(arr) {
-  // arr: [{ at, dir, spd, rev }] -> sai cada lança 160 px antes, no tempo certo
+  // arr: [{ at, dir, spd, rev }] (hora em que CHEGA no escudo) -> hora em que tem que aparecer
   // cada um vira faca, coração, osso ou um canhão (que dispara o raio direto no escudo)
   return arr.map(a => {
     const r = Math.random(), type = a.rev ? (r < 0.5 ? 'faca' : 'coracao') : r < 0.33 ? 'faca' : r < 0.58 ? 'coracao' : r < 0.85 ? 'osso' : 'canhao';
-    return { ...a, type, spawn: type === 'canhao' ? a.at - 0.8 : a.at - 160 / a.spd };
+    return { ...a, type, spawn: type === 'canhao' ? a.at - 0.8 : a.at - 160 / a.spd - (a.rev ? G_ARC : 0) };
   }).sort((x, y) => x.spawn - y.spawn);
 }
-function gPattern(len, make) {
-  return { len, green: true, update(B, dt) {
+// alma roxa: facas correndo nas linhas (nunca nas 3 ao mesmo tempo)
+function purpleRun(B, S, dt, lvl) {
+  S.k = (S.k ?? 0.5) - dt; if (S.k > 0) return;
+  S.k = 0.72 / lvl;
+  // a linha livre fica igual por 2 ataques e depois muda pra uma VIZINHA (dá tempo de pular)
+  S.n = (S.n || 0) + 1;
+  if (S.free === undefined) S.free = (Math.random() * 3) | 0;
+  else if (S.n % 2 === 1) S.free = S.free === 1 ? (Math.random() < 0.5 ? 0 : 2) : 1;
+  const free = S.free, lines = [0, 1, 2].filter(l => l !== free), use = Math.random() < 0.4 ? [lines[(Math.random() * 2) | 0]] : lines;
+  const left = (S.side = !S.side), bx = B.box;
+  for (const l of use) B.bullets.push({ kind: 'knife', x: left ? bx.x - 14 : bx.x + bx.w + 14, y: 276 + l * 40, vx: (left ? 1 : -1) * 190 * lvl, vy: 0, ang: left ? 0 : Math.PI, go: 1, r: 6, life: 4 });
+}
+// alma laranja: paredes com buraco + corações caindo (você não para de andar)
+function orangeRun(B, S, dt, lvl) {
+  const bx = B.box;
+  S.w = (S.w ?? 0.4) - dt;
+  if (S.w <= 0) {
+    S.w = 1.15 / lvl; const left = (S.n = (S.n || 0) + 1) % 2, gap = 56, gy = bx.y + 30 + Math.random() * (bx.h - 60);
+    const x = left ? bx.x - 10 : bx.x + bx.w + 10, v = (left ? 1 : -1) * 135 * lvl, h1 = gy - gap / 2 - bx.y, h2 = bx.y + bx.h - gy - gap / 2;
+    if (h1 > 4) m9Bone(B, x, bx.y + h1 / 2, h1, v); if (h2 > 4) m9Bone(B, x, bx.y + bx.h - h2 / 2, h2, v);
+  }
+  S.h = (S.h ?? 0.8) - dt;
+  if (S.h <= 0) { S.h = 0.85 / lvl; B.bullets.push({ kind: 'heartB', x: bx.x + 12 + Math.random() * (bx.w - 24), y: bx.y - 8, vx: 0, vy: 100 * lvl, r: 6, life: 3 }); }
+}
+// um ataque da 2ª fase = trechos; em cada trecho a alma tem uma cor
+function segPattern(len, segs) {
+  return { len, mode: segs[0].mode, update(B, dt) {
     const S = B.pState;
-    if (!S.q) S.q = gSchedule(make());
-    while (S.q.length && B.pt >= S.q[0].spawn + 0.6) {
+    if (!S.q) S.q = gSchedule([].concat(...segs.filter(g => g.make).map(g => g.make())));
+    let cur = 0; segs.forEach((g, i) => { if (B.pt >= g.t0) cur = i; });
+    if (S.cur !== cur) { S.cur = cur; S.seg = {}; if (B.soulMode !== segs[cur].mode) B.setSoul(segs[cur].mode); }
+    const g = segs[cur];
+    const rdt = dt / (B.diffMul || 1); // ritmo em tempo real (a dificuldade fica no 'lvl')
+    if (g.mode === 'purple') purpleRun(B, S.seg, rdt, g.lvl || 1);
+    if (g.mode === 'orange') orangeRun(B, S.seg, rdt, g.lvl || 1);
+    while (S.q.length && B.pt >= S.q[0].spawn) {
       const a = S.q.shift();
-      if (a.type === 'canhao') { B.bullets.push({ kind: 'gBlast', dir: a.dir, fire: a.at + 0.6, x: 320, y: 316, vx: 0, vy: 0, life: 99, hitFn: () => false }); Sfx.blasterCharge(); continue; }
+      if (a.type === 'canhao') { B.bullets.push({ kind: 'gBlast', dir: a.dir, fire: a.at, x: 320, y: 316, vx: 0, vy: 0, life: 99, hitFn: () => false }); Sfx.blasterCharge(); continue; }
       B.bullets.push({ kind: 'gSpear', type: a.type, dir: a.dir, d: 160, spd: a.spd, rev: a.rev, x: 320, y: 316, vx: 0, vy: 0, life: 99, hitFn: () => false });
     }
   } };
 }
+const gOnly = (len, make) => segPattern(len, [{ t0: 0, mode: 'green', make }]);
 const rdir = () => GDIRS[(Math.random() * 4) | 0];
 const opp = d => ({ up: 'down', down: 'up', left: 'right', right: 'left' })[d];
 // sequências: sempre com tempo pra virar o escudo entre uma lança e outra
@@ -781,19 +879,26 @@ function gDoubleSeq(n, gap, spd, start = 1) {
   return out;
 }
 Object.assign(D_ATK, {
-  gBasic: gPattern(8.5, () => gSeq(14, 0.48, 210)),
-  gReverse: gPattern(8.5, () => gSeq(14, 0.5, 220, 0.4)),
-  gSpin: gPattern(8, () => gSpinSeq(24, 0.26, 240)),
-  gDouble: gPattern(8.5, () => gDoubleSeq(9, 0.72, 240)),
-  gFast: gPattern(8, () => gSeq(20, 0.31, 280, 0.15)),
-  gChaos: gPattern(9, () => gSeq(24, 0.29, 290, 0.35)),
-  // ÚLTIMO SUSPIRO: cada vez mais rápido
-  gFinal: gPattern(26, () => [].concat(
-    gSeq(12, 0.4, 230, 0.2, 1),
-    gSpinSeq(20, 0.22, 270, 6.2),
-    gDoubleSeq(6, 0.62, 280, 11),
-    gSeq(18, 0.27, 300, 0.4, 15),
-    gSpinSeq(16, 0.19, 330, 20.2))),
+  gBasic: gOnly(8.5, () => gSeq(14, 0.48, 210, 0, 1.6)),
+  gReverse: gOnly(8.8, () => gSeq(14, 0.5, 220, 0.4, 1.6)),
+  gSpin: gOnly(8.2, () => gSpinSeq(24, 0.26, 240, 1.6)),
+  gDouble: gOnly(8.4, () => gDoubleSeq(9, 0.72, 240, 1.6)),
+  gFast: gOnly(8.2, () => gSeq(20, 0.31, 280, 0.15, 1.6)),
+  gChaos: gOnly(9, () => gSeq(24, 0.29, 290, 0.35, 1.6)),
+  pLines: segPattern(8.5, [{ t0: 0, mode: 'purple', lvl: 1.05 }]),
+  oRun: segPattern(8.5, [{ t0: 0, mode: 'orange', lvl: 1.05 }]),
+  // trocando de alma no meio do ataque
+  mixGP: segPattern(9.5, [{ t0: 0, mode: 'green', make: () => gSeq(7, 0.45, 230, 0.3, 1.4) }, { t0: 4.8, mode: 'purple', lvl: 1.15 }]),
+  mixGO: segPattern(9.5, [{ t0: 0, mode: 'green', make: () => gSpinSeq(10, 0.3, 240, 1.4) }, { t0: 4.8, mode: 'orange', lvl: 1.15 }]),
+  mixPO: segPattern(9.5, [{ t0: 0, mode: 'purple', lvl: 1.1 }, { t0: 4.8, mode: 'orange', lvl: 1.2 }]),
+  // ÚLTIMO SUSPIRO: todas as almas, cada vez mais rápido
+  gFinal: segPattern(27, [
+    { t0: 0, mode: 'green', make: () => gSeq(10, 0.42, 240, 0.3, 1.4) },
+    { t0: 6, mode: 'purple', lvl: 1.3 },
+    { t0: 11, mode: 'green', make: () => gSpinSeq(14, 0.25, 280, 12.2) },
+    { t0: 16.2, mode: 'orange', lvl: 1.3 },
+    { t0: 21.2, mode: 'green', make: () => gSeq(16, 0.27, 310, 0.4, 22.4) },
+  ]),
 });
 Object.assign(BULLET_DRAW, { gSpear() {}, gBlast() {} });
 
