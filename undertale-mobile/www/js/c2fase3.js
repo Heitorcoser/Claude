@@ -377,11 +377,19 @@ const D_ATK = {
     len: 9,
     update(B, dt) {
       const S = B.pState, t = B.pt;
-      B.boxTarget = { x: 320 - 75 + Math.sin(t * 1.3) * 140, y: 250 + Math.sin(t * 2.1) * 20, w: 150, h: 120 };
+      const bxAt = k => ({ x: 320 - 75 + Math.sin(k * 1.3) * 140, y: 250 + Math.sin(k * 2.1) * 20 });
+      const cur = bxAt(t);
+      B.boxTarget = { x: cur.x, y: cur.y, w: 150, h: 120 };
+      // mira onde a alma VAI estar quando o canhão disparar (a caixa leva a alma junto)
+      const aim = warn => { const f = bxAt(t + warn); return { x: B.soul.x + f.x - cur.x, y: B.soul.y + f.y - cur.y }; };
       S.b = (S.b ?? 0.6) - dt;
-      if (S.b <= 0) { S.b = 0.8; const v = (S.n = (S.n || 0) + 1) % 2; if (v) m9Blaster(B, 40 + Math.random() * 560, 140, Math.PI / 2, { warn: 0.7, w: 26 }); else m9Blaster(B, 30, 250 + Math.random() * 130, 0, { warn: 0.7, w: 24 }); }
+      if (S.b <= 0) {
+        S.b = 0.8; const v = (S.n = (S.n || 0) + 1) % 2, a = aim(0.7), off = (Math.random() - 0.5) * 24;
+        if (v) m9Blaster(B, a.x + off, 140, Math.PI / 2, { warn: 0.7, w: 26 });
+        else m9Blaster(B, a.x < 320 ? 610 : 30, a.y + off, a.x < 320 ? Math.PI : 0, { warn: 0.7, w: 24 });
+      }
       S.d = (S.d ?? 2) - dt;
-      if (S.d <= 0) { S.d = 2.2; const y = B.soul.y; cDash(B, 0, y, 640, y, 0.6); }
+      if (S.d <= 0) { S.d = 2.2; const a = aim(0.6); cDash(B, 0, a.y, 640, a.y, 0.6); }
     },
   },
   // dois braços de osso girando no meio da caixa + facas que te perseguem
