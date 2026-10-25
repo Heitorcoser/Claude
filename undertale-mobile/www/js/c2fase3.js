@@ -374,6 +374,16 @@ function cDash(B, x1, y1, x2, y2, warn = 0.5) {
   B.bullets.push({ kind: 'cDash', x: x1, y: y1, x2, y2, vx: 0, vy: 0, warn, life: warn + 0.5,
     hitFn(b, q) { return b.t >= b.warn && b.t < b.warn + 0.25 && segDist(q.x, q.y, b.x, b.y, b.x2, b.y2) < 12; } });
 }
+// corte na caixa toda com UM canto seguro; só aparece quando o anterior acabou,
+// e o canto novo é sempre vizinho do anterior (dá tempo de chegar)
+function safeCorner(B, P, warn) {
+  if (B.bullets.some(b => b.kind === 'cSafe')) return;
+  const bx = bf(B);
+  P.safe = P.safe === undefined ? (Math.random() * 4) | 0 : P.safe ^ (Math.random() < 0.5 ? 1 : 2);
+  P.n = (P.n || 0) + 1;
+  const sx = P.safe % 2 ? bx.x + bx.w - 22 : bx.x + 22, sy = P.safe > 1 ? bx.y + bx.h - 20 : bx.y + 20;
+  B.bullets.push({ kind: 'cSafe', x: sx, y: sy, vx: 0, vy: 0, warn, life: warn + 0.3, hitFn: (b, q) => b.t >= b.warn && Math.hypot(q.x - b.x, q.y - b.y) > 26 });
+}
 const orb = (B, x, y, a, v, r = 5) => B.bullets.push({ kind: 'cOrb', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r, life: 5 });
 // parede que esmaga (mão de sombra / espinhos na parede)
 function cWall(B, x, y, w, h, warn, act, kind = 'cHand') { B.bullets.push({ kind, x, y, w, h, vx: 0, vy: 0, warn, life: warn + act }); }
@@ -398,7 +408,7 @@ const D_ATK = {
       const S = B.pState, bx = bf(B), s = B.soul;
       S.r = (S.r ?? 0.2) - dt;
       if (S.r <= 0) {
-        S.r = 1.35; const gap = Math.random() * Math.PI * 2;
+        S.r = 1.35; const gap = Math.atan2(bx.y + bx.h / 2 - s.y, bx.x + bx.w / 2 - s.x) + (Math.random() - 0.5) * 0.9;
         for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; if (Math.abs(((a - gap + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 0.45) continue; cKnife(B, s.x + Math.cos(a) * 125, s.y + Math.sin(a) * 125, a + Math.PI, 230, 0.7); }
       }
       S.o = (S.o ?? 0.5) - dt;
@@ -423,6 +433,20 @@ const D_ATK = {
       }
       S.k = (S.k ?? 1) - dt;
       if (S.k <= 0) { S.k = 0.85; const a = Math.random() * Math.PI * 2, s = B.soul; cKnife(B, s.x + Math.cos(a) * 140, s.y + Math.sin(a) * 110, Math.atan2(-Math.sin(a), -Math.cos(a)), 280, 0.55); }
+    },
+  },
+  // ossos baixinhos correndo pelo "chão" da gravidade atual (sempre dá pra pular)
+  dFloorBones: {
+    len: 9,
+    update(B, dt) {
+      const S = B.pState, bx = bf(B), g = B.gdir || 'down', h = 22, v = 165;
+      S.f = (S.f ?? 0.5) - dt;
+      if (S.f > 0) return;
+      S.f = 0.95; const a = Math.random() < 0.5;
+      if (g === 'down') m9Bone(B, a ? bx.x - 10 : bx.x + bx.w + 10, bx.y + bx.h - h / 2, h, a ? v : -v);
+      if (g === 'up') m9Bone(B, a ? bx.x - 10 : bx.x + bx.w + 10, bx.y + h / 2, h, a ? v : -v);
+      if (g === 'left') m9BoneH(B, bx.x + h / 2, a ? bx.y - 10 : bx.y + bx.h + 10, h, 0, a ? v : -v);
+      if (g === 'right') m9BoneH(B, bx.x + bx.w - h / 2, a ? bx.y - 10 : bx.y + bx.h + 10, h, 0, a ? v : -v);
     },
   },
   // a caixa CORRE pela tela; canhões em linhas fixas e a Carmim atravessando
@@ -463,7 +487,9 @@ const D_ATK = {
     update(B, dt) {
       const S = B.pState, bx = bf(B), s = B.soul;
       S.d = (S.d ?? 0.4) - dt;
-      if (S.d <= 0) {
+      const blueNear = B.bullets.some(b => b.kind === 'mbone' && b.color === 'blue' && Math.abs(b.x + b.vx * 0.6 - s.x) < 70);
+      if (S.d <= 0 && blueNear) S.d = 0.15;
+      else if (S.d <= 0) {
         S.d = 0.95; const a = [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4][(Math.random() * 4) | 0], L = 400;
         cDash(B, s.x - Math.cos(a) * L, s.y - Math.sin(a) * L, s.x + Math.cos(a) * L, s.y + Math.sin(a) * L, 0.55);
       }
@@ -536,9 +562,9 @@ const D_ATK = {
       S.h = (S.h ?? 0.3) - dt;
       if (S.h <= 0) {
         S.h = 1.15; const s = B.soul, gap = 44, side = (S.n = (S.n || 0) + 1) % 2;
-        if (side) { const gy = Math.max(bx.y + 30, Math.min(bx.y + bx.h - 30, s.y + (Math.random() - 0.5) * 60)); const h1 = gy - gap / 2 - bx.y, h2 = bx.y + bx.h - gy - gap / 2;
+        if (side) { const gy = Math.max(bx.y + 30, Math.min(bx.y + bx.h - 30, s.y + (Math.random() - 0.5) * 24)); const h1 = gy - gap / 2 - bx.y, h2 = bx.y + bx.h - gy - gap / 2;
           cWall(B, bx.x + bx.w / 2, bx.y + h1 / 2, bx.w, h1, 0.6, 0.45); cWall(B, bx.x + bx.w / 2, bx.y + bx.h - h2 / 2, bx.w, h2, 0.6, 0.45); }
-        else { const gx = Math.max(bx.x + 30, Math.min(bx.x + bx.w - 30, s.x + (Math.random() - 0.5) * 80)); const w1 = gx - gap / 2 - bx.x, w2 = bx.x + bx.w - gx - gap / 2;
+        else { const gx = Math.max(bx.x + 30, Math.min(bx.x + bx.w - 30, s.x + (Math.random() - 0.5) * 24)); const w1 = gx - gap / 2 - bx.x, w2 = bx.x + bx.w - gx - gap / 2;
           cWall(B, bx.x + w1 / 2, bx.y + bx.h / 2, w1, bx.h, 0.6, 0.45); cWall(B, bx.x + bx.w - w2 / 2, bx.y + bx.h / 2, w2, bx.h, 0.6, 0.45); }
       }
       S.s = (S.s ?? 0.9) - dt;
@@ -561,7 +587,7 @@ const D_ATK = {
     update(B, dt) {
       const S = B.pState, bx = bf(B), s = B.soul;
       if (!S.init) { S.init = 1; S.cl = []; for (const [x, y] of [[bx.x + 14, bx.y + 14], [bx.x + bx.w - 14, bx.y + 14], [bx.x + bx.w / 2, bx.y + bx.h - 14]]) { const c = { kind: 'cClone', x, y, vx: 0, vy: 0, r: 6, life: 99 }; S.cl.push(c); B.bullets.push(c); } }
-      const sp = 70 + B.pt * 9;
+      const sp = Math.min(115, 70 + B.pt * 9);
       S.cl.forEach((c, i) => { const a = Math.atan2(s.y - c.y, s.x - c.x) + Math.sin(B.pt * 2 + i * 2) * 0.5; c.x += Math.cos(a) * sp * dt; c.y += Math.sin(a) * sp * dt; });
       S.d = (S.d ?? 2.2) - dt;
       if (S.d <= 0) { S.d = 2.2; const c = S.cl[(Math.random() * 3) | 0]; cDash(B, c.x - 400 * Math.cos(0.3), c.y - 400 * Math.sin(0.3), c.x + 400 * Math.cos(0.3), c.y + 400 * Math.sin(0.3), 0.6); }
@@ -595,11 +621,7 @@ const D_ATK = {
       if (phase === 4) {
         // quatro cortes gigantes: só um canto da caixa fica seguro (marcado em verde)
         const P = B.pState, bx = bf(B);
-        if (!P.x) { P.x = 1; P.safe = (Math.random() * 4) | 0; }
-        P.s = (P.s ?? 0.2) - dt;
-        if (P.s <= 0 && (P.n || 0) < 6) { P.s = 0.55; P.n = (P.n || 0) + 1;
-          const sx = P.safe % 2 ? bx.x + bx.w - 22 : bx.x + 22, sy = P.safe > 1 ? bx.y + bx.h - 20 : bx.y + 20;
-          B.bullets.push({ kind: 'cSafe', x: sx, y: sy, vx: 0, vy: 0, warn: 1.1, life: 1.5, hitFn: (b, q) => b.t >= b.warn && Math.hypot(q.x - b.x, q.y - b.y) > 26 }); }
+        if ((P.n || 0) < 5) safeCorner(B, P, 1.4);
       }
     },
   },
@@ -613,10 +635,10 @@ function combo(B, dt, parts) {
 }
 const X_COMBOS = {
   xRing: { len: 8.5, parts: [['dSlashCircle', 1.15], ['dKnifeRing', 1.1]] },
-  xGrav: { len: 9, blue: true, parts: [['dGravity', 1.1], ['cKnifeWalls', 0.9]] },
+  xGrav: { len: 9, blue: true, parts: [['dGravity', 1.15], ['dFloorBones', 1]] },
   xHands: { len: 9, parts: [['cHands', 1], ['dSpinBones', 1.1]] },
   xRun: { len: 9, parts: [['dBoxRun', 1.1], ['cClones', 1]] },
-  xMirror: { len: 8.5, parts: [['cMirror', 1], ['dCrossDash', 1]] },
+  xMirror: { len: 8.5, parts: [['cMirror', 1], ['dSpinBones', 0.8]] },
   xVortex: { len: 8.5, parts: [['cVortex', 1.1], ['dSlashCircle', 0.9]] },
   xDash: { len: 8.5, parts: [['cDash', 1.15], ['dKnifeRing', 0.9]] },
 };
@@ -636,13 +658,8 @@ D_ATK.xFinal = {
     const name = steps[cur][1], spd = 1 + t * 0.012;
     if (name !== 'end') return D_ATK[name].update(B, dt * spd);
     // fim: cortes gigantes (só um canto seguro) alternando com canhões cruzados
-    const P = B.pState, bx = bf(B);
-    P.s = (P.s ?? 0.1) - dt;
-    if (P.s <= 0 && (P.n || 0) < 4) {
-      P.s = 0.6; P.n = (P.n || 0) + 1; const safe = (Math.random() * 4) | 0;
-      const sx = safe % 2 ? bx.x + bx.w - 22 : bx.x + 22, sy = safe > 1 ? bx.y + bx.h - 20 : bx.y + 20;
-      B.bullets.push({ kind: 'cSafe', x: sx, y: sy, vx: 0, vy: 0, warn: 0.95, life: 1.3, hitFn: (b, q) => b.t >= b.warn && Math.hypot(q.x - b.x, q.y - b.y) > 26 });
-    }
+    const P = B.pState;
+    if ((P.n || 0) < 4) safeCorner(B, P, 1.3);
   },
 };
 Object.assign(PATTERNS, D_ATK);
