@@ -68,7 +68,7 @@ const C2 = {
     const F = G.flags;
     if (G.map === 'aurora' && F.c1done) return this.card(2);
     if (G.map === 'doces2' && F.c2done) return this.card(3);
-    if (G.map === 'altar' && F.c3done) return this.credits();
+    if (G.map === 'altar' && F.c3done) return this.end(3);
     if (G.map === 'aurora' && !F.a1arrived) return this.card(1);
     Game.enterMap(G.map);
     if (Fade.a > 0) Fade.to(0, 1.5);
@@ -142,8 +142,8 @@ const ChapterSel = {
       const ph = { labirinto: 1, dragoncity: 2, gelo: 3, futuro: 4, ilha: 5, caverna: 6, sakura: 7, vulcao: 8, cidade: 9, arena: 10, salao: 11, vila: 12, praia: 13, casa: 14 }[s.map] || 1;
       return { save: s, st: 'FASE ' + ph + ' de 14' };
     }
-    if (s.flags && s.flags.c3done) return { save: s, st: 'COMPLETO ★' };
-    return { save: s, st: 'FASE ' + ({ aurora: 1, doces2: 2, altar: 3 }[s.map] || 1) + ' de 3' };
+    if (s.flags && s.flags.c3done) return { save: s, st: 'FASE 4 EM BREVE' };
+    return { save: s, st: 'FASE ' + ({ aurora: 1, doces2: 2, altar: 3 }[s.map] || 1) };
   },
   rows() { return this.sub ? this.sub.opts : ['CAPÍTULO 1', 'CAPÍTULO 2', 'VOLTAR']; },
   update(dt) {
@@ -267,14 +267,14 @@ const End2 = {
   enter(n) {
     this.t = 0; this.n = n; Fade.to(0, 0.8);
     Sfx.playMusic(n === 2 ? 'tristeza' : 'victory');
-    const map = { 1: 'aurora', 2: 'doces2' }[n];
+    const map = { 1: 'aurora', 2: 'doces2', 3: 'altar' }[n];
     if (map) { G.map = map; G.pos = null; G.flags['c' + n + 'done'] = true; saveGame(null); }
   },
   update(dt) {
     this.t += dt;
     if (this.t > 3 && (Input.isPressed('a') || Input.tap)) {
       Sfx.select(); this.t = -99;
-      Fade.to(1, 1).then(() => { Sfx.stopMusic(); C2.card(this.n + 1); });
+      Fade.to(1, 1).then(() => { Sfx.stopMusic(); this.n >= 3 ? Game.goTitle() : C2.card(this.n + 1); });
     }
   },
   draw() {
@@ -285,14 +285,14 @@ const End2 = {
     drawSpr(SPR.player.down[0], 300, 140, 3);
     drawSpr(SPR.partySet.kai.down[0], 230, 146, 3); drawSpr(SPR.partySet.luna.down[0], 370, 146, 3);
     if (n === 1) { drawSpr(SPR.dragon[G.dragon || 'lava'].right[Math.floor(T * 4) % 2], 60, 110, 3.4); drawSpr(SPR.jorge, 470, 130, 3); }
-    if (n === 2) { ctx.globalAlpha = 0.6 + Math.sin(T * 2) * 0.2; drawSpr(SPR.instrSoul, 450, 104, 3); ctx.globalAlpha = 1; }
+    if (n >= 2) { ctx.globalAlpha = 0.6 + Math.sin(T * 2) * 0.2; drawSpr(SPR.instrSoul, 450, 104, 3); ctx.globalAlpha = 1; }
     text(`LV ${G.lv}   HP ${G.maxhp}   ATQ ${playerAtk()}`, 320, 236, 32, '#fff', 'center');
     const food = G.items.filter(i => /Peixe|Dourado/.test(i)).length;
-    text(n === 1 ? `Comida na mochila: ${food}` : `Treinos completos: ${G.flags.d2train || 0} de 3`, 320, 270, 30, '#fff', 'center');
-    const line = n === 1 ? 'O Instrutor é o IRMÃO da Carmim.' : 'A alma do Instrutor está com você.';
+    text(n === 1 ? `Comida na mochila: ${food}` : n === 2 ? `Treinos completos: ${G.flags.d2train || 0} de 3` : 'As seis almas estão livres.', 320, 270, 30, '#fff', 'center');
+    const line = n === 1 ? 'O Instrutor é o IRMÃO da Carmim.' : n === 2 ? 'A alma do Instrutor está com você.' : 'A Carmim e o Encapuzado foram derrotados.';
     text(line, 320, 320, 30, '#9fe4ff', 'center');
-    text(n === 1 ? 'Próxima: FASE 2 — A ARENA DOS DOCES' : 'Próxima: FASE 3 — O ALTAR DAS ALMAS', 320, 370, 28, '#ff7f27', 'center');
-    if (this.t > 3 && Math.floor(this.t * 2) % 2) text('toque para continuar', 320, 434, 26, '#777', 'center');
+    text({ 1: 'Próxima: FASE 2 — A ARENA DOS DOCES', 2: 'Próxima: FASE 3 — O ALTAR DAS ALMAS', 3: 'Próxima: FASE 4 — EM BREVE...' }[n], 320, 370, 28, '#ff7f27', 'center');
+    if (this.t > 3 && Math.floor(this.t * 2) % 2) text(n >= 3 ? 'toque para voltar ao título' : 'toque para continuar', 320, 434, 26, '#777', 'center');
   },
 };
 

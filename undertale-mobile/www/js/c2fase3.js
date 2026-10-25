@@ -7,7 +7,7 @@
 'use strict';
 
 ENEMIES.c2final = {
-  name: 'Encapuzado', spr: 'c2duo', scale: 5, hp: 280, atk: 4, def: 3, xp: 1000, gold: 0, voice: 'posh',
+  name: 'Encapuzado', spr: 'c2duo', scale: 5, hp: 420, atk: 4, def: 3, xp: 1000, gold: 0, voice: 'posh',
   boss: true, cls: 'c2final', music: 'final2', bubbleW: 210, turnLen: 7,
   intro: '* A Carmim e o Encapuzado.\n* A luta do bem contra o mal.',
   check: '* ENCAPUZADO - ATK ? DEF 3\n* Protege a Carmim com tudo o que tem.\n* Derrube ele primeiro.',
@@ -26,11 +26,22 @@ const F2_TALK = {
   2: [['5', 'VOCÊ MACHUCOU ELE.'], ['5', 'Sua alma vai ser a SÉTIMA.'], ['5', 'Meu irmão era fraco. Igual você.'], ['5', 'POR QUE VOCÊ NÃO CAI?!'], ['5', 'Eu... eu...']],
 };
 
+// Ataques de cada parte (difícil de propósito: igual à luta do Mestre na ponte)
+const F2_ATK = {
+  1: ['mBoneGap', 'mBlasters', 'mBlue', 'mBlueOrange', 'mFlip', 'mCage', 'mBlueBlasters', 'mStorm'],
+  '1f': ['mStorm', 'mFlip', 'mBlueBlasters', 'mCage', 'mBlue'],
+  2: ['f2Storm', 'f2RedBlasters', 'knives', 'f2BlueHearts', 'f2Flip', 'f2Rain', 'f2Cage'],
+  '2f': ['f2RedBlasters', 'f2Flip', 'f2BlueHearts', 'f2Storm', 'f2Cage'],
+};
+
 class FinalBattle extends Battle {
   constructor(key, opts) {
     super(key, { ...opts, party: ['kai', 'luna'] });
     boss9Sprites();
-    this.stage = 1; this.soulCd = 0; this.broke = false; this.redFlash = 0; this.shakeT = 0;
+    this.stage = 1; this.soulCd = 1; this.broke = false; this.redFlash = 0; this.shakeT = 0;
+    this.phase = 3; this.flip = false; this.soulMode = 'red'; this.kr = 0; this.krT = 0;
+    this.dodges = 2; this.dodgeT = 0; this.atkN = 0; this.finalUsed = false;
+    this.diffMul *= 1.1;
     if (opts.oneShot) Sfx.playMusic('carmim');
     if (opts.rematch) this.broke = true;
   }
@@ -45,12 +56,55 @@ class FinalBattle extends Battle {
   }
   doom() { this.startEnemyTurn('f2Doom'); this.bubble = { t: this.opts.oneShot ? 'Adeus.' : 'De novo?', life: 1.2 }; }
 
+  toMenu() {
+    this.flip = false; this.soulMode = 'red';
+    super.toMenu();
+  }
+
+  afterPlayer() {
+    if (this.soulCd > 0) this.soulCd--;
+    const fr = this.e.hpNow / this.e.hp;
+    if (this.stage === 1 && fr < 0.4 && !this.finalUsed) {
+      this.finalUsed = true; this.dodges = 1; Sfx.slam();
+      this.turn++;
+      return this.say(['* O olho do Encapuzado brilha AZUL e AMARELO.', { who: 'stranger', t: '* Pela Carmim... ATAQUE FINAL.' }], () => this.startEnemyTurn('mFinal'));
+    }
+    if (this.stage === 2 && fr < 0.35 && !this.finalUsed) {
+      this.finalUsed = true; Sfx.slam();
+      this.turn++;
+      return this.say([{ who: 'carmim', t: '* CHEGA. CHEGA. CHEGA!' }, '* A sombra dela cobre o altar inteiro.', '* ATAQUE FINAL.'], () => this.startEnemyTurn('f2Final'));
+    }
+    Battle.prototype.afterPlayer.call(this);
+  }
+
   startEnemyTurn(p) {
+    if (p !== 'f2Doom' && p !== 'mFinal' && p !== 'f2Final') {
+      const lowHp = this.e.hpNow < this.e.hp * 0.4;
+      const list = F2_ATK[this.stage + (lowHp ? 'f' : '')];
+      p = list[this.atkN++ % list.length];
+    }
     super.startEnemyTurn(p);
-    if (p === 'f2Doom') { this.turnLen = 5; return; }
+    const P = PATTERNS[p];
+    this.turnLen = P.len || 7.5;
+    if (p === 'f2Doom') this.turnLen = 5;
+    this.soulMode = P.blue ? 'blue' : 'red';
+    this.soul.vy = 0;
+    if (P.blue) this.soul.y = 316 + 80 - 12;
+    if (p === 'f2Doom') return;
     const L = F2_TALK[this.stage], q = L[(this.talkN = (this.talkN ?? -1) + 1) % L.length];
-    this.bubble = { t: q[1], life: 2.4 };
-    this.speaker = q[0];
+    this.bubble = (p === 'mFinal' || p === 'f2Final') ? null : { t: q[1], life: 2.2 };
+  }
+  moveSoul(dt) { return MasterBattle.prototype.moveSoul.call(this, dt); }
+
+  // o Encapuzado desvia dos primeiros golpes
+  dealDamage(dmg, then, quiet) {
+    if (!quiet && this.stage === 1 && this.dodges > 0) {
+      this.dodges--;
+      this.state = 'damage'; this.dodgeT = 0.6; Sfx.whoosh();
+      this.dmgPop = { v: 'MISS', t: 0 }; this.afterDamage = then; this.damageT = 0;
+      return;
+    }
+    super.dealDamage(dmg, then, quiet);
   }
 
   // ----- ação nova: a alma do Instrutor -----
@@ -65,16 +119,15 @@ class FinalBattle extends Battle {
       const a = this.actList()[i];
       if (a && a.kind === 'alma') {
         if (a.disabled) { Sfx.back(); return -1; }
-        Sfx.magic(); this.soulCd = 3; this.soulFx = { t: 0 };
-        const before = G.hp; G.hp = Math.min(G.maxhp, G.hp + Math.round(G.maxhp * 0.4));
-        this.say([{ who: 'alma', t: '* Eu tô aqui. Sempre estive.' }, `* A alma do Carmino brilha! Você recuperou ${G.hp - before} HP.`, '* Uma luz azul acerta em cheio!'],
-          () => this.dealDamage(24 + G.lv * 2, () => { this.soulFx = null; this.afterPlayer(); }, true));
+        Sfx.magic(); this.soulCd = 4; this.soulFx = { t: 0 }; this.kr = 0;
+        const before = G.hp; G.hp = Math.min(G.maxhp, G.hp + Math.round(G.maxhp * 0.3));
+        this.say([{ who: 'alma', t: '* Eu tô aqui. Sempre estive.' }, `* A alma do Carmino brilha! Você recuperou ${G.hp - before} HP e o KARMA sumiu.`, '* Uma luz azul acerta em cheio!'],
+          () => this.dealDamage(20 + G.lv * 2, () => { this.soulFx = null; this.afterPlayer(); }, true));
         return -1;
       }
     }
     return i;
   }
-  afterPlayer() { if (this.soulCd > 0) this.soulCd--; super.afterPlayer(); }
 
   st_mercyMenu() {
     const i = this.listInput(1, 1);
@@ -83,7 +136,7 @@ class FinalBattle extends Battle {
     this.say(this.stage === 1 ? ['* Você estende a mão pro Encapuzado.', '* Ele olha pra Carmim... e balança a cabeça.'] : ['* Você tenta poupar a Carmim.', '* Lá no fundo, uma menininha quer aceitar.', '* Mas o DEMÔNIO não deixa.'], () => this.afterPlayer());
   }
 
-  // ----- dano no jogador -----
+  // ----- dano no jogador: golpe + KARMA (o HP continua caindo depois) -----
   hurt(dmg, who) {
     if (this.ended || this.breaking) return;
     if (this.opts.oneShot) {
@@ -91,11 +144,12 @@ class FinalBattle extends Battle {
       return this.end('dead');
     }
     if (!this.broke) return this.breakAttack();
-    const d = Math.max(2, this.e.atkNow + (this.stage === 2 && this.e.hpNow < this.e.hp * 0.35 ? 1 : 0));
+    const d = this.stage === 1 ? 3 : 4 + (this.finalUsed ? 1 : 0);
     G.hp = Math.max(0, G.hp - d);
-    if (who) who.inv = 1.0; else this.soul.inv = 1.0;
-    Sfx.hurt(); this.hurtFlash = 0.15;
-    if (G.hp <= 0) this.end('dead');
+    this.kr = Math.min(this.kr + 2, 40, Math.max(0, G.hp - 1));
+    if (who) who.inv = 0.6; else this.soul.inv = 0.35;
+    Sfx.hurt(); this.hurtFlash = 0.12;
+    if (G.hp <= 0) { this.kr = 0; this.end('dead'); }
   }
   breakAttack() {
     this.broke = true; this.breaking = true;
@@ -111,6 +165,7 @@ class FinalBattle extends Battle {
       '* A força dos seus amigos. A força do Carmino. Tudo junto.',
       '3: AGORA SIM! BORA!',
       '4: A gente tá com você!',
+      '* (Cuidado: cada golpe deles deixa KARMA. O HP continua caindo depois.)',
     ], () => {
       this.breaking = false;
       G.flags.redEyes = true;
@@ -123,7 +178,7 @@ class FinalBattle extends Battle {
   doKill() {
     if (this.stage === 1) {
       this.state = 'text';
-      Sfx.dust();
+      Sfx.dust(); this.kr = 0;
       return this.say([
         '* O Encapuzado cai de joelhos.',
         { who: 'stranger', t: '* Carmim... desculpa... eu tentei...' },
@@ -131,10 +186,10 @@ class FinalBattle extends Battle {
         '* A Carmim grita. A sombra dela cresce até o teto.',
         '* Ela vem com TUDO.',
       ], () => {
-        this.stage = 2; this.talkN = -1;
-        Object.assign(this.e, { name: 'Carmim', spr: 'carmimDemon', scale: 6, hp: 380, hpNow: 380, atkNow: 6,
-          check: '* CARMIM - ATK ? DEF 3\n* Possuída por um demônio.\n* Lá no fundo, ainda é uma criança perdida.',
-          patterns: ['redSlash', 'f2Storm', 'knives', 'hearts', 'f2Rain'], finale: ['f2Storm', 'f2Rain', 'redSlash'] });
+        this.stage = 2; this.talkN = -1; this.atkN = 0; this.finalUsed = false;
+        this.diffMul *= 1.15;
+        Object.assign(this.e, { name: 'Carmim', spr: 'carmimDemon', scale: 6, hp: 520, hpNow: 520, atkNow: 6, def: 3,
+          check: '* CARMIM - ATK ? DEF 3\n* Possuída por um demônio.\n* Lá no fundo, ainda é uma criança perdida.' });
         this.toMenu();
       });
     }
@@ -153,6 +208,11 @@ class FinalBattle extends Battle {
     super.update(dt);
     if (this.shakeT > 0) this.shakeT -= dt;
     if (this.redFlash > 0) this.redFlash -= dt * 0.7;
+    if (this.dodgeT > 0) { this.dodgeT -= dt; this.e.offX = -Math.sin((1 - this.dodgeT / 0.6) * Math.PI) * 120; } else this.e.offX = 0;
+    if (this.kr > 0 && this.state !== 'over') {
+      this.krT += dt;
+      if (this.krT > 0.4) { this.krT = 0; this.kr--; if (G.hp > 1) G.hp--; }
+    }
     if (this.state === 'enemyTurn') for (const b of this.bullets) if (b.kind === 'blaster' && !b.fired && b.t >= b.warn) { b.fired = true; Sfx.blasterFire(); this.shakeT = 0.12; }
   }
 
@@ -170,9 +230,9 @@ class FinalBattle extends Battle {
   draw() {
     ctx.save();
     if (this.shakeT > 0) ctx.translate((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12);
+    if (this.flip) { ctx.translate(W, H); ctx.rotate(Math.PI); }
     super.draw();
     const t = this.t;
-    // alma do Instrutor e os dragões de Kai e Luna
     if (!this.opts.oneShot) {
       ctx.globalAlpha = 0.55 + Math.sin(t * 2) * 0.15 + (this.soulFx ? 0.3 : 0);
       ctx.fillStyle = 'rgba(150,240,255,0.25)'; ctx.beginPath(); ctx.arc(320, 26, 30, 0, Math.PI * 2); ctx.fill();
@@ -184,17 +244,23 @@ class FinalBattle extends Battle {
     }
     if (this.state === 'enemyTurn') {
       for (const b of this.bullets) if (b.kind === 'blaster') drawBlaster(b);
-      if (G.flags.redEyes && !this.opts.oneShot) { const s = this.soul; ctx.strokeStyle = `rgba(255,40,60,${0.4 + Math.sin(t * 10) * 0.2})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 14, 0, Math.PI * 2); ctx.stroke(); }
+      const s = this.soul;
+      if (this.soulMode === 'blue' && (s.inv <= 0 || Math.floor(s.inv * 12) % 2)) drawSpr(BOSS9_SPR.soulBlue, s.x - 8, s.y - 7, 1);
+      if (G.flags.redEyes && !this.opts.oneShot) { ctx.strokeStyle = `rgba(255,40,60,${0.4 + Math.sin(t * 10) * 0.2})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x, s.y, 14, 0, Math.PI * 2); ctx.stroke(); }
     }
-    // olhos vermelhos da Carmim
     if (this.e.alpha > 0.1) {
-      const img = SPR[this.e.spr], sc = this.e.scale, ex = 320 - img.width * sc / 2, ey = this.enemyY();
+      const img = SPR[this.e.spr], sc = this.e.scale, ex = 320 - img.width * sc / 2 + (this.e.offX || 0), ey = this.enemyY();
       const cx = this.stage === 1 ? ex + (SPR.encapuzado.width + 4) * sc : ex, cy = this.stage === 1 ? ey + (img.height - SPR.carmimDemon.height) * sc : ey;
       ctx.fillStyle = `rgba(255,20,40,${0.7 + Math.sin(t * 8) * 0.3})`;
       ctx.fillRect(cx + 5 * sc, cy + 6 * sc, sc, sc); ctx.fillRect(cx + 8 * sc, cy + 6 * sc, sc, sc);
     }
     ctx.restore();
     if (this.redFlash > 0) { ctx.fillStyle = `rgba(255,0,30,${Math.min(0.6, this.redFlash)})`; ctx.fillRect(0, 0, W, H); }
+  }
+  // KARMA ao lado do HP
+  drawStats() {
+    super.drawStats();
+    if (this.kr > 0) { const w = G.maxhp * 2.4; text('KR', Math.min(606, 300 + w + 110), 394, 26, '#ff5ac8'); ctx.fillStyle = '#ff5ac8'; ctx.fillRect(286 + w * Math.max(0, G.hp - this.kr) / G.maxhp, 398, w * this.kr / G.maxhp, 20); }
   }
 }
 BATTLE_CLASSES.c2final = FinalBattle;
@@ -258,6 +324,69 @@ Object.assign(PATTERNS, {
       B.spawnT = 0.16;
       const bx = B.box;
       B.bullets.push({ kind: 'heartB', x: bx.x + 10 + Math.random() * (bx.w - 20), y: bx.y - 8, vx: (Math.random() - 0.5) * 40, vy: 150 + Math.random() * 60, r: 6, life: 3 });
+    },
+  },
+});
+Object.assign(PATTERNS, {
+  f2RedBlasters: {
+    len: 7.5,
+    update(B, dt) {
+      PATTERNS.f2Storm.update(B, dt);
+      const S = B.pState; S.bl = (S.bl ?? 0.8) - dt;
+      if (S.bl <= 0) { S.bl = 0.9; m9AimBlaster(B, 175, { warn: 0.65, w: 26 }); }
+    },
+  },
+  f2BlueHearts: {
+    len: 8, blue: true,
+    update(B, dt) {
+      const S = B.pState, bx = bf(B);
+      S.h = (S.h ?? 0) - dt;
+      if (S.h <= 0) { S.h = 0.55; const l = Math.random() < 0.5, hh = 16 + Math.random() * 22; m9Bone(B, l ? bx.x - 10 : bx.x + bx.w + 10, bx.y + bx.h - hh / 2, hh, l ? 190 : -190, Math.random() < 0.3 ? 'blue' : null); }
+      S.r = (S.r ?? 0.4) - dt;
+      if (S.r <= 0) { S.r = 0.35; B.bullets.push({ kind: 'heartB', x: bx.x + 10 + Math.random() * (bx.w - 20), y: bx.y - 8, vx: 0, vy: 140, r: 6, life: 3 }); }
+      S.sp = (S.sp ?? 2.5) - dt;
+      if (S.sp <= 0) { S.sp = 2.4; B.soul.vy = 900; Sfx.slam(); B.shakeT = 0.2; B.bullets.push({ kind: 'spikes', x: bx.x + bx.w / 2, y: bx.y + bx.h - 11, w: bx.w, h: 22, vx: 0, vy: 0, warn: 0.6, life: 1.1 }); }
+    },
+  },
+  f2Flip: {
+    len: 7.5,
+    update(B, dt) {
+      const S = B.pState;
+      S.fl = (S.fl ?? 0) - dt;
+      if (S.fl <= 0) { S.fl = 1.8; B.flip = !B.flip; Sfx.slam(); B.shakeT = 0.25; }
+      PATTERNS.knives.update(B, dt * 0.85);
+    },
+  },
+  f2Cage: {
+    len: 7.5,
+    update(B, dt) {
+      const S = B.pState;
+      if (!S.c) { S.c = 1; B.boxTarget = { x: 320 - 65, y: 252, w: 130, h: 130 }; }
+      S.r = (S.r ?? 0) - dt;
+      if (S.r <= 0) { S.r = 0.7; const s = B.soul, a = [0, Math.PI / 2, Math.PI / 4, -Math.PI / 4][(Math.random() * 4) | 0];
+        B.bullets.push({ kind: 'redSlash', x: s.x, y: s.y, ang: a, vx: 0, vy: 0, warn: 0.5, life: 0.8,
+          hitFn(b, q) { if (b.t < b.warn) return false; return Math.abs(-(q.x - b.x) * Math.sin(b.ang) + (q.y - b.y) * Math.cos(b.ang)) < 9; } }); }
+      PATTERNS.mCage.update(B, dt * 0.8);
+    },
+  },
+  // ataque final da Carmim: 18 segundos de tudo
+  f2Final: {
+    len: 18,
+    update(B, dt) {
+      const S = B.pState, t = B.pt, bx = bf(B);
+      if (t < 4) { PATTERNS.f2Storm.update(B, dt * 1.3); S.k = (S.k ?? 0) - dt; if (S.k <= 0) { S.k = 0.5; PATTERNS.knives.update(B, 1); } }
+      else if (t < 8) {
+        if (!S.blue) { S.blue = 1; B.soulMode = 'blue'; B.soul.vy = 900; Sfx.slam(); B.shakeT = 0.3; }
+        S.sp = (S.sp ?? 0.3) - dt; if (S.sp <= 0) { S.sp = 1.3; B.bullets.push({ kind: 'spikes', x: bx.x + bx.w / 2, y: bx.y + bx.h - 11, w: bx.w, h: 22, vx: 0, vy: 0, warn: 0.55, life: 1.0 }); }
+        S.r = (S.r ?? 0) - dt; if (S.r <= 0) { S.r = 0.3; B.bullets.push({ kind: 'heartB', x: bx.x + 10 + Math.random() * (bx.w - 20), y: bx.y - 8, vx: 0, vy: 150, r: 6, life: 3 }); }
+      } else if (t < 12) {
+        if (!S.red) { S.red = 1; B.soulMode = 'red'; }
+        S.fl = (S.fl ?? 0) - dt; if (S.fl <= 0) { S.fl = 1.3; B.flip = !B.flip; Sfx.slam(); }
+        PATTERNS.f2Rain.update(B, dt * 0.8);
+      } else if (t < 16) {
+        if (!S.unf) { S.unf = 1; B.flip = false; }
+        S.st = (S.st ?? 0) - dt; if (S.st <= 0) { S.st = 0.45; m9AimBlaster(B, 180, { warn: 0.6, w: 26 }); }
+      } else if (!S.big) { S.big = 1; m9Blaster(B, 320, 150, Math.PI / 2, { warn: 1.0, fire: 0.6, w: 70 }); }
     },
   },
 });
@@ -517,13 +646,13 @@ const R3 = {
       { who: 'alma', t: '* Eu vou ficar mais um pouquinho aqui dentro, tá? Ainda tem muita coisa pra te ensinar.' },
       '* (Seu peito brilha azul, quentinho.)',
       '* (Kai segura sua mão de um lado. Luna, do outro.)',
-      '* (Você não está PERDIDO. Nunca mais.)',
+      '* (Mas lá no fundo, você sabe: isso ainda não acabou.)',
     ]);
     this.free = null;
     W.saveHere(0);
     await Fade.to(1, 1);
     Sfx.stopMusic();
-    C2.credits();
+    C2.end(3);
   },
 
   async useStar() {
