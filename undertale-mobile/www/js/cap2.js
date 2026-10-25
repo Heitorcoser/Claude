@@ -41,7 +41,7 @@ const C2 = {
     Object.assign(g, {
       ch: 2, lv: 8, xp: 450, maxhp: 48, hp: 48, gold: 40, items: ['Picolé de Coco'],
       dragon: 'lava', weapon: 'Faca do Leão', party: ['kai', 'luna'], map: 'aurora', pos: null,
-      flags: { phone: true, ch2: true },
+      flags: { phone: true, ch2: true, dragonBattleTip: true },
     });
     if (!c1 || !c1.dragon) g.flags.pickDragon = true;
     if (c1) {
