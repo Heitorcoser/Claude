@@ -145,8 +145,7 @@ const Title = {
   t: 0, sel: 0, opts: [],
   enter() {
     this.t = 0; this.sel = 0;
-    this.save = loadGame();
-    this.opts = (this.save ? ['CONTINUAR', 'NOVO JOGO'] : ['NOVO JOGO']).concat(['MULTIPLAYER', 'CONFIGURAÇÕES']);
+    this.opts = ['JOGAR', 'MULTIPLAYER', 'CONFIGURAÇÕES'];
     Fade.a = 1; Fade.to(0, 1);
     this.musicStarted = false;
   },
@@ -165,7 +164,7 @@ const Title = {
     if (o === 'CONFIGURAÇÕES') { ConfigMenu.open(); return; }
     if (o === 'MULTIPLAYER') { CoopUI.open(); return; }
     this.t = -99;
-    Fade.to(1, 1.5).then(() => { Sfx.stopMusic(); o === 'CONTINUAR' ? Game.continueGame() : Game.newGame(); });
+    Fade.to(1, 1.5).then(() => { this.t = 0; C2.scene(ChapterSel); });
   },
   draw() {
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
@@ -175,8 +174,7 @@ const Title = {
     }
     text('PERDIDO', 320, 90, 52, '#fff', 'center', FONT_TITLE);
     text('um fangame de Undertale', 320, 160, 30, '#aaa', 'center');
-    const fase = { dragoncity: 'FASE 2: DRAGONCITY', gelo: 'FASE 3: COLÔNIA DE GELO', futuro: 'FASE 4: CIDADE FUTURISTA', ilha: 'FASE 5: A ILHA DOS DOCES', caverna: 'FASE 6: A CAVERNA', sakura: 'FASE 7: NEO-SAKURA', vulcao: 'FASE 8: VILA VULCÂNICA', cidade: 'FASE 9: O MESTRE', arena: 'FASE 10: A ARENA', salao: 'FASE 11: A BATALHA', vila: 'FASE 12: A VILA DAS ESPÉCIES', praia: 'FASE 13: A PRAIA', casa: G.flags && G.flags.ch1done ? 'CAPÍTULO 1 COMPLETO' : 'FASE 14: A CASA' }[this.save && this.save.map] || 'FASE 1: O LABIRINTO';
-    text(fase, 320, 196, 30, '#ffe680', 'center');
+    text('NOVO: CAPÍTULO 2!', 320, 196, 30, '#ff3b4a', 'center');
     drawSpr(SPR.soul, 312, 244 + Math.sin(this.t * 3) * 4, 1);
     this.opts.forEach((o, i) => text(o, 320, 284 + i * 44, 34, i === this.sel ? '#ffff40' : '#fff', 'center'));
     if (Math.floor(this.t * 2) % 2) text('toque para escolher', 320, 440, 26, '#777', 'center');

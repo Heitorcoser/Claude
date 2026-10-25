@@ -463,7 +463,8 @@ const Timers = {
 const wait = s => Timers.wait(s);
 
 // ---------------- DADOS / SALVAMENTO ----------------
-const SAVE_KEY = 'perdido_save_v1';
+// Cada capítulo tem o próprio save (o Capítulo 2 troca a chave em cap2.js).
+let SAVE_KEY = 'perdido_save_v1';
 function newGameState() {
   return {
     name: 'HUMANO', lv: 1, xp: 0, hp: 20, maxhp: 20, gold: 0,
