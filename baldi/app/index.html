@@ -129,6 +129,12 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
 .caixa h2{margin:0 0 8px}
 .caixa p{margin:0 0 10px}
 #pausa{background:rgba(0,0,0,.75)}
+#mpCaixa input{font:700 20px Comic,sans-serif;padding:6px 10px;border:3px solid #000;border-radius:8px;width:220px;text-align:center}
+#mpCodigoIn{width:140px!important;text-transform:uppercase;letter-spacing:4px}
+#mpCodigo{font:700 48px Comic,sans-serif;letter-spacing:8px}
+#mpLista{list-style:none;padding:0;margin:4px 0;font:700 20px Comic,sans-serif}
+#mpMsg{color:#a00;min-height:1.2em}
+#mpAvisoMenu{position:absolute;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#2a2;color:#fff;font:700 17px Comic,sans-serif;padding:6px 14px;border-radius:10px;max-width:90vw;text-align:center}
 #atualiza{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));max-width:300px;background:#fffbe0;border:3px solid #2a2;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;font-size:15px;color:#000;text-align:center}
 #atualiza .bt{font-size:18px;background:#2a2;color:#fff;border-radius:8px;padding:4px 10px;align-self:center}
 #versaoTxt{position:absolute;left:max(8px,env(safe-area-inset-left));bottom:max(6px,env(safe-area-inset-bottom));font-size:13px;color:#666}
@@ -172,15 +178,37 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
 
 <div class="tela" id="titulo"><div id="tocaTxt">Toque para começar</div></div>
 <div class="tela" id="menu" hidden>
+  <div id="mpAvisoMenu" hidden>Multiplayer: escolha o modo para começar com todos da sala</div>
   <img src="assets/Texture2D/MenuTextures/title_final.png" id="miniTitulo" alt="Baldi's Basics">
   <div class="botoes">
     <button class="bt" id="jHistoria"><img src="assets/ui/historia.png" alt="">Modo História</button>
     <button class="bt" id="jInfinito"><img src="assets/ui/infinito.png" alt="">Modo Infinito</button>
     <button class="bt" id="jBeta"><img src="assets/Texture2D/CharacterSprites/PlaceFace.png" alt="">Beta</button>
+    <button class="bt" id="jMulti">Multiplayer</button>
     <button class="bt" id="jComo">Como jogar</button>
   </div>
   <div class="aviso">Fã-jogo sem fins lucrativos, refeito na web a partir do projeto aberto do Baldi's Basics Classic. Baldi's Basics é de Basically Games (mystman12).</div>
 </div>
+
+<div class="tela" id="telaMP" hidden><div class="caixa" id="mpCaixa">
+  <h2>Multiplayer</h2>
+  <p>Jogue com até 3 amigos, cada um no seu celular, pela internet. Os cadernos são da equipe; quem o Baldi pegar fica assistindo; se alguém escapar, todos vencem.</p>
+  <p><input id="mpNome" maxlength="12" placeholder="Seu nome" autocomplete="off"></p>
+  <div id="mpInicio">
+    <div class="botoes"><button class="bt" id="mpCriar">Criar sala</button></div>
+    <p>ou entre na sala de um amigo:</p>
+    <div class="botoes"><input id="mpCodigoIn" maxlength="4" placeholder="CÓDIGO" autocomplete="off"><button class="bt" id="mpEntrar">Entrar</button></div>
+  </div>
+  <div id="mpSala" hidden>
+    <p>Código da sala:</p><div id="mpCodigo"></div>
+    <ul id="mpLista"></ul>
+    <div class="botoes"><button class="bt" id="mpComecar">Escolher modo e começar</button></div>
+    <p id="mpEspera">Esperando o anfitrião escolher o modo...</p>
+    <div class="botoes"><button class="bt" id="mpSair">Sair da sala</button></div>
+  </div>
+  <p id="mpMsg"></p>
+  <button class="bt" id="mpVolta">Voltar</button>
+</div></div>
 
 <div class="tela" id="telaBeta" hidden>
   <div id="betaTitulo">Beta Features</div>
@@ -223,6 +251,7 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
   <p><b>Cuidado:</b> o Diretor não deixa correr, beber no corredor nem entrar na sala dos professores. A Playtime quer pular corda. O Gotta Sweep varre tudo. O Bully cobra pedágio.</p>
   <p><b>Modo História:</b> o jogo original, ou ligue as novidades que já saíram do Beta: mapa aleatório, Dr. Reflex (toque rápido na mão com o círculo), Cloudy Copter (vento nos corredores), The Test (não fique olhando para ele), eventos, a ala nova e o porão.</p>
   <p><b>Beta:</b> tudo isso e o que está em teste: <b>pontos</b> (caderno com 2 ou mais acertos, símbolos de mais, Dr. Reflex, Playtime e Mrs. Pomp) para gastar na <b>loja do Johnny</b> (porta numa parede de corredor), <b>porta amarela de uma direção</b> (setas verdes abrem, sinal vermelho não), <b>Beans</b> (o chiclete gruda: a tesoura corta), <b>Chalkles</b> (saia da sala antes de 15 s) e <b>Mrs. Pomp</b> (chegue na aula dela a tempo).</p>
+  <p><b>Multiplayer:</b> até 4 jogadores pela internet. Um cria a sala e passa o código de 4 letras; os outros entram com ele. Quem criou escolhe o modo, e todos jogam na mesma escola. Os cadernos são da equipe, o Baldi vai atrás de quem estiver mais perto; quem for pego assiste os outros, e se alguém escapar todos vencem.</p>
   <button class="bt" id="fechaComo">Voltar</button>
 </div></div>
 
@@ -257,5 +286,7 @@ body.nullTreme canvas#c{animation:treme .08s infinite}
 <script src="porao.js"></script>
 <script src="plus.js"></script>
 <script src="atualiza.js"></script>
+<script src="peerjs.min.js"></script>
+<script src="mp.js"></script>
 </body>
 </html>

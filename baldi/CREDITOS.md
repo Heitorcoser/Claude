@@ -40,4 +40,5 @@ Sprites e vozes do **Dr. Reflex**, do **Cloudy Copter** e do **The Test**, baixa
 |---|---|---|---|
 | beta/sons/alarme.mp3 | opengameart.org/content/alarm-2 | Frenchyboy | CC0 |
 | beta/sons/apagao.mp3 | opengameart.org/content/machine-shutting-down | Cough-E | CC0 |
+| peerjs.min.js | PeerJS 1.5.4 (peerjs.com) | The PeerJS team | MIT |
 | fonts/comic-neue-* | Comic Neue (Fontsource) | The Comic Neue Project Authors | SIL OFL 1.1 |

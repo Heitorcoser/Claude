@@ -18,6 +18,7 @@
     ...['AmComing', 'AmLooking', 'BeenProgrammed', 'HaveLost', 'IHug', 'ISeeYou', 'Marry', 'OhNo'].map((n) => 'Characters/1stPrize/1PR_' + n), 'Characters/1stPrize/Sounds/1PR_Motor',
     ...['Donation', 'GiveGreat', 'NoItems', 'TakeCandy', 'TakeThat'].map((n) => 'Characters/Bully/B_' + n)];
   J.SONS = SONS;
+  const rede = (m) => { if (J.mpEnvia) J.mpEnvia(m); }; // multiplayer: o convidado avisa o anfitrião (sozinho não faz nada)
 
   /* ---------- cena 3D ---------- */
   const canvas = $('c'), render = new THREE.WebGLRenderer({ canvas, antialias: false });
@@ -40,11 +41,11 @@
     m.userData.larg = larg; m.userData.alt = alt;
     // o tamanho vem da imagem (pixels / 100), então espera ela carregar
     (function ajustaTam() { const i = mat.map.image; if (i && i.width) m.scale.set(i.width / 100 * larg, i.height / 100 * alt, 1); else setTimeout(ajustaTam, 60); })();
-    cena.add(m); sprites.push(m);
+    cena.add(m); sprites.push(m); m.userData.tex = tex;
     return m;
   }
   // troca o desenho do sprite só quando a imagem nova já carregou (senão o personagem pisca/some)
-  function troca(m, tex) { const t = M.tex(tex); if (m.material.map !== t && t.image && t.image.width) { m.material.map = t; m.material.needsUpdate = true; } }
+  function troca(m, tex) { const t = M.tex(tex); if (m.material.map !== t && t.image && t.image.width) { m.material.map = t; m.material.needsUpdate = true; m.userData.tex = tex; } }
   // escala do sprite a partir da matriz do Unity (tamanho em pixels / pixels por unidade × escala)
   function spriteDe(s) {
     const sx = Math.hypot(s.M[0], s.M[1], s.M[2]) * 100 / s.ppu, sy = Math.hypot(s.M[4], s.M[5], s.M[6]) * 100 / s.ppu;
@@ -87,6 +88,12 @@
   try { dificuldade = DIF[localStorage.getItem('baldiDificuldade')] ? localStorage.getItem('baldiDificuldade') : 'normal'; } catch (e) {}
   J.DIF = DIF;
   function novoJogo(modo) {
+    // multiplayer: com a mesma semente, todo mundo monta a mesma escola (mapa aleatório, itens, personagens)
+    const sorteio = Math.random;
+    if (J.semente != null) { let a = J.semente >>> 0; Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+    try { novoJogo2(modo); } finally { Math.random = sorteio; }
+  }
+  function novoJogo2(modo) {
     montaCena(modo);
     const pj = espDe('PlayerScript')[0];
     G = {
@@ -138,11 +145,12 @@
   }
   function abrePorta(d, quem) {
     if (quem == 'jogador' && J.portaHook && J.portaHook(d) === false) return; // ex.: portas bugadas da partida do Null
+    if (quem == 'jogador' && d.tipo != 'vaivem' && !d.aberta) rede({ t: 'porta', i: G.portas.indexOf(d), s: d.silencio > 0 });
     if (d.tipo == 'vaivem') {
       if (d.travada) return;
       if (!d.aberta) M.som('Sounds/Doors/swingdoor_open', { de: d, vol: 0.8 });
       d.aberta = true; d.tempo = 2; mostraPorta(d);
-      if (quem == 'jogador' && G.npcs.baldi.ativo) G.npcs.baldi.ouve(d.x, d.z, 1);
+      if (quem == 'jogador' && G.npcs.baldi.ativo) { G.npcs.baldi.ouve(d.x, d.z, 1); rede({ t: 'ouve', x: d.x, z: d.z, pr: 1 }); }
       return;
     }
     if (d.trava > 0) return;
@@ -425,7 +433,7 @@
   /* ---------- modo spoop (Baldi bravo) e final ---------- */
   function spoop() {
     if (G.spoop) return;
-    G.spoop = true;
+    G.spoop = true; rede({ t: 'spoop' });
     abaixaEntradas(true);
     if (G.tutor) G.tutor.visible = false;
     Object.values(G.npcs).forEach((n) => n.ativa());
@@ -602,7 +610,7 @@
     if (!a) return;
     if (a.tipo == 'loja') return J.compra && J.compra(a.o); // prateleira da loja do Johnny
     if (a.tipo == 'caderno') pegaCaderno(a.o);
-    else if (a.tipo == 'item') { a.o.ativo = false; a.o.m.visible = false; pegaItem(a.o.id); }
+    else if (a.tipo == 'item') { a.o.ativo = false; a.o.m.visible = false; pegaItem(a.o.id); rede({ t: 'obj', i: G.objs.indexOf(a.o) }); }
     else if (a.tipo == 'porta' && a.o.tipo != 'vaivem' && a.o.trava <= 0) abrePorta(a.o, 'jogador');
   }
   function pegaItem(id) {
@@ -617,8 +625,8 @@
     if (!id) return;
     const gasta = () => { G.item[G.sel] = 0; atualizaHud(); };
     if (id == 1) { p.est = 200; gasta(); }
-    else if (id == 2) { const a = alvo(['porta'], 0.4); if (a && a.o.tipo == 'vaivem' && !a.o.travada) { a.o.trava = 15; gasta(); } }
-    else if (id == 3) { const a = alvo(['porta'], 0.4); if (a && a.o.tipo != 'vaivem' && a.o.trava > 0) { a.o.trava = 0; abrePorta(a.o, 'jogador'); gasta(); } }
+    else if (id == 2) { const a = alvo(['porta'], 0.4); if (a && a.o.tipo == 'vaivem' && !a.o.travada) { a.o.trava = 15; gasta(); rede({ t: 'trava', i: G.portas.indexOf(a.o), v: 15 }); } }
+    else if (id == 3) { const a = alvo(['porta'], 0.4); if (a && a.o.tipo != 'vaivem' && a.o.trava > 0) { a.o.trava = 0; rede({ t: 'trava', i: G.portas.indexOf(a.o), v: 0 }); abrePorta(a.o, 'jogador'); gasta(); } }
     else if (id == 4) { soltaBsoda(); culpa('drink', 1); M.som('Sounds/Items/soda_spray'); gasta(); }
     else if (id == 5) {
       const a = alvo(['maquina', 'telefone'], 0.5);
@@ -630,22 +638,25 @@
     else if (id == 9) {
       if (p.chiclete > 0) { p.chiclete = 0; gasta(); aviso('Você cortou o chiclete!', 1.5); }
       else if (p.corda) { acabaCorda(true); gasta(); } // tesoura corta a corda: ela fica triste e espera 20 s
-      else { const a = alvo(['prize'], 0.3); if (a) { G.npcs.prize.louco = 15; gasta(); } }
+      else { const a = alvo(['prize'], 0.3); if (a) { G.npcs.prize.louco = 15; gasta(); rede({ t: 'prize' }); } }
     } else if (id == 10) { p.botas = 15; gasta(); aviso('Botas grandes: nada te empurra por 15s', 2); }
     else if (id == 11) { teleporte(); gasta(); }
     else if (J.usaItemExtra) J.usaItemExtra(id, G, gasta, alvo); // itens novos (fita verde do porão)
   }
-  function fita(o) { if (o.tipo == 'fita') troca(o.m, 'Texture2D/SchoolHouse/PickUps/TapePlayer/TapePlayerClosed.png'); M.som('Sounds/Items/AntiHearing', { de: o }); G.npcs.baldi.surdo = 30; G.npcs.baldi.vagar(); }
-  function despertador() {
-    const p = G.p, m = sprite('Texture2D/SchoolHouse/PickUps/AlarmClockItem.png', 1.2, 1.2);
-    const o = { x: p.x, z: p.z, m, t: 30, vida: 35 };
-    m.position.set(p.x, 1, p.z); G.relogios = (G.relogios || []).concat(o);
+  function fita(o) { if (o.tipo == 'fita') troca(o.m, 'Texture2D/SchoolHouse/PickUps/TapePlayer/TapePlayerClosed.png'); M.som('Sounds/Items/AntiHearing', { de: o }); surdo(); rede({ t: 'surdo' }); }
+  function surdo() { G.npcs.baldi.surdo = 30; G.npcs.baldi.vagar(); }
+  function despertador(x = G.p.x, z = G.p.z, remoto) {
+    if (!remoto) rede({ t: 'relogio', x, z });
+    const m = sprite('Texture2D/SchoolHouse/PickUps/AlarmClockItem.png', 1.2, 1.2);
+    const o = { x, z, m, t: 30, vida: 35 };
+    m.position.set(x, 1, z); G.relogios = (G.relogios || []).concat(o);
     o.tic = M.som('Sounds/Items/clocktick', { de: o, loop: true, vol: 0.6 });
   }
-  function soltaBsoda() {
+  function soltaBsoda(x = G.p.x, z = G.p.z, vx = -Math.sin(G.p.yaw) * BSODA_VEL, vz = -Math.cos(G.p.yaw) * BSODA_VEL, remoto) {
     // o jato ocupa quase o corredor todo e anda devagar (como no jogo original)
-    const p = G.p, m = sprite('Texture2D/SchoolHouse/PickUps/ItemDrop/BSODA_Spray.png', 9, 9);
-    const o = { x: p.x, z: p.z, vx: -Math.sin(p.yaw) * BSODA_VEL, vz: -Math.cos(p.yaw) * BSODA_VEL, vida: 10, m };
+    if (!remoto) rede({ t: 'bsoda', x, z, vx, vz });
+    const m = sprite('Texture2D/SchoolHouse/PickUps/ItemDrop/BSODA_Spray.png', 9, 9);
+    const o = { x, z, vx, vz, vida: 10, m };
     m.position.set(o.x, 3.6, o.z); G.bsodas = (G.bsodas || []).concat(o);
   }
   async function teleporte() {
@@ -701,7 +712,7 @@
       conta.fimT = 5;
       let t;
       if (!G.spoop) t = 'UAU! VOCÊ EXISTE!';
-      else if (conta.erros >= 3) { t = 'EU OUVI CONTA TÃO RUIM'; G.npcs.baldi.ouve(G.p.x, G.p.z, 7); G.falhou++; }
+      else if (conta.erros >= 3) { t = 'EU OUVI CONTA TÃO RUIM'; G.npcs.baldi.ouve(G.p.x, G.p.z, 7); rede({ t: 'ouve', x: G.p.x, z: G.p.z, pr: 7 }); G.falhou++; }
       else t = ['QUE PENA, ERROU AQUELA. TENTE DE NOVO!', 'TENTE ESTUDAR MAIS!'][M.rndInt(0, 1)];
       $('pergunta').textContent = t;
     }
@@ -717,8 +728,7 @@
     } else {
       res.src = 'assets/Texture2D/YCTPTextures/X.png'; conta.erros++;
       if (!G.spoop) { G.carranca = 1.2; spoop(); }
-      if (G.modo == 'infinito') G.npcs.baldi.bravo(1);
-      else if (conta.prob == 3) G.npcs.baldi.bravo(1); else G.npcs.baldi.raivaT += 0.25;
+      if (G.modo == 'infinito' || conta.prob == 3) { G.npcs.baldi.bravo(1); rede({ t: 'bravo', v: 1 }); } else { G.npcs.baldi.raivaT += 0.25; rede({ t: 'raiva', v: 0.25 }); }
       M.para(conta.tocando); conta.fila = [];
     }
     novoProblema();
@@ -870,6 +880,7 @@
   /* ---------- fim ---------- */
   function gameOver() {
     if (G.fim) return;
+    if (J.interceptaGameOver && J.interceptaGameOver()) return; // multiplayer: quem é pego assiste os outros
     G.fim = true;
     if (document.pointerLockElement) document.exitPointerLock();
     M.para(G.sons.musica); M.para(G.sons.maquina);
@@ -880,11 +891,12 @@
       fim(`assets/Texture2D/Screens/GameOver/${M.rndInt(0, 4)}.png`, 'O Baldi te pegou!');
     }, 1500);
   }
-  function vitoria() {
+  function vitoria(txt) {
     if (G.fim) return;
+    if (J.aoVencer && !txt) J.aoVencer();
     G.fim = true; M.para(G.sons.maquina);
     if (document.pointerLockElement) document.exitPointerLock();
-    fim('assets/Texture2D/Screens/win.png', G.falhou >= G.totalCadernos ? 'Você errou tudo... e mesmo assim escapou!' : 'Você escapou!');
+    fim('assets/Texture2D/Screens/win.png', txt || (G.falhou >= G.totalCadernos ? 'Você errou tudo... e mesmo assim escapou!' : 'Você escapou!'));
   }
   function fim(img, txt) {
     soltaMouse();
@@ -900,7 +912,7 @@
     G.pausado = on; $('pausa').hidden = !on;
     clearInterval(G.cabecaT); if (on) { let k = 0; G.cabecaT = setInterval(() => ($('cabecaPausa').src = 'assets/Texture2D/HudTextures/PauseHead/Nod' + String(k++ % 48).padStart(4, '0') + '.png'), 40); }
     if (on) soltaMouse(); else if (usaTeclado) capturaMouse();
-    M.audio()[on ? 'suspend' : 'resume']();
+    if (!J.mpAtivo) M.audio()[on ? 'suspend' : 'resume']();
   }
   $('continua').onclick = () => pausa(false);
   $('sair').onclick = () => { pausa(false); G.fim = true; menu(); };
@@ -912,7 +924,7 @@
     requestAnimationFrame(quadro);
     const dt = Math.min(0.05, (agora - ultimo) / 1000); ultimo = agora;
     if (!G || !cena) return;
-    if (!G.pausado && !G.fim) passo(dt);
+    if ((!G.pausado || J.mpAtivo) && !G.fim) passo(dt); // no multiplayer a pausa não congela a escola dos outros
     desenha();
   }
   function passo(dt) {
@@ -981,6 +993,7 @@
     $('menu').hidden = false;
   }
   async function comeca(modo) {
+    if (J.antesComeca) J.antesComeca(modo); // multiplayer: o anfitrião manda o modo e a semente para os outros
     $('menu').hidden = true; $('telaDif').hidden = true; $('carregando').hidden = false;
     M.audio().resume(); M.paraTudo();
     let girando = 0; const gira = setInterval(() => ($('cabeca').src = 'assets/Texture2D/MenuTextures/LoadingHead/HeadSpin' + String(girando++ % 48).padStart(4, '0') + '.png'), 40);
@@ -1007,7 +1020,7 @@
     M.som('Characters/Baldi/BaldiTutor/BAL_Hi');
   }
   J.contaSol = () => conta.sol; // usado pelos testes
-  J.comeca = comeca; J.fim = fim; J.menu = menu; J.pegaCaderno = pegaCaderno; J.mostraPorta = mostraPorta; J.dist = dist; J.ve = ve; J.spoop = spoop; J.sprite = sprite; J.troca = troca; J.Agente = Agente; J.ronda = ronda; J.dentro = dentro; J.abrePorta = abrePorta; J.gameOver = gameOver; J.vitoria = vitoria; J.trancaNav = trancaNav; J.alvo = alvo; J.usaItem = usaItem; J.pegaItem = pegaItem; J.ITEM = ITEM; J.ICONE = ICONE; J.interage = interage; J.pausa = pausa;
+  J.comeca = comeca; J.fim = fim; J.menu = menu; J.pegaCaderno = pegaCaderno; J.mostraPorta = mostraPorta; J.dist = dist; J.ve = ve; J.spoop = spoop; J.sprite = sprite; J.troca = troca; J.Agente = Agente; J.ronda = ronda; J.dentro = dentro; J.abrePorta = abrePorta; J.gameOver = gameOver; J.vitoria = vitoria; J.trancaNav = trancaNav; J.modoFinal = modoFinal; J.soltaBsoda = soltaBsoda; J.despertador = despertador; J.surdo = surdo; J.dificuldade = (d) => (d ? (dificuldade = d) : dificuldade); J.alvo = alvo; J.usaItem = usaItem; J.pegaItem = pegaItem; J.ITEM = ITEM; J.ICONE = ICONE; J.interage = interage; J.pausa = pausa;
   $('titulo').onclick = () => { $('titulo').hidden = true; $('menu').hidden = false; M.audio().resume(); M.carregaSom('Characters/Baldi/BAL_MainMenu').then(() => M.som('Characters/Baldi/BAL_MainMenu')).catch(() => {}); };
   // escolher o modo abre a tela de dificuldade; a escolhida fica guardada para a próxima vez
   let modoEscolhido = 'historia';
