@@ -397,7 +397,8 @@
       ativa() { this.ativo = false; this.pronto = true; },
       aparece() {
         for (let k = 0; k < 30; k++) { const r = ronda(false); this.x = r[0]; this.z = r[1]; if (dist(this, G.p) >= 20) break; }
-        this.ativo = true; this.spr.visible = true; this.tempo = 0; this.falou = false;
+        // no mapa ele fica guardado 20 abaixo do chão (como no Unity): ao aparecer, sobe com os pés no chão
+        this.oy = 4.96; this.ativo = true; this.spr.visible = true; this.tempo = 0; this.falou = false;
       },
       some() { this.ativo = false; this.spr.visible = false; this.espera = M.rnd(60, 120); },
       tique(dt) {
@@ -584,11 +585,12 @@
       if (d > alcance || d < 0.01) return;
       const a = Math.acos(Math.max(-1, Math.min(1, (ox * dx + oz * dz) / d)));
       if (a > ang + Math.atan(1.5 / d)) return;
-      if (!mundo.ve(p.x, p.z, o.x - (ox / d) * 0.8, o.z - (oz / d) * 0.8)) return;
+      const folga = o.tipo == 'loja' ? Math.min(d, 3.4) : 0.8; // produto da loja: em cima da mesa comprida (a mesa não pode tapar)
+      if (!mundo.ve(p.x, p.z, o.x - (ox / d) * folga, o.z - (oz / d) * folga)) return;
       const nota = a * 10 + d * 0.05;
       if (nota < mb) { mb = nota; melhor = { o, tipo }; }
     };
-    for (const o of G.objs) if (tipos.includes(o.tipo) && o.ativo !== false && (!o.m || o.m.visible)) testa(o, o.tipo, o.tipo == 'caderno' ? 10 : 10);
+    for (const o of G.objs) if (tipos.includes(o.tipo) && o.ativo !== false && (!o.m || o.m.visible)) testa(o, o.tipo, o.tipo == 'loja' ? 13 : 10);
     if (tipos.includes('porta')) for (const d of G.portas) testa(d, 'porta', d.tipo == 'vaivem' ? 10 : 15);
     if (tipos.includes('prize') && G.npcs.prize.ativo) testa(G.npcs.prize, 'prize', 30);
     return melhor;

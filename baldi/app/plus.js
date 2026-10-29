@@ -205,11 +205,12 @@
     const G = J.G;
     if (!G) return;
     if (G.pontos < o.preco) { J.aviso(`Faltam ${o.preco - G.pontos} pontos`, 1.8); M.som(SOM('Jon_TooMuch1'), { vol: 0.9 }); return; }
-    if (G.item.indexOf(0) < 0) { J.aviso('Seus bolsos estão cheios!', 1.8); return; }
+    // bolsos cheios: troca pelo item escolhido (como pegar um item do chão)
+    const troca = G.item.indexOf(0) < 0 ? G.item[G.sel] : 0;
     G.pontos -= o.preco; hudPontos(G);
     J.pegaItem(o.id);
     M.som(SOM('Jon_Buy' + M.rndInt(1, 3)), { vol: 0.9 });
-    J.aviso(`Comprou: ${J.ITEM[o.id]}`, 1.8);
+    J.aviso(troca ? `Comprou: ${J.ITEM[o.id]} (no lugar de: ${J.ITEM[troca]})` : `Comprou: ${J.ITEM[o.id]}`, 2);
   };
 
   /* ---------- porta amarela de uma direção ---------- */

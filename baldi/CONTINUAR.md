@@ -76,6 +76,8 @@ A chave `android/baldi.keystore` (senha `baldibeta`, alias `baldi`) só está no
 - Janelas em parede sólida (mapa aleatório e ala nova) usam `JanelaFora` (`beta/janela_fora.png`: a Window.png com céu, cerca e grama atrás), senão o vidro transparente mostrava os tijolos.
 - Porta de uma direção: as texturas `SwingDoor0Certo/Errado` são a `SwingDoor0.png` clássica com só os ícones do Plus colados (as do Plus tinham janelas e bordas transparentes diferentes); aberta usa a `SwingDoor60` clássica. Beans e Mrs. Pomp: sprite 3,2 (altura visível ~6,5, como os outros; Playtime 5,6, Baldi 8).
 - Regra: o fundo pintado em volta de uma porta/janela tem que ser a parede do lugar (porão = madeira: `PoraoMysteryDoor_*`; loja = papel de parede: `loja_porta_dentro`).
+- Bully: no mapa ele fica 20 abaixo do chão (como no Unity); `aparece()` põe `oy = 4,96` (pés no chão). Teste: `test/bully.mjs`.
+- Loja: alcance 13 para os produtos e a mesa não tapa a visão (`folga` em `alvo`); com os bolsos cheios a compra troca pelo item escolhido.
 - Atualização: `app/atualiza.js` lê `baldi/versao.json` no GitHub (raw, branch `claude/graphify-repo-setup-d9dotq`) e, se a versão for maior, mostra o aviso no menu; o botão chama `Android.atualiza(url)` (`Atualiza.java`: DownloadManager + instalador; permissão REQUEST_INSTALL_PACKAGES). O tester baixa o `BaldiNullTester.apk`. **A cada versão nova:** atualizar `versionCode/versionName` no manifesto, o fallback `J.VERSAO` em `atualiza.js`, `python3 tools/titulo.py X`, e o `baldi/versao.json` no repositório junto com os APKs.
 
 ## Ideias para as próximas versões

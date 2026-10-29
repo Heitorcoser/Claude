@@ -23,8 +23,19 @@ export default async function (p, out) {
   console.log('dentro da loja:', await p.evaluate(() => Jogo.G.loja.dentro));
   await p.evaluate(() => { Jogo.G.p.yaw = 0; }); await p.waitForTimeout(300); await p.screenshot({ path: out + '/loja.png' });
   // compra o produto da mesa da esquerda
-  const compra = await p.evaluate(() => { const G = Jogo.G, o = G.objs.find((o) => o.tipo == 'loja'); G.p.x = o.x + 6; G.p.z = o.z; G.p.yaw = Math.PI / 2; const antes = G.pontos; Jogo.compra(o); return [Jogo.ITEM[o.id], o.preco, antes, G.pontos, G.item.join(',')]; });
-  console.log('compra:', JSON.stringify(compra));
+  // compra como o jogador: olha para o produto e toca no botão da mão (e também tocando na tela em cima dele)
+  const compra = await p.evaluate(() => { const G = Jogo.G, o = G.objs.find((o) => o.tipo == 'loja'); const L = Jogo.E.loja; G.p.x = o.x + (L.cx > o.x ? 6 : -6); G.p.z = o.z; G.p.yaw = Math.atan2(-(o.x - G.p.x), -(o.z - G.p.z)); return [o.x, o.z]; });
+  await p.waitForTimeout(300);
+  const painel = await p.evaluate(() => document.getElementById('lojaPainel').textContent);
+  const antesLoja = await p.evaluate(() => Jogo.G.pontos);
+  await p.evaluate(() => document.getElementById('bToca').dispatchEvent(new PointerEvent('pointerdown')));
+  await p.waitForTimeout(300);
+  const depois1 = await p.evaluate(() => [Jogo.G.pontos, Jogo.G.item.join(',')]);
+  // tocar na tela em cima do produto (o centro da tela)
+  await p.evaluate(() => { const G = Jogo.G; G.item = [9, 5, 5]; G.sel = 1; Jogo.atualizaHud(); }); // bolsos cheios: troca pelo item escolhido
+  await p.evaluate(() => document.getElementById('bToca').dispatchEvent(new PointerEvent('pointerdown')));
+  await p.waitForTimeout(300);
+  console.log('loja painel:', painel, '| botão:', antesLoja, '->', JSON.stringify(depois1), '| bolsos cheios:', JSON.stringify(await p.evaluate(() => [Jogo.G.pontos, Jogo.G.item.join(',')])));
   await p.waitForTimeout(300); await p.screenshot({ path: out + '/loja_mesa.png' });
   // sai da loja
   await p.evaluate(() => { const L = Jogo.E.loja, G = Jogo.G; G.p.x = L.saida[0]; G.p.z = L.saida[1] - 8; });

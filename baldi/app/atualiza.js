@@ -4,7 +4,7 @@
   const J = window.Jogo, $ = (id) => document.getElementById(id);
   const BASE = 'https://raw.githubusercontent.com/Heitorcoser/claude/claude/graphify-repo-setup-d9dotq/baldi/';
   const A = () => window.Android || {};
-  J.VERSAO = (A().versao && A().versao()) || '1.16';
+  J.VERSAO = (A().versao && A().versao()) || '1.17';
   const tester = () => !!(A().pacote && /\.tester$/.test(A().pacote())) || !!J.ehTester;
   // "1.10" > "1.9": compara número por número
   const maior = (a, b) => {
